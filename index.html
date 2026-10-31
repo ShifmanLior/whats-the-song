@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="theme-color" content="#0f0b1e">
+<title>מה השיר?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0b1e;
+    --surface: #1a1433;
+    --surface-2: #261d4a;
+    --line: #382d63;
+    --text: #f4f1ff;
+    --muted: #a79fc9;
+    --accent: #ff5d8f;
+    --accent-2: #ff9a5c;
+    --good: #3ddc97;
+    --bad: #ff6b6b;
+    --skip: #5d5488;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(900px 500px at 50% -10%, #2a1a5e 0%, transparent 70%),
+      var(--bg);
+    color: var(--text);
+    font-family: "Heebo", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
+
+  .app {
+    width: 100%;
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 20px 16px 48px;
+  }
+
+  /* header */
+  .top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  h1 { margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.1; }
+  .sub { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+  .stats { display: flex; gap: 8px; }
+  .stat {
+    min-width: 64px;
+    padding: 6px 10px;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+  .stat b { display: block; font-size: 20px; line-height: 1.2; }
+  .stat span { display: block; color: var(--muted); font-size: 12px; }
+  .lead { margin: 16px 0 0; color: var(--muted); font-size: 15px; }
+
+  /* player stage */
+  .stage { margin-top: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .stage[hidden] { display: none; }
+  .play {
+    position: relative;
+    width: 96px; height: 96px;
+    border: 0; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 10px 30px rgba(255, 93, 143, 0.35);
+    cursor: pointer;
+    display: grid; place-items: center;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .play:hover:not(:disabled) { transform: scale(1.04); }
+  .play:active:not(:disabled) { transform: scale(0.97); }
+  .play:disabled { cursor: progress; filter: saturate(0.6) brightness(0.8); }
+  .play svg { width: 40px; height: 40px; fill: #fff; grid-area: 1 / 1; }
+  .play .i-pause { display: none; }
+  .play[data-state="playing"] .i-play { display: none; }
+  .play[data-state="playing"] .i-pause { display: block; }
+  .play[data-state="playing"]::after {
+    content: ""; position: absolute; inset: -8px; border-radius: 50%;
+    border: 3px solid var(--accent); opacity: 0;
+    animation: pulse 1.2s ease-out infinite;
+  }
+  .play[data-state="loading"]::after {
+    content: ""; position: absolute; inset: -8px; border-radius: 50%;
+    border: 3px solid transparent; border-top-color: var(--accent-2);
+    animation: spin .8s linear infinite;
+  }
+  @keyframes pulse { from { transform: scale(0.9); opacity: .8; } to { transform: scale(1.25); opacity: 0; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .timeline-wrap { width: 100%; }
+  .timeline {
+    position: relative;
+    height: 14px;
+    background: var(--surface-2);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .tl-unlocked, .tl-played { position: absolute; inset-block: 0; left: 0; }
+  .tl-unlocked { background: rgba(255, 93, 143, 0.32); transition: width .35s ease; }
+  .tl-played { background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+  .tl-tick { position: absolute; inset-block: 0; width: 2px; background: var(--bg); }
+  .tl-marks { position: relative; height: 20px; margin-top: 6px; color: var(--muted); font-size: 12px; }
+  .tl-marks span { position: absolute; transform: translateX(-50%); }
+  .tl-marks span:last-child { transform: translateX(-100%); }
+  .tl-label { text-align: center; color: var(--muted); font-size: 14px; }
+
+  /* attempts */
+  .attempts { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 8px; }
+  .attempt {
+    display: flex; align-items: center; gap: 12px;
+    min-height: 46px; padding: 6px 12px 6px 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 15px;
+  }
+  .attempt .badge {
+    flex: none; width: 34px; height: 34px; border-radius: 9px;
+    display: grid; place-items: center;
+    background: var(--surface-2); color: var(--muted);
+    font-size: 13px; font-weight: 700;
+  }
+  .attempt .txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .attempt.current { border-color: var(--accent); }
+  .attempt.current .badge { background: var(--accent); color: #fff; }
+  .attempt.bad .badge { background: var(--bad); color: #2a0b0b; }
+  .attempt.skip .badge { background: var(--skip); color: #fff; }
+  .attempt.skip .txt { color: var(--muted); }
+  .attempt.win { border-color: var(--good); }
+  .attempt.win .badge { background: var(--good); color: #052b1b; }
+  .attempt.empty { opacity: .55; }
+
+  /* guess area */
+  .guess { margin-top: 20px; }
+  .guess[hidden] { display: none; }
+  .combo { position: relative; }
+  .combo input {
+    width: 100%; height: 52px; padding: 0 16px;
+    background: var(--surface);
+    border: 2px solid var(--line);
+    border-radius: 14px;
+    font-size: 17px;
+  }
+  .combo input::placeholder { color: var(--muted); }
+  .combo input:focus { outline: none; border-color: var(--accent); }
+  .list {
+    position: absolute; z-index: 5; inset-inline: 0; top: calc(100% + 6px);
+    margin: 0; padding: 6px; list-style: none;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .45);
+    max-height: 320px; overflow-y: auto;
+  }
+  .list[hidden] { display: none; }
+  .list li { padding: 10px 12px; border-radius: 10px; cursor: pointer; }
+  .list li b { display: block; font-weight: 700; }
+  .list li small { display: block; color: var(--muted); font-size: 13px; }
+  .list li[aria-selected="true"], .list li:hover { background: var(--line); }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .btn {
+    height: 50px; border-radius: 14px; border: 2px solid transparent;
+    font-weight: 700; font-size: 16px; cursor: pointer;
+    transition: transform .1s ease, opacity .1s ease;
+  }
+  .btn:active:not(:disabled) { transform: scale(0.98); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; }
+  .btn.ghost { background: transparent; border-color: var(--line); color: var(--text); }
+  .btn.ghost:hover:not(:disabled) { border-color: var(--muted); }
+  .btn.danger { border-color: var(--bad); color: var(--bad); }
+
+  /* result */
+  .result {
+    margin-top: 20px; padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    text-align: center;
+  }
+  .result[hidden] { display: none; }
+  .result h2 { margin: 0; font-size: 24px; font-weight: 800; }
+  .result.won h2 { color: var(--good); }
+  .result.lost h2 { color: var(--accent-2); }
+  .song-title { margin: 12px 0 0; font-size: 20px; font-weight: 700; }
+  .song-artist { margin: 0; color: var(--muted); }
+  .squares { display: flex; justify-content: center; gap: 6px; margin: 16px 0; }
+  .squares i { width: 28px; height: 28px; border-radius: 7px; background: var(--surface-2); }
+  .squares i.win { background: var(--good); }
+  .squares i.bad { background: var(--bad); }
+  .squares i.skip { background: var(--skip); }
+  .result .btn { width: 100%; }
+  .next { margin: 14px 0 0; color: var(--muted); font-size: 14px; }
+  .next b { color: var(--text); font-variant-numeric: tabular-nums; }
+
+  /* YouTube player: kept off-screen while guessing, shown at the end */
+  .player-wrap {
+    position: fixed; left: -10000px; top: 0;
+    width: 220px; height: 220px;
+    pointer-events: none;
+  }
+  .player-wrap iframe { width: 100%; height: 100%; border: 0; border-radius: 12px; }
+  .player-wrap.revealed {
+    position: static; left: auto;
+    width: 100%; height: auto; aspect-ratio: 16 / 9;
+    margin-top: 16px; pointer-events: auto;
+  }
+
+  .notice {
+    margin: 16px 0 0; padding: 12px 14px;
+    background: #3a1730; border: 1px solid var(--bad); border-radius: 12px;
+    color: #ffd6d6; font-size: 14px;
+  }
+  .notice[hidden] { display: none; }
+  .notice code { direction: ltr; unicode-bidi: embed; background: rgba(0,0,0,.3); padding: 1px 6px; border-radius: 6px; }
+  .foot { margin-top: 28px; text-align: center; color: var(--muted); font-size: 13px; }
+
+  .toast {
+    position: fixed; inset-inline: 0; bottom: 24px; margin: 0 auto; width: max-content; max-width: calc(100% - 32px);
+    padding: 10px 18px; border-radius: 999px;
+    background: var(--text); color: var(--bg); font-weight: 700;
+    opacity: 0; transform: translateY(12px); pointer-events: none;
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  .toast.show { opacity: 1; transform: none; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* small phones: keep the guess box and buttons above the fold */
+  @media (max-width: 480px) {
+    .app { padding-top: 14px; }
+    h1 { font-size: 28px; }
+    .lead { margin-top: 10px; font-size: 14px; }
+    .stage { margin-top: 14px; gap: 10px; }
+    .play { width: 80px; height: 80px; }
+    .play svg { width: 34px; height: 34px; }
+    .attempts { margin-top: 12px; gap: 5px; }
+    .attempt { min-height: 36px; padding-block: 2px; }
+    .attempt .badge { width: 28px; height: 28px; }
+    .guess { margin-top: 14px; }
+  }
+  @media (max-width: 480px) and (max-height: 860px) {
+    .lead { display: none; }   /* the 3 to 13 scale and the skip button already say it */
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <div>
+      <h1>מה השיר?</h1>
+      <p class="sub" id="dayLabel"></p>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="statStreak">0</b><span>רצף</span></div>
+      <div class="stat"><b id="statWins">0</b><span>ניצחונות</span></div>
+    </div>
+  </header>
+  <p class="lead">שיר חדש בכל יום. מתחילים עם 3 שניות מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד 2 שניות.</p>
+
+  <section class="stage" id="stage" aria-label="נגן">
+    <button class="play" id="play" type="button" aria-label="נגן את הקטע" data-state="loading" disabled>
+      <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z"/></svg>
+      <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>
+    </button>
+    <div class="timeline-wrap" dir="ltr">
+      <div class="timeline" id="timeline" aria-hidden="true">
+        <div class="tl-unlocked" id="tlUnlocked"></div>
+        <div class="tl-played" id="tlPlayed"></div>
+      </div>
+      <div class="tl-marks" id="tlMarks" aria-hidden="true"></div>
+    </div>
+    <div class="tl-label" id="tlLabel"></div>
+  </section>
+
+  <ol class="attempts" id="attempts" aria-label="הניחושים שלכם"></ol>
+
+  <section class="guess" id="guess" aria-label="ניחוש">
+    <div class="combo">
+      <label class="sr-only" for="q">חפשו שיר או אמן</label>
+      <input id="q" type="text" role="combobox" aria-expanded="false" aria-controls="list" aria-autocomplete="list"
+             autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="חפשו שיר או אמן...">
+      <ul class="list" id="list" role="listbox" aria-label="הצעות" hidden></ul>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="guessBtn" type="button" disabled>נחשו</button>
+      <button class="btn ghost" id="skipBtn" type="button">עוד 2 שניות</button>
+    </div>
+  </section>
+
+  <section class="result" id="result" hidden aria-live="polite">
+    <h2 id="resultTitle"></h2>
+    <p class="song-title" id="resultSong"></p>
+    <p class="song-artist" id="resultArtist"></p>
+    <div class="squares" id="resultSquares" aria-hidden="true"></div>
+    <button class="btn primary" id="shareBtn" type="button">שתפו תוצאה</button>
+    <p class="next">השיר הבא בעוד <b id="countdown">--:--:--</b></p>
+  </section>
+
+  <div class="player-wrap" id="playerWrap"><div id="yt"></div></div>
+
+  <p class="notice" id="notice" role="alert" hidden></p>
+  <p class="foot">השיר מתחלף בחצות</p>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="sr-only" id="live" aria-live="polite"></div>
+
+<script src="songs.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  const STAGES = [3, 5, 7, 9, 11, 13];            // seconds revealed at each attempt
+  const MAX = STAGES[STAGES.length - 1];
+  const EPOCH = Date.UTC(2026, 9, 31);              // day #1 is 31 Oct 2026
+  const STORE_KEY = 'whats-the-song.v1';
+  const SONGS = window.SONGS;
+  const BY_ID = new Map(SONGS.map((s) => [s.id, s]));
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- which song is today's ----------
+  const params = new URLSearchParams(location.search);
+  const previewMode = params.has('day');            // ?day=5 previews another day without saving anything
+  const dayNumberOf = (d) => Math.round((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - EPOCH) / 86400000) + 1;
+  const today = dayNumberOf(new Date());
+  const dayNo = previewMode ? (parseInt(params.get('day'), 10) || 1) : today;
+  const answer = SONGS[(((dayNo - 1) % SONGS.length) + SONGS.length) % SONGS.length];
+
+  // ---------- saved progress ----------
+  let store = { days: {} };
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (raw && raw.days) store = raw;
+  } catch (e) { /* storage unavailable: play without saving */ }
+  const rec = previewMode ? { g: [], done: false, won: false } : (store.days[dayNo] ||= { g: [], done: false, won: false });
+  const persist = () => {
+    if (previewMode) return;
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) { /* ignore */ }
+  };
+
+  function computeStats() {
+    let wins = 0;
+    for (const k in store.days) if (store.days[k].done && store.days[k].won) wins++;
+    let streak = 0;
+    let n = today;
+    if (!(store.days[n] && store.days[n].done)) n--;   // today not finished yet: streak runs through yesterday
+    while (store.days[n] && store.days[n].won) { streak++; n--; }
+    return { wins, streak };
+  }
+
+  // ---------- small helpers ----------
+  const stageIndex = () => Math.min(rec.g.length, STAGES.length - 1);
+  const secsUnlocked = () => STAGES[stageIndex()];
+  const label = (s) => `${s.artist} - ${s.title}`;
+  function announce(msg) { $('live').textContent = ''; setTimeout(() => { $('live').textContent = msg; }, 30); }
+  let toastTimer;
+  function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+  }
+  function showNotice(html) { const n = $('notice'); n.innerHTML = html; n.hidden = false; }
+
+  // ---------- rendering ----------
+  function buildTimeline() {
+    const tl = $('timeline'), marks = $('tlMarks');
+    STAGES.forEach((s, i) => {
+      const pct = (s / MAX) * 100;
+      if (i < STAGES.length - 1) {
+        const tick = document.createElement('div');
+        tick.className = 'tl-tick'; tick.style.left = pct + '%';
+        tl.appendChild(tick);
+      }
+      const m = document.createElement('span');
+      m.textContent = s; m.style.left = pct + '%';
+      marks.appendChild(m);
+    });
+  }
+
+  function renderAttempts() {
+    const ol = $('attempts');
+    ol.textContent = '';
+    for (let i = 0; i < STAGES.length; i++) {
+      const li = document.createElement('li');
+      const badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = STAGES[i];
+      const txt = document.createElement('span'); txt.className = 'txt';
+      const g = rec.g[i];
+      let cls = 'empty';
+      if (g !== undefined) {
+        if (g === 'skip') { cls = 'skip'; txt.textContent = 'דילגתם'; }
+        else if (g === answer.id) { cls = 'win'; txt.textContent = label(BY_ID.get(g)); }
+        else { cls = 'bad'; txt.textContent = label(BY_ID.get(g)); }
+      } else if (i === rec.g.length && !rec.done) {
+        cls = 'current'; txt.textContent = i === 0 ? 'מה השיר?' : '';
+      }
+      li.className = 'attempt ' + cls;
+      li.append(badge, txt);
+      ol.appendChild(li);
+    }
+  }
+
+  function renderControls() {
+    const s = secsUnlocked();
+    $('tlUnlocked').style.width = (s / MAX) * 100 + '%';
+    $('tlLabel').textContent = `${s} שניות מתחילת השיר`;
+    const i = rec.g.length;
+    const last = i >= STAGES.length - 1;
+    const skip = $('skipBtn');
+    skip.textContent = last ? 'ויתור' : `עוד ${STAGES[i + 1] - STAGES[i]} שניות`;
+    skip.classList.toggle('danger', last);
+    $('stage').hidden = rec.done;
+    $('guess').hidden = rec.done;
+    const st = computeStats();
+    $('statStreak').textContent = st.streak;
+    $('statWins').textContent = st.wins;
+  }
+
+  function squaresFor(g) {
+    return STAGES.map((_, i) => {
+      const v = g[i];
+      if (v === undefined) return '';
+      return v === 'skip' ? 'skip' : v === answer.id ? 'win' : 'bad';
+    });
+  }
+
+  function renderResult() {
+    const box = $('result');
+    box.hidden = false;
+    box.classList.toggle('won', rec.won);
+    box.classList.toggle('lost', !rec.won);
+    $('resultTitle').textContent = rec.won ? `נכון! ניחשתם בניסיון ${rec.g.length}` : 'לא הפעם';
+    $('resultSong').textContent = answer.title;
+    $('resultArtist').textContent = answer.artist;
+    const sq = $('resultSquares'); sq.textContent = '';
+    squaresFor(rec.g).forEach((c) => { const i = document.createElement('i'); if (c) i.className = c; sq.appendChild(i); });
+    $('playerWrap').classList.add('revealed');
+    tickCountdown();
+  }
+
+  function render() {
+    renderAttempts();
+    renderControls();
+    if (rec.done) renderResult();
+  }
+
+  // ---------- YouTube player: play only the first N seconds ----------
+  let player = null, playerReady = false, clip = null;
+
+  function setPlayState(state) {
+    const b = $('play');
+    b.dataset.state = state;
+    b.disabled = state === 'loading' && !playerReady;
+    b.setAttribute('aria-label', state === 'playing' ? 'עצרו' : 'נגנו את הקטע');
+  }
+
+  function startClip() {
+    if (!playerReady || rec.done) return;
+    stopClip();
+    const start = answer.start || 0;
+    const len = secsUnlocked();
+    clip = { start, end: start + len, len, armed: false, lastT: start, lastWall: 0, launched: performance.now() };
+    player.seekTo(start, true);
+    player.playVideo();
+    setPlayState('loading');
+    $('play').disabled = false;
+    clip.timer = setInterval(tick, 30);
+  }
+
+  function tick() {
+    if (!clip) return;
+    const now = performance.now();
+    const st = player.getPlayerState();             // 1 playing, 2 paused, 3 buffering, 5 cued
+    const t = player.getCurrentTime();
+    if (!clip.armed) {
+      // wait until audio really started from the clip start, so buffering never eats into the clip
+      if (st === 1 && t >= clip.start - 0.3 && t < clip.end) {
+        clip.armed = true; clip.lastT = t; clip.lastWall = now;
+        setPlayState('playing');
+      } else if (now - clip.launched > 12000) {
+        stopClip();
+        showNotice('הנגן לא הצליח להתחיל להשמיע. נסו לרענן את העמוד.');
+      } else if ((st === 2 || st === 5 || st === -1) && now - clip.launched > 1500) {
+        player.playVideo();
+      }
+      return;
+    }
+    if (t !== clip.lastT) { clip.lastT = t; clip.lastWall = now; }
+    if (st === 3) clip.lastWall = now;              // buffering: freeze the estimate
+    if (st !== 1 && st !== 3) { stopClip(); return; } // paused from outside
+    // getCurrentTime updates in coarse steps, so extrapolate between updates
+    const est = clip.lastT + (now - clip.lastWall) / 1000;
+    const pos = Math.min(Math.max(est - clip.start, 0), clip.len);
+    $('tlPlayed').style.width = (pos / MAX) * 100 + '%';
+    if (est >= clip.end) stopClip();
+  }
+
+  function stopClip() {
+    if (clip) { clearInterval(clip.timer); clip = null; try { player.pauseVideo(); } catch (e) { /* not ready */ } }
+    $('tlPlayed').style.width = '0%';
+    setPlayState('idle');
+  }
+
+  const YT_ERRORS = { 2: 'מזהה סרטון לא תקין', 5: 'שגיאת נגן', 100: 'הסרטון הוסר או פרטי', 101: 'הבעלים חסם הטמעה', 150: 'הבעלים חסם הטמעה', 153: 'הנגן לא קיבל מקור (Referer)' };
+
+  function loadYouTube() {
+    if (location.protocol === 'file:') {
+      showNotice('יוטיוב לא משמיע כשהעמוד נפתח ישר מהקובץ. הריצו בתיקייה <code>python3 -m http.server 8123</code> ופתחו <code>localhost:8123</code>.');
+      return;
+    }
+    window.onYouTubeIframeAPIReady = () => {
+      const vars = { playsinline: 1, rel: 0, modestbranding: 1, controls: 1, disablekb: 1, start: answer.start || 0 };
+      if (/^https?:$/.test(location.protocol)) vars.origin = location.origin;
+      player = new YT.Player('yt', {
+        width: '100%', height: '100%', videoId: answer.id, playerVars: vars,
+        events: {
+          onReady: () => { playerReady = true; setPlayState('idle'); },
+          onError: (e) => {
+            stopClip();
+            showNotice(`הסרטון של היום לא מתנגן כאן: ${YT_ERRORS[e.data] || 'שגיאה ' + e.data}. השיר: ${label(answer)}.`);
+          },
+        },
+      });
+    };
+    const s = document.createElement('script');
+    s.src = 'https://www.youtube.com/iframe_api';
+    s.onerror = () => showNotice('לא הצלחתי לטעון את הנגן של יוטיוב. בדקו את החיבור לאינטרנט.');
+    document.head.appendChild(s);
+  }
+
+  // ---------- guessing ----------
+  function submit(id) {
+    if (rec.done) return;
+    stopClip();
+    rec.g.push(id);
+    const won = id === answer.id;
+    if (won || rec.g.length >= STAGES.length) { rec.done = true; rec.won = won; }
+    persist();
+    $('q').value = ''; picked = null; $('guessBtn').disabled = true; closeList();
+    render();
+    if (rec.done) {
+      announce(won ? 'נכון!' : 'לא הפעם');
+      if (playerReady) { player.seekTo(0, true); player.playVideo(); }   // play the full song
+    } else {
+      announce(id === 'skip' ? 'דילגתם' : 'ניחוש שגוי');
+      startClip();
+    }
+  }
+
+  // ---------- autocomplete ----------
+  const input = $('q'), list = $('list');
+  let matches = [], active = -1, picked = null;
+  const norm = (s) => s.toLowerCase().normalize('NFD')
+    .replace(/[̀-֑ͯ-ׇ]/g, '')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ').trim();
+  SONGS.forEach((s) => { s._hay = norm(`${s.artist} ${s.title}`); s._title = norm(s.title); });
+
+  function closeList() {
+    list.hidden = true; active = -1;
+    input.setAttribute('aria-expanded', 'false');
+    input.removeAttribute('aria-activedescendant');
+  }
+  function renderList() {
+    list.textContent = '';
+    if (!matches.length) { closeList(); return; }
+    matches.forEach((s, i) => {
+      const li = document.createElement('li');
+      li.id = 'opt-' + i; li.setAttribute('role', 'option');
+      li.setAttribute('aria-selected', i === active ? 'true' : 'false');
+      const b = document.createElement('b'); b.textContent = s.title; b.dir = 'auto';
+      const sm = document.createElement('small'); sm.textContent = s.artist; sm.dir = 'auto';
+      li.append(b, sm);
+      li.addEventListener('mousedown', (e) => { e.preventDefault(); pick(i); });
+      list.appendChild(li);
+    });
+    list.hidden = false;
+    input.setAttribute('aria-expanded', 'true');
+    if (active >= 0) input.setAttribute('aria-activedescendant', 'opt-' + active);
+  }
+  function updateList() {
+    picked = null; $('guessBtn').disabled = true;
+    const q = norm(input.value);
+    if (!q) { matches = []; closeList(); return; }
+    const toks = q.split(' ');
+    const seen = new Set(rec.g);
+    matches = SONGS.filter((s) => !seen.has(s.id) && toks.every((t) => s._hay.includes(t)))
+      .sort((a, b) => Number(b._title.startsWith(q)) - Number(a._title.startsWith(q)))
+      .slice(0, 8);
+    active = -1;
+    renderList();
+  }
+  function pick(i) {
+    const s = matches[i];
+    input.value = label(s); picked = s.id;
+    $('guessBtn').disabled = false;
+    closeList();
+  }
+  input.addEventListener('input', updateList);
+  input.addEventListener('blur', () => setTimeout(closeList, 120));
+  input.addEventListener('keydown', (e) => {
+    const open = !list.hidden;
+    if (e.key === 'ArrowDown' && matches.length) { e.preventDefault(); active = (active + 1) % matches.length; renderList(); }
+    else if (e.key === 'ArrowUp' && matches.length) { e.preventDefault(); active = (active - 1 + matches.length) % matches.length; renderList(); }
+    else if (e.key === 'Escape') { closeList(); }
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (open && active >= 0) pick(active);
+      else if (open && matches.length === 1) pick(0);
+      else if (picked) submit(picked);
+    }
+  });
+  $('guessBtn').addEventListener('click', () => { if (picked) submit(picked); });
+  $('skipBtn').addEventListener('click', () => submit('skip'));
+  $('play').addEventListener('click', () => { if (clip) stopClip(); else startClip(); });
+
+  // ---------- share + countdown ----------
+  const EMOJI = { win: '🟩', bad: '🟥', skip: '⬛', '': '⬜' };
+  $('shareBtn').addEventListener('click', async () => {
+    const text = `מה השיר? #${dayNo}\n🔊${squaresFor(rec.g).map((c) => EMOJI[c]).join('')}`;
+    try { await navigator.clipboard.writeText(text); toast('התוצאה הועתקה'); }
+    catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); toast('התוצאה הועתקה'); } catch (_) { toast('לא הצלחתי להעתיק'); }
+      ta.remove();
+    }
+  });
+
+  function tickCountdown() {
+    if (!rec.done) return;
+    const now = new Date();
+    const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const ms = Math.max(0, next - now);
+    const p = (n) => String(n).padStart(2, '0');
+    $('countdown').textContent = `${p(Math.floor(ms / 3600000))}:${p(Math.floor(ms / 60000) % 60)}:${p(Math.floor(ms / 1000) % 60)}`;
+    if (ms === 0 && !previewMode) location.reload();
+  }
+  setInterval(tickCountdown, 1000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && !previewMode && dayNumberOf(new Date()) !== today) location.reload();
+  });
+
+  // ---------- boot ----------
+  $('dayLabel').textContent = previewMode ? `תצוגה מקדימה: שיר מספר ${dayNo}` : `שיר מספר ${dayNo}`;
+  buildTimeline();
+  render();
+  if (rec.done) $('playerWrap').classList.add('revealed');
+  loadYouTube();
+})();
+</script>
+</body>
+</html>
