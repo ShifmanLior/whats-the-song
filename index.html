@@ -167,6 +167,8 @@
   .list li b { display: block; font-weight: 700; }
   .list li small { display: block; color: var(--muted); font-size: 13px; }
   .list li[aria-selected="true"], .list li:hover { background: var(--line); }
+  .list li.status { color: var(--muted); font-size: 14px; cursor: default; }
+  .list li.status:hover { background: none; }
   .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
   .btn {
     height: 50px; border-radius: 14px; border: 2px solid transparent;
@@ -268,7 +270,7 @@
       <div class="stat"><b id="statWins">0</b><span>ניצחונות</span></div>
     </div>
   </header>
-  <p class="lead">שיר חדש בכל יום. מתחילים עם 3 שניות מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד 2 שניות.</p>
+  <p class="lead">שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה.</p>
 
   <section class="stage" id="stage" aria-label="נגן">
     <button class="play" id="play" type="button" aria-label="נגן את הקטע" data-state="loading" disabled>
@@ -291,7 +293,7 @@
     <div class="combo">
       <label class="sr-only" for="q">חפשו שיר או אמן</label>
       <input id="q" type="text" role="combobox" aria-expanded="false" aria-controls="list" aria-autocomplete="list"
-             autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="חפשו שיר או אמן...">
+             autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="חפשו שיר, או הקלידו חופשי...">
       <ul class="list" id="list" role="listbox" aria-label="הצעות" hidden></ul>
     </div>
     <div class="actions">
@@ -322,10 +324,12 @@
 (() => {
   'use strict';
 
-  const STAGES = [3, 5, 7, 9, 11, 13];            // seconds revealed at each attempt
+  const STAGES = [0.5, 1, 1.5, 2, 2.5, 3];          // seconds revealed at each attempt
+  const STOP_LEAD = 0.2;                            // stop this early: pausing takes ~0.2s to reach the player (measured with ?debug)
   const MAX = STAGES[STAGES.length - 1];
   const EPOCH = Date.UTC(2026, 9, 31);              // day #1 is 31 Oct 2026
   const STORE_KEY = 'whats-the-song.v1';
+  const SHARE_URL = 'https://whats-the-song.vercel.app/';   // link added to shared results
   const SONGS = window.SONGS;
   const BY_ID = new Map(SONGS.map((s) => [s.id, s]));
   const $ = (id) => document.getElementById(id);
@@ -364,6 +368,9 @@
   const stageIndex = () => Math.min(rec.g.length, STAGES.length - 1);
   const secsUnlocked = () => STAGES[stageIndex()];
   const label = (s) => `${s.artist} - ${s.title}`;
+  // older saves stored guesses as song ids: convert them to { t: text, ok: correct }
+  rec.g = rec.g.map((x) => (x === 'skip' || typeof x === 'object') ? x
+    : BY_ID.has(x) ? { t: label(BY_ID.get(x)), ok: x === answer.id } : { t: String(x), ok: false });
   function announce(msg) { $('live').textContent = ''; setTimeout(() => { $('live').textContent = msg; }, 30); }
   let toastTimer;
   function toast(msg) {
@@ -401,8 +408,7 @@
       let cls = 'empty';
       if (g !== undefined) {
         if (g === 'skip') { cls = 'skip'; txt.textContent = 'דילגתם'; }
-        else if (g === answer.id) { cls = 'win'; txt.textContent = label(BY_ID.get(g)); }
-        else { cls = 'bad'; txt.textContent = label(BY_ID.get(g)); }
+        else { cls = g.ok ? 'win' : 'bad'; txt.textContent = g.t; }
       } else if (i === rec.g.length && !rec.done) {
         cls = 'current'; txt.textContent = i === 0 ? 'מה השיר?' : '';
       }
@@ -412,14 +418,15 @@
     }
   }
 
+  const secsText = (s) => (s === 0.5 ? 'חצי שנייה' : s === 1 ? 'שנייה אחת' : `${s} שניות`);
   function renderControls() {
     const s = secsUnlocked();
     $('tlUnlocked').style.width = (s / MAX) * 100 + '%';
-    $('tlLabel').textContent = `${s} שניות מתחילת השיר`;
+    $('tlLabel').textContent = `${secsText(s)} מתחילת השיר`;
     const i = rec.g.length;
     const last = i >= STAGES.length - 1;
     const skip = $('skipBtn');
-    skip.textContent = last ? 'ויתור' : `עוד ${STAGES[i + 1] - STAGES[i]} שניות`;
+    skip.textContent = last ? 'ויתור' : `עוד ${secsText(STAGES[i + 1] - STAGES[i])}`;
     skip.classList.toggle('danger', last);
     $('stage').hidden = rec.done;
     $('guess').hidden = rec.done;
@@ -432,7 +439,7 @@
     return STAGES.map((_, i) => {
       const v = g[i];
       if (v === undefined) return '';
-      return v === 'skip' ? 'skip' : v === answer.id ? 'win' : 'bad';
+      return v === 'skip' ? 'skip' : v.ok ? 'win' : 'bad';
     });
   }
 
@@ -471,44 +478,61 @@
     stopClip();
     const start = answer.start || 0;
     const len = secsUnlocked();
-    clip = { start, end: start + len, len, armed: false, lastT: start, lastWall: 0, launched: performance.now() };
+    clip = { start, len, armed: false, wall0: 0, stalledAt: 0, nudgedAt: 0, launched: performance.now() };
     player.seekTo(start, true);
     player.playVideo();
     setPlayState('loading');
     $('play').disabled = false;
-    clip.timer = setInterval(tick, 30);
+    clip.timer = setInterval(tick, 16);
+  }
+
+  // The clip clock starts when YouTube reports PLAYING, not on click, so loading never eats into a short clip.
+  // getCurrentTime only updates in coarse steps, which is too blunt for half a second.
+  function onPlayerState(st) {                      // 1 playing, 2 paused, 3 buffering
+    if (!clip) return;
+    const now = performance.now();
+    if (st === 1) {
+      if (!clip.armed) { clip.armed = true; clip.wall0 = now; setPlayState('playing'); }
+      else if (clip.stalledAt) { clip.wall0 += now - clip.stalledAt; clip.stalledAt = 0; }
+    } else if (st === 3 && clip.armed && !clip.stalledAt) {
+      clip.stalledAt = now;                         // buffering mid-clip: hold the clock
+    } else if (st === 2 && clip.armed) {
+      stopClip();                                   // paused from outside
+    }
   }
 
   function tick() {
     if (!clip) return;
     const now = performance.now();
-    const st = player.getPlayerState();             // 1 playing, 2 paused, 3 buffering, 5 cued
-    const t = player.getCurrentTime();
     if (!clip.armed) {
-      // wait until audio really started from the clip start, so buffering never eats into the clip
-      if (st === 1 && t >= clip.start - 0.3 && t < clip.end) {
-        clip.armed = true; clip.lastT = t; clip.lastWall = now;
-        setPlayState('playing');
-      } else if (now - clip.launched > 12000) {
+      const st = player.getPlayerState();           // 1 playing, 2 paused, 3 buffering, 5 cued
+      if (now - clip.launched > 12000) {
         stopClip();
         showNotice('הנגן לא הצליח להתחיל להשמיע. נסו לרענן את העמוד.');
-      } else if ((st === 2 || st === 5 || st === -1) && now - clip.launched > 1500) {
-        player.playVideo();
+      } else if (st === 1 && now - clip.launched > 250) {
+        // the PLAYING event was missed: arm from the media position instead
+        clip.armed = true; setPlayState('playing');
+        clip.wall0 = now - Math.max(0, player.getCurrentTime() - clip.start) * 1000;
+      } else if ((st === 2 || st === 5 || st === -1) && now - clip.launched > 1500 && now - clip.nudgedAt > 1500) {
+        clip.nudgedAt = now; player.playVideo();
       }
       return;
     }
-    if (t !== clip.lastT) { clip.lastT = t; clip.lastWall = now; }
-    if (st === 3) clip.lastWall = now;              // buffering: freeze the estimate
-    if (st !== 1 && st !== 3) { stopClip(); return; } // paused from outside
-    // getCurrentTime updates in coarse steps, so extrapolate between updates
-    const est = clip.lastT + (now - clip.lastWall) / 1000;
-    const pos = Math.min(Math.max(est - clip.start, 0), clip.len);
-    $('tlPlayed').style.width = (pos / MAX) * 100 + '%';
-    if (est >= clip.end) stopClip();
+    const elapsed = ((clip.stalledAt || now) - clip.wall0) / 1000;
+    $('tlPlayed').style.width = (Math.min(elapsed, clip.len) / MAX) * 100 + '%';
+    if (elapsed >= clip.len - STOP_LEAD) stopClip();
   }
 
   function stopClip() {
-    if (clip) { clearInterval(clip.timer); clip = null; try { player.pauseVideo(); } catch (e) { /* not ready */ } }
+    if (clip) {
+      const c = clip;
+      clearInterval(c.timer); clip = null;
+      try { player.pauseVideo(); } catch (e) { /* not ready */ }
+      // ?debug logs how far the media really advanced, to tune STOP_LEAD
+      if (params.has('debug') && c.armed) {
+        setTimeout(() => console.log(`clip ${c.len}s: media advanced ${(player.getCurrentTime() - c.start).toFixed(2)}s`), 600);
+      }
+    }
     $('tlPlayed').style.width = '0%';
     setPlayState('idle');
   }
@@ -527,6 +551,7 @@
         width: '100%', height: '100%', videoId: answer.id, playerVars: vars,
         events: {
           onReady: () => { playerReady = true; setPlayState('idle'); },
+          onStateChange: (e) => onPlayerState(e.data),
           onError: (e) => {
             stopClip();
             showNotice(`הסרטון של היום לא מתנגן כאן: ${YT_ERRORS[e.data] || 'שגיאה ' + e.data}. השיר: ${label(answer)}.`);
@@ -541,20 +566,21 @@
   }
 
   // ---------- guessing ----------
-  function submit(id) {
+  function submit(entry) {                          // entry: 'skip' or { t: guess text, ok: correct }
     if (rec.done) return;
     stopClip();
-    rec.g.push(id);
-    const won = id === answer.id;
+    rec.g.push(entry);
+    const won = entry !== 'skip' && entry.ok;
     if (won || rec.g.length >= STAGES.length) { rec.done = true; rec.won = won; }
     persist();
+    cancelSearch(); matches = [];
     $('q').value = ''; picked = null; $('guessBtn').disabled = true; closeList();
     render();
     if (rec.done) {
       announce(won ? 'נכון!' : 'לא הפעם');
       if (playerReady) { player.seekTo(0, true); player.playVideo(); }   // play the full song
     } else {
-      announce(id === 'skip' ? 'דילגתם' : 'ניחוש שגוי');
+      announce(entry === 'skip' ? 'דילגתם' : 'ניחוש שגוי');
       startClip();
     }
   }
@@ -566,16 +592,39 @@
     .replace(/[̀-֑ͯ-ׇ]/g, '')
     .replace(/[^\p{L}\p{N}\s]/gu, ' ')
     .replace(/\s+/g, ' ').trim();
-  SONGS.forEach((s) => { s._hay = norm(`${s.artist} ${s.title}`); s._title = norm(s.title); });
+  SONGS.forEach((s) => { s._hay = norm([s.artist, s.title, ...(s.artistAlt || []), ...(s.titleAlt || [])].join(' ')); });
+
+  // ---------- judging a guess ----------
+  const STOP_WORDS = new Set(['the', 'and', 'feat', 'ft', 'with', 'של']);
+  const stripExtras = (s) => s.replace(/\(.*?\)|\[.*?\]/g, ' ').replace(/\s[-–]\s.*$/, '');   // "(Remastered)", "- Live"
+  const wordsOf = (s) => norm(s).split(' ').filter(Boolean);
+  const hasPhrase = (text, phrase) => ` ${text} `.includes(` ${phrase} `);
+  const titleNames = [answer.title, ...(answer.titleAlt || [])].flatMap((t) => [norm(stripExtras(t)), norm(t)]).filter(Boolean);
+  const artistWords = new Set([answer.artist, ...(answer.artistAlt || [])].flatMap(wordsOf).filter((w) => w.length >= 3 && !STOP_WORDS.has(w)));
+  const hasArtist = (text) => wordsOf(text).some((w) => artistWords.has(w));
+
+  // a suggestion picked from the catalog: the title and the artist both have to fit
+  const judgePick = (p) => titleNames.some((n) => hasPhrase(norm(stripExtras(p.title)), n)) && hasArtist(p.artist);
+  // free text: the exact title, or the title together with the artist
+  function judgeText(raw) {
+    const text = norm(raw);
+    if (!text) return false;
+    return titleNames.includes(text) || (titleNames.some((n) => hasPhrase(text, n)) && hasArtist(text));
+  }
 
   function closeList() {
     list.hidden = true; active = -1;
     input.setAttribute('aria-expanded', 'false');
     input.removeAttribute('aria-activedescendant');
   }
-  function renderList() {
+  function renderList(status) {
     list.textContent = '';
-    if (!matches.length) { closeList(); return; }
+    if (!matches.length && !status) { closeList(); return; }
+    if (status) {
+      const li = document.createElement('li');
+      li.className = 'status'; li.setAttribute('role', 'presentation'); li.textContent = status;
+      list.appendChild(li);
+    }
     matches.forEach((s, i) => {
       const li = document.createElement('li');
       li.id = 'opt-' + i; li.setAttribute('role', 'option');
@@ -590,23 +639,72 @@
     input.setAttribute('aria-expanded', 'true');
     if (active >= 0) input.setAttribute('aria-activedescendant', 'opt-' + active);
   }
+
+  // suggestions come from the iTunes catalog (millions of songs, Hebrew included);
+  // if it is unreachable we fall back to the game's own list
+  const catalogCache = new Map();
+  let searchTimer = 0, searchCtl = null, searchSeq = 0;
+  function cancelSearch() { clearTimeout(searchTimer); if (searchCtl) searchCtl.abort(); searchSeq++; }
+
+  async function searchCatalog(q, signal) {
+    if (catalogCache.has(q)) return catalogCache.get(q);
+    const r = await fetch('https://itunes.apple.com/search?media=music&entity=song&limit=10&country=IL&term=' + encodeURIComponent(q), { signal });
+    if (!r.ok) throw new Error('catalog ' + r.status);
+    const out = ((await r.json()).results || [])
+      .filter((x) => x.trackName && x.artistName)
+      .map((x) => ({ title: x.trackName, artist: x.artistName }));
+    catalogCache.set(q, out);
+    return out;
+  }
+  function localMatches(raw) {
+    const toks = norm(raw).split(' ').filter(Boolean);
+    return SONGS.filter((s) => toks.length && toks.every((t) => s._hay.includes(t))).map((s) => ({ title: s.title, artist: s.artist }));
+  }
+  function suggestions(found, raw) {
+    const pool = found && found.length ? found : localMatches(raw);
+    const guessed = new Set(rec.g.filter((g) => g !== 'skip').map((g) => norm(g.t)));
+    const seen = new Set();
+    return pool.filter((s) => {
+      const key = norm(stripExtras(s.title)) + '|' + norm(s.artist);
+      if (seen.has(key) || guessed.has(norm(label(s)))) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 8);
+  }
+
   function updateList() {
-    picked = null; $('guessBtn').disabled = true;
-    const q = norm(input.value);
-    if (!q) { matches = []; closeList(); return; }
-    const toks = q.split(' ');
-    const seen = new Set(rec.g);
-    matches = SONGS.filter((s) => !seen.has(s.id) && toks.every((t) => s._hay.includes(t)))
-      .sort((a, b) => Number(b._title.startsWith(q)) - Number(a._title.startsWith(q)))
-      .slice(0, 8);
-    active = -1;
-    renderList();
+    picked = null;
+    const raw = input.value.trim();
+    $('guessBtn').disabled = !raw;                  // free text is allowed, so any text can be sent
+    cancelSearch();
+    if (raw.length < 2) { matches = []; closeList(); return; }
+    if (!matches.length) renderList('מחפש...');
+    const seq = searchSeq;
+    searchTimer = setTimeout(async () => {
+      searchCtl = new AbortController();
+      let found = null;
+      try { found = await searchCatalog(raw, searchCtl.signal); }
+      catch (e) { if (e.name === 'AbortError') return; }
+      if (seq !== searchSeq) return;
+      matches = suggestions(found, raw);
+      active = -1;
+      renderList(matches.length ? '' : 'אין הצעות. אפשר לנחש בטקסט חופשי');
+    }, 280);
   }
   function pick(i) {
     const s = matches[i];
-    input.value = label(s); picked = s.id;
+    cancelSearch();
+    picked = { ...s, text: label(s) };
+    input.value = picked.text;
     $('guessBtn').disabled = false;
     closeList();
+  }
+  function guessFromInput() {
+    const text = input.value.trim();
+    if (!text) return;
+    const key = norm(text);
+    if (rec.g.some((g) => g !== 'skip' && norm(g.t) === key)) { toast('כבר ניחשתם את זה'); return; }
+    submit({ t: text, ok: picked && picked.text === text ? judgePick(picked) : judgeText(text) });
   }
   input.addEventListener('input', updateList);
   input.addEventListener('blur', () => setTimeout(closeList, 120));
@@ -618,18 +716,17 @@
     else if (e.key === 'Enter') {
       e.preventDefault();
       if (open && active >= 0) pick(active);
-      else if (open && matches.length === 1) pick(0);
-      else if (picked) submit(picked);
+      else guessFromInput();
     }
   });
-  $('guessBtn').addEventListener('click', () => { if (picked) submit(picked); });
+  $('guessBtn').addEventListener('click', guessFromInput);
   $('skipBtn').addEventListener('click', () => submit('skip'));
   $('play').addEventListener('click', () => { if (clip) stopClip(); else startClip(); });
 
   // ---------- share + countdown ----------
   const EMOJI = { win: '🟩', bad: '🟥', skip: '⬛', '': '⬜' };
   $('shareBtn').addEventListener('click', async () => {
-    const text = `מה השיר? #${dayNo}\n🔊${squaresFor(rec.g).map((c) => EMOJI[c]).join('')}`;
+    const text = `מה השיר? #${dayNo}\n🔊${squaresFor(rec.g).map((c) => EMOJI[c]).join('')}\n${SHARE_URL}`;
     try { await navigator.clipboard.writeText(text); toast('התוצאה הועתקה'); }
     catch (e) {
       const ta = document.createElement('textarea');
