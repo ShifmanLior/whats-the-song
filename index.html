@@ -4,206 +4,226 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta name="theme-color" content="#0f0b1e">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <title>מה השיר?</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
+
+  /* Monochrome, Uber-like: flat black and white, hairlines, bold type. State is shown with
+     fill, outline and icons rather than colour. Dark mode inverts the same tokens. */
   :root {
-    --bg: #0f0b1e;
-    --surface: #1a1433;
-    --surface-2: #261d4a;
-    --line: #382d63;
-    --text: #f4f1ff;
-    --muted: #a79fc9;
-    --accent: #ff5d8f;
-    --accent-2: #ff9a5c;
-    --good: #3ddc97;
-    --bad: #ff6b6b;
-    --skip: #5d5488;
-    --radius: 16px;
+    color-scheme: light dark;
+    --paper: #ffffff;
+    --ink: #000000;
+    --muted: #6b6b6b;
+    --line: #e2e2e2;
+    --soft: #f3f3f3;
+    --soft-2: #e8e8e8;
+    --mid: #bdbdbd;
+    --radius: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #000000;
+      --ink: #ffffff;
+      --muted: #9b9b9b;
+      --line: #2b2b2b;
+      --soft: #141414;
+      --soft-2: #1f1f1f;
+      --mid: #4d4d4d;
+    }
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
     min-height: 100vh;
-    background:
-      radial-gradient(900px 500px at 50% -10%, #2a1a5e 0%, transparent 70%),
-      var(--bg);
-    color: var(--text);
+    background: var(--paper);
+    color: var(--ink);
     font-family: "Heebo", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
     font-size: 16px;
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
   }
   button, input { font: inherit; color: inherit; }
-  :focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
+  :focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
 
   .app {
     width: 100%;
-    max-width: 460px;
+    max-width: 440px;
     margin: 0 auto;
-    padding: 20px 16px 48px;
+    padding: 28px 20px 56px;
   }
 
   /* header */
-  .top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-  h1 { margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.1; }
-  .sub { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+  .top {
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  h1 { margin: 0; font-size: 38px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; }
+  .sub { margin: 6px 0 0; color: var(--muted); font-size: 14px; font-weight: 500; }
   .stats { display: flex; gap: 8px; }
   .stat {
-    min-width: 64px;
+    min-width: 60px;
     padding: 6px 10px;
     text-align: center;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 12px;
+    background: var(--soft);
+    border-radius: 10px;
   }
-  .stat b { display: block; font-size: 20px; line-height: 1.2; }
+  .stat b { display: block; font-size: 20px; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
   .stat span { display: block; color: var(--muted); font-size: 12px; }
-  .lead { margin: 16px 0 0; color: var(--muted); font-size: 15px; }
+  .lead { margin: 18px 0 0; color: var(--muted); font-size: 15px; }
 
   /* player stage */
-  .stage { margin-top: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .stage { margin-top: 32px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
   .stage[hidden] { display: none; }
   .play {
     position: relative;
-    width: 96px; height: 96px;
+    width: 88px; height: 88px;
     border: 0; border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    box-shadow: 0 10px 30px rgba(255, 93, 143, 0.35);
+    background: var(--ink);
+    color: var(--paper);
     cursor: pointer;
     display: grid; place-items: center;
-    transition: transform .12s ease, box-shadow .12s ease;
+    transition: transform .12s ease;
   }
-  .play:hover:not(:disabled) { transform: scale(1.04); }
-  .play:active:not(:disabled) { transform: scale(0.97); }
-  .play:disabled { cursor: progress; filter: saturate(0.6) brightness(0.8); }
-  .play svg { width: 40px; height: 40px; fill: #fff; grid-area: 1 / 1; }
+  .play:hover:not(:disabled) { transform: scale(1.05); }
+  .play:active:not(:disabled) { transform: scale(0.96); }
+  .play:disabled { cursor: progress; opacity: .35; }
+  .play svg { width: 36px; height: 36px; fill: currentColor; grid-area: 1 / 1; }
   .play .i-pause { display: none; }
   .play[data-state="playing"] .i-play { display: none; }
   .play[data-state="playing"] .i-pause { display: block; }
   .play[data-state="playing"]::after {
     content: ""; position: absolute; inset: -8px; border-radius: 50%;
-    border: 3px solid var(--accent); opacity: 0;
+    border: 2px solid var(--ink); opacity: 0;
     animation: pulse 1.2s ease-out infinite;
   }
   .play[data-state="loading"]::after {
     content: ""; position: absolute; inset: -8px; border-radius: 50%;
-    border: 3px solid transparent; border-top-color: var(--accent-2);
+    border: 2px solid transparent; border-top-color: var(--ink);
     animation: spin .8s linear infinite;
   }
-  @keyframes pulse { from { transform: scale(0.9); opacity: .8; } to { transform: scale(1.25); opacity: 0; } }
+  @keyframes pulse { from { transform: scale(0.9); opacity: .6; } to { transform: scale(1.25); opacity: 0; } }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .timeline-wrap { width: 100%; }
   .timeline {
     position: relative;
-    height: 14px;
-    background: var(--surface-2);
+    height: 6px;
+    background: var(--soft-2);
     border-radius: 999px;
     overflow: hidden;
   }
   .tl-unlocked, .tl-played { position: absolute; inset-block: 0; left: 0; }
-  .tl-unlocked { background: rgba(255, 93, 143, 0.32); transition: width .35s ease; }
-  .tl-played { background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
-  .tl-tick { position: absolute; inset-block: 0; width: 2px; background: var(--bg); }
-  .tl-marks { position: relative; height: 20px; margin-top: 6px; color: var(--muted); font-size: 12px; }
+  .tl-unlocked { background: var(--mid); transition: width .35s ease; }
+  .tl-played { background: var(--ink); }
+  .tl-tick { position: absolute; inset-block: 0; width: 2px; background: var(--paper); }
+  .tl-marks { position: relative; height: 20px; margin-top: 8px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
   .tl-marks span { position: absolute; transform: translateX(-50%); }
   .tl-marks span:last-child { transform: translateX(-100%); }
   .tl-label { text-align: center; color: var(--muted); font-size: 14px; }
 
-  /* attempts */
+  /* guess history: correct = solid, wrong = struck through, skipped = dashed */
   .attempts { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 8px; }
+  .attempts:empty { display: none; }
   .attempt {
     display: flex; align-items: center; gap: 12px;
-    min-height: 46px; padding: 6px 12px 6px 8px;
-    background: var(--surface);
+    min-height: 48px; padding: 7px 14px 7px 12px;
     border: 1px solid var(--line);
-    border-radius: 12px;
+    border-radius: var(--radius);
     font-size: 15px;
   }
   .attempt .badge {
-    flex: none; width: 34px; height: 34px; border-radius: 9px;
+    flex: none; min-width: 34px; height: 34px; padding: 0 6px; border-radius: 8px;
     display: grid; place-items: center;
-    background: var(--surface-2); color: var(--muted);
-    font-size: 13px; font-weight: 700;
+    background: var(--soft); color: var(--muted);
+    font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;
   }
-  .attempt .txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .attempt.current { border-color: var(--accent); }
-  .attempt.current .badge { background: var(--accent); color: #fff; }
-  .attempt.bad .badge { background: var(--bad); color: #2a0b0b; }
-  .attempt.skip .badge { background: var(--skip); color: #fff; }
+  .attempt .txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .attempt.bad .txt { color: var(--muted); text-decoration: line-through; }
+  .attempt.bad::after { content: "\2715"; font-weight: 700; }
+  .attempt.skip { border-style: dashed; border-color: var(--mid); }
   .attempt.skip .txt { color: var(--muted); }
-  .attempt.win { border-color: var(--good); }
-  .attempt.win .badge { background: var(--good); color: #052b1b; }
-  .attempt.empty { opacity: .55; }
+  .attempt.win { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .attempt.win .badge { background: var(--paper); color: var(--ink); }
+  .attempt.win::after { content: "\2713"; font-weight: 800; }
 
   /* guess area */
   .guess { margin-top: 20px; }
   .guess[hidden] { display: none; }
   .combo { position: relative; }
   .combo input {
-    width: 100%; height: 52px; padding: 0 16px;
-    background: var(--surface);
-    border: 2px solid var(--line);
-    border-radius: 14px;
+    width: 100%; height: 54px; padding: 0 16px;
+    background: var(--soft);
+    border: 2px solid transparent;
+    border-radius: var(--radius);
     font-size: 17px;
   }
   .combo input::placeholder { color: var(--muted); }
-  .combo input:focus { outline: none; border-color: var(--accent); }
+  .combo input:focus { outline: none; border-color: var(--ink); background: var(--paper); }
   .list {
     position: absolute; z-index: 5; inset-inline: 0; top: calc(100% + 6px);
     margin: 0; padding: 6px; list-style: none;
-    background: var(--surface-2);
+    background: var(--paper);
     border: 1px solid var(--line);
-    border-radius: 14px;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, .45);
+    border-radius: var(--radius);
+    box-shadow: 0 14px 36px rgba(0, 0, 0, .16);
     max-height: 320px; overflow-y: auto;
   }
   .list[hidden] { display: none; }
-  .list li { padding: 10px 12px; border-radius: 10px; cursor: pointer; }
+  .list li { padding: 10px 12px; border-radius: 8px; cursor: pointer; }
   .list li b { display: block; font-weight: 700; }
   .list li small { display: block; color: var(--muted); font-size: 13px; }
-  .list li[aria-selected="true"], .list li:hover { background: var(--line); }
+  .list li[aria-selected="true"], .list li:hover { background: var(--soft); }
   .list li.status { color: var(--muted); font-size: 14px; cursor: default; }
   .list li.status:hover { background: none; }
   .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
   .btn {
-    height: 50px; border-radius: 14px; border: 2px solid transparent;
+    height: 52px; border-radius: var(--radius); border: 2px solid transparent;
     font-weight: 700; font-size: 16px; cursor: pointer;
-    transition: transform .1s ease, opacity .1s ease;
+    transition: transform .1s ease, background-color .15s ease;
   }
   .btn:active:not(:disabled) { transform: scale(0.98); }
-  .btn:disabled { opacity: .45; cursor: not-allowed; }
-  .btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; }
-  .btn.ghost { background: transparent; border-color: var(--line); color: var(--text); }
-  .btn.ghost:hover:not(:disabled) { border-color: var(--muted); }
-  .btn.danger { border-color: var(--bad); color: var(--bad); }
+  .btn:disabled { opacity: .3; cursor: not-allowed; }
+  .btn.primary { background: var(--ink); color: var(--paper); }
+  .btn.ghost { background: var(--soft); color: var(--ink); }
+  .btn.ghost:hover:not(:disabled) { background: var(--soft-2); }
+  .btn.danger { background: transparent; border-color: var(--ink); }
 
-  /* result */
+  /* result: an inverted card, so the end of the game stands out */
   .result {
-    margin-top: 20px; padding: 20px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
+    margin-top: 20px; padding: 24px 20px;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 16px;
     text-align: center;
   }
   .result[hidden] { display: none; }
-  .result h2 { margin: 0; font-size: 24px; font-weight: 800; }
-  .result.won h2 { color: var(--good); }
-  .result.lost h2 { color: var(--accent-2); }
-  .song-title { margin: 12px 0 0; font-size: 20px; font-weight: 700; }
-  .song-artist { margin: 0; color: var(--muted); }
-  .squares { display: flex; justify-content: center; gap: 6px; margin: 16px 0; }
-  .squares i { width: 28px; height: 28px; border-radius: 7px; background: var(--surface-2); }
-  .squares i.win { background: var(--good); }
-  .squares i.bad { background: var(--bad); }
-  .squares i.skip { background: var(--skip); }
+  .result h2 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+  .song-title { margin: 14px 0 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+  .song-artist { margin: 0; opacity: .7; }
+  .squares { display: flex; justify-content: center; gap: 5px; margin: 18px 0; }
+  .squares i {
+    position: relative; flex: 1 1 0; max-width: 28px; aspect-ratio: 1; border-radius: 7px;
+    border: 1px solid var(--paper); opacity: .3;
+  }
+  .squares i.win { background: var(--paper); border-color: var(--paper); opacity: 1; }
+  .squares i.skip { background: var(--paper); opacity: .35; }
+  .squares i.bad { border-width: 2px; opacity: 1; }
+  .squares i.bad::before, .squares i.bad::after {
+    content: ""; position: absolute; left: 50%; top: 50%; width: 14px; height: 2px;
+    margin: -1px 0 0 -7px; background: var(--paper); transform: rotate(45deg);
+  }
+  .squares i.bad::after { transform: rotate(-45deg); }
   .result .btn { width: 100%; }
-  .next { margin: 14px 0 0; color: var(--muted); font-size: 14px; }
-  .next b { color: var(--text); font-variant-numeric: tabular-nums; }
+  .result .btn.primary { background: var(--paper); color: var(--ink); }
+  .next { margin: 16px 0 0; opacity: .7; font-size: 14px; }
+  .next b { font-variant-numeric: tabular-nums; }
 
   /* YouTube player: kept off-screen while guessing, shown at the end */
   .player-wrap {
@@ -211,7 +231,7 @@
     width: 220px; height: 220px;
     pointer-events: none;
   }
-  .player-wrap iframe { width: 100%; height: 100%; border: 0; border-radius: 12px; }
+  .player-wrap iframe { width: 100%; height: 100%; border: 0; border-radius: var(--radius); }
   .player-wrap.revealed {
     position: static; left: auto;
     width: 100%; height: auto; aspect-ratio: 16 / 9;
@@ -220,17 +240,17 @@
 
   .notice {
     margin: 16px 0 0; padding: 12px 14px;
-    background: #3a1730; border: 1px solid var(--bad); border-radius: 12px;
-    color: #ffd6d6; font-size: 14px;
+    background: var(--soft); border: 1px solid var(--ink); border-radius: var(--radius);
+    font-size: 14px;
   }
   .notice[hidden] { display: none; }
-  .notice code { direction: ltr; unicode-bidi: embed; background: rgba(0,0,0,.3); padding: 1px 6px; border-radius: 6px; }
-  .foot { margin-top: 28px; text-align: center; color: var(--muted); font-size: 13px; }
+  .notice code { direction: ltr; unicode-bidi: embed; background: var(--soft-2); padding: 1px 6px; border-radius: 6px; }
+  .foot { margin-top: 32px; text-align: center; color: var(--muted); font-size: 13px; }
 
   .toast {
     position: fixed; inset-inline: 0; bottom: 24px; margin: 0 auto; width: max-content; max-width: calc(100% - 32px);
     padding: 10px 18px; border-radius: 999px;
-    background: var(--text); color: var(--bg); font-weight: 700;
+    background: var(--ink); color: var(--paper); font-weight: 700;
     opacity: 0; transform: translateY(12px); pointer-events: none;
     transition: opacity .2s ease, transform .2s ease;
   }
@@ -239,19 +259,17 @@
 
   /* small phones: keep the guess box and buttons above the fold */
   @media (max-width: 480px) {
-    .app { padding-top: 14px; }
-    h1 { font-size: 28px; }
+    .app { padding: 16px 16px 48px; }
+    h1 { font-size: 30px; }
+    .top { padding-bottom: 14px; }
     .lead { margin-top: 10px; font-size: 14px; }
-    .stage { margin-top: 14px; gap: 10px; }
-    .play { width: 80px; height: 80px; }
-    .play svg { width: 34px; height: 34px; }
-    .attempts { margin-top: 12px; gap: 5px; }
-    .attempt { min-height: 36px; padding-block: 2px; }
-    .attempt .badge { width: 28px; height: 28px; }
+    .stage { margin-top: 18px; gap: 12px; }
+    .play { width: 76px; height: 76px; }
+    .play svg { width: 32px; height: 32px; }
+    .attempts { margin-top: 14px; gap: 5px; }
+    .attempt { min-height: 38px; padding-block: 2px; }
+    .attempt .badge { min-width: 30px; height: 28px; }
     .guess { margin-top: 14px; }
-  }
-  @media (max-width: 480px) and (max-height: 860px) {
-    .lead { display: none; }   /* the 3 to 13 scale and the skip button already say it */
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -270,7 +288,7 @@
       <div class="stat"><b id="statWins">0</b><span>ניצחונות</span></div>
     </div>
   </header>
-  <p class="lead">שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה.</p>
+  <p class="lead">שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה, עד 5 שניות.</p>
 
   <section class="stage" id="stage" aria-label="נגן">
     <button class="play" id="play" type="button" aria-label="נגן את הקטע" data-state="loading" disabled>
@@ -286,8 +304,6 @@
     </div>
     <div class="tl-label" id="tlLabel"></div>
   </section>
-
-  <ol class="attempts" id="attempts" aria-label="הניחושים שלכם"></ol>
 
   <section class="guess" id="guess" aria-label="ניחוש">
     <div class="combo">
@@ -313,6 +329,8 @@
 
   <div class="player-wrap" id="playerWrap"><div id="yt"></div></div>
 
+  <ol class="attempts" id="attempts" aria-label="הניחושים שלכם"></ol>
+
   <p class="notice" id="notice" role="alert" hidden></p>
   <p class="foot">השיר מתחלף בחצות</p>
 </main>
@@ -324,7 +342,7 @@
 (() => {
   'use strict';
 
-  const STAGES = [0.5, 1, 1.5, 2, 2.5, 3];          // seconds revealed at each attempt
+  const STAGES = Array.from({ length: 10 }, (_, i) => (i + 1) / 2);   // 0.5s up to 5s, half a second more per attempt
   const STOP_LEAD = 0.2;                            // stop this early: pausing takes ~0.2s to reach the player (measured with ?debug)
   const MAX = STAGES[STAGES.length - 1];
   const EPOCH = Date.UTC(2026, 9, 31);              // day #1 is 31 Oct 2026
@@ -391,6 +409,7 @@
         tick.className = 'tl-tick'; tick.style.left = pct + '%';
         tl.appendChild(tick);
       }
+      if (!Number.isInteger(s)) return;             // label whole seconds only, ten labels would not fit
       const m = document.createElement('span');
       m.textContent = s; m.style.left = pct + '%';
       marks.appendChild(m);
@@ -400,18 +419,14 @@
   function renderAttempts() {
     const ol = $('attempts');
     ol.textContent = '';
-    for (let i = 0; i < STAGES.length; i++) {
+    for (let i = rec.g.length - 1; i >= 0; i--) {   // newest first, under the guess box
       const li = document.createElement('li');
       const badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = STAGES[i];
       const txt = document.createElement('span'); txt.className = 'txt';
       const g = rec.g[i];
-      let cls = 'empty';
-      if (g !== undefined) {
-        if (g === 'skip') { cls = 'skip'; txt.textContent = 'דילגתם'; }
-        else { cls = g.ok ? 'win' : 'bad'; txt.textContent = g.t; }
-      } else if (i === rec.g.length && !rec.done) {
-        cls = 'current'; txt.textContent = i === 0 ? 'מה השיר?' : '';
-      }
+      let cls;
+      if (g === 'skip') { cls = 'skip'; txt.textContent = 'דילגתם'; }
+      else { cls = g.ok ? 'win' : 'bad'; txt.textContent = g.t; }
       li.className = 'attempt ' + cls;
       li.append(badge, txt);
       ol.appendChild(li);
@@ -422,7 +437,7 @@
   function renderControls() {
     const s = secsUnlocked();
     $('tlUnlocked').style.width = (s / MAX) * 100 + '%';
-    $('tlLabel').textContent = `${secsText(s)} מתחילת השיר`;
+    $('tlLabel').textContent = `${secsText(s)} מתחילת השיר, ניסיון ${Math.min(rec.g.length + 1, STAGES.length)} מתוך ${STAGES.length}`;
     const i = rec.g.length;
     const last = i >= STAGES.length - 1;
     const skip = $('skipBtn');
