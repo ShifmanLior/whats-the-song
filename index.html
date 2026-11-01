@@ -309,12 +309,12 @@
     <div class="combo">
       <label class="sr-only" for="q">חפשו שיר או אמן</label>
       <input id="q" type="text" role="combobox" aria-expanded="false" aria-controls="list" aria-autocomplete="list"
-             autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="חפשו שיר, או הקלידו חופשי...">
+             autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="התחילו להקליד ובחרו מהרשימה">
       <ul class="list" id="list" role="listbox" aria-label="הצעות" hidden></ul>
     </div>
     <div class="actions">
       <button class="btn primary" id="guessBtn" type="button" disabled>נחשו</button>
-      <button class="btn ghost" id="skipBtn" type="button">עוד 2 שניות</button>
+      <button class="btn ghost" id="skipBtn" type="button">עוד חצי שנייה</button>
     </div>
   </section>
 
@@ -327,7 +327,7 @@
     <p class="next">השיר הבא בעוד <b id="countdown">--:--:--</b></p>
   </section>
 
-  <div class="player-wrap" id="playerWrap"><div id="yt"></div></div>
+  <div class="player-wrap" id="playerWrap"></div>
 
   <ol class="attempts" id="attempts" aria-label="הניחושים שלכם"></ol>
 
@@ -480,6 +480,13 @@
 
   // ---------- YouTube player: play only the first N seconds ----------
   let player = null, playerReady = false, clip = null;
+  let pending = null;                               // 'clip' or 'full': waits for a fresh player to get ready
+
+  // Chromium lists whatever a YouTube iframe has played in its media notification, lock screen and media hub, with the
+  // video's title, channel and a frame of it, which gives the answer away. So after every clip the iframe is thrown
+  // away and a fresh one that has never played takes its place. Safari keeps one iframe: its autoplay rules are
+  // stricter and a new iframe per clip could not be tested there.
+  const RETIRE_PLAYERS = !!navigator.userAgentData;     // only Chromium has this
 
   function setPlayState(state) {
     const b = $('play');
@@ -489,8 +496,9 @@
   }
 
   function startClip() {
-    if (!playerReady || rec.done) return;
-    stopClip();
+    if (rec.done) return;
+    if (!playerReady) { pending = 'clip'; setPlayState('loading'); return; }   // a fresh player is still loading
+    stopClip(false);
     const start = answer.start || 0;
     const len = secsUnlocked();
     clip = { start, len, armed: false, wall0: 0, stalledAt: 0, nudgedAt: 0, launched: performance.now() };
@@ -538,14 +546,20 @@
     if (elapsed >= clip.len - STOP_LEAD) stopClip();
   }
 
-  function stopClip() {
+  function stopClip(retire = true) {
     if (clip) {
-      const c = clip;
+      const c = clip, old = player;
       clearInterval(c.timer); clip = null;
-      try { player.pauseVideo(); } catch (e) { /* not ready */ }
+      try { old.pauseVideo(); } catch (e) { /* not ready */ }
+      const swap = retire && RETIRE_PLAYERS;
+      if (swap) buildPlayer();
+      // the old iframe goes only after the pause has reached it, or the clip would end early;
       // ?debug logs how far the media really advanced, to tune STOP_LEAD
-      if (params.has('debug') && c.armed) {
-        setTimeout(() => console.log(`clip ${c.len}s: media advanced ${(player.getCurrentTime() - c.start).toFixed(2)}s`), 600);
+      if (swap || (params.has('debug') && c.armed)) {
+        setTimeout(() => {
+          if (params.has('debug') && c.armed) console.log(`clip ${c.len}s: media advanced ${(old.getCurrentTime() - c.start).toFixed(2)}s`);
+          if (swap) { try { old.destroy(); } catch (e) { /* already gone */ } }
+        }, 700);
       }
     }
     $('tlPlayed').style.width = '0%';
@@ -554,26 +568,45 @@
 
   const YT_ERRORS = { 2: 'מזהה סרטון לא תקין', 5: 'שגיאת נגן', 100: 'הסרטון הוסר או פרטי', 101: 'הבעלים חסם הטמעה', 150: 'הבעלים חסם הטמעה', 153: 'הנגן לא קיבל מקור (Referer)' };
 
+  function buildPlayer() {
+    const holder = document.createElement('div');
+    $('playerWrap').appendChild(holder);
+    const vars = { playsinline: 1, rel: 0, modestbranding: 1, controls: 1, disablekb: 1, start: answer.start || 0 };
+    if (/^https?:$/.test(location.protocol)) vars.origin = location.origin;
+    playerReady = false;
+    const me = player = new YT.Player(holder, {
+      width: '100%', height: '100%', videoId: answer.id, playerVars: vars,
+      events: {
+        onReady: () => {
+          if (me !== player) return;
+          playerReady = true;
+          const job = pending; pending = null;
+          if (job === 'clip') startClip();
+          else if (job === 'full') playFull();
+          else setPlayState('idle');
+        },
+        onStateChange: (e) => { if (me === player) onPlayerState(e.data); },
+        onError: (e) => {
+          if (me !== player) return;
+          pending = null;
+          stopClip(false);
+          showNotice(`הסרטון של היום לא מתנגן כאן: ${YT_ERRORS[e.data] || 'שגיאה ' + e.data}. השיר: ${label(answer)}.`);
+        },
+      },
+    });
+  }
+
+  function playFull() {                             // the whole song, once the game is over
+    if (!playerReady) { pending = 'full'; return; }
+    player.seekTo(0, true); player.playVideo();
+  }
+
   function loadYouTube() {
     if (location.protocol === 'file:') {
       showNotice('יוטיוב לא משמיע כשהעמוד נפתח ישר מהקובץ. הריצו בתיקייה <code>python3 -m http.server 8123</code> ופתחו <code>localhost:8123</code>.');
       return;
     }
-    window.onYouTubeIframeAPIReady = () => {
-      const vars = { playsinline: 1, rel: 0, modestbranding: 1, controls: 1, disablekb: 1, start: answer.start || 0 };
-      if (/^https?:$/.test(location.protocol)) vars.origin = location.origin;
-      player = new YT.Player('yt', {
-        width: '100%', height: '100%', videoId: answer.id, playerVars: vars,
-        events: {
-          onReady: () => { playerReady = true; setPlayState('idle'); },
-          onStateChange: (e) => onPlayerState(e.data),
-          onError: (e) => {
-            stopClip();
-            showNotice(`הסרטון של היום לא מתנגן כאן: ${YT_ERRORS[e.data] || 'שגיאה ' + e.data}. השיר: ${label(answer)}.`);
-          },
-        },
-      });
-    };
+    window.onYouTubeIframeAPIReady = buildPlayer;
     const s = document.createElement('script');
     s.src = 'https://www.youtube.com/iframe_api';
     s.onerror = () => showNotice('לא הצלחתי לטעון את הנגן של יוטיוב. בדקו את החיבור לאינטרנט.');
@@ -583,17 +616,17 @@
   // ---------- guessing ----------
   function submit(entry) {                          // entry: 'skip' or { t: guess text, ok: correct }
     if (rec.done) return;
-    stopClip();
     rec.g.push(entry);
     const won = entry !== 'skip' && entry.ok;
     if (won || rec.g.length >= STAGES.length) { rec.done = true; rec.won = won; }
+    stopClip(!rec.done);                            // at the end the same player goes on to play the whole song
     persist();
     cancelSearch(); matches = [];
     $('q').value = ''; picked = null; $('guessBtn').disabled = true; closeList();
     render();
     if (rec.done) {
       announce(won ? 'נכון!' : 'לא הפעם');
-      if (playerReady) { player.seekTo(0, true); player.playVideo(); }   // play the full song
+      playFull();
     } else {
       announce(entry === 'skip' ? 'דילגתם' : 'ניחוש שגוי');
       startClip();
@@ -605,6 +638,7 @@
   let matches = [], active = -1, picked = null;
   const norm = (s) => s.toLowerCase().normalize('NFD')
     .replace(/[̀-֑ͯ-ׇ]/g, '')
+    .replace(/['’‘`׳]/g, '')            // apostrophes vanish: "ג'ין" is "גין", "V'eAta" is "veata"
     .replace(/[^\p{L}\p{N}\s]/gu, ' ')
     .replace(/\s+/g, ' ').trim();
   SONGS.forEach((s) => { s._hay = norm([s.artist, s.title, ...(s.artistAlt || []), ...(s.titleAlt || [])].join(' ')); });
@@ -612,19 +646,73 @@
   // ---------- judging a guess ----------
   const STOP_WORDS = new Set(['the', 'and', 'feat', 'ft', 'with', 'של']);
   const stripExtras = (s) => s.replace(/\(.*?\)|\[.*?\]/g, ' ').replace(/\s[-–]\s.*$/, '');   // "(Remastered)", "- Live"
-  const wordsOf = (s) => norm(s).split(' ').filter(Boolean);
   const hasPhrase = (text, phrase) => ` ${text} `.includes(` ${phrase} `);
+  // A guess is only ever compared with today's song, so the matching can afford to be generous:
+  // small spelling slips are forgiven, and Hebrew spellings of English names match through the aliases in songs.js.
+  //
+  // Hebrew has several spellings for one sound (בילי / ביילי, ג'ין / גין), so Hebrew words are reduced to a key:
+  // vowel letters after the first letter are dropped, look-alike consonants are merged, doubled letters are collapsed.
+  const HE = /[֐-׿]/;
+  const HE_MERGE = { ק: 'כ', ך: 'כ', ח: 'כ', ט: 'ת', ש: 'ס', ז: 'ס', צ: 'ס', ץ: 'ס', ף: 'פ', ם: 'מ', ן: 'נ', ע: 'א' };
+  function hebKey(word) {
+    let out = '';
+    [...word].forEach((c, i) => {
+      if (i > 0 && 'אהויע'.includes(c)) return;
+      c = HE_MERGE[c] || c;
+      if (out[out.length - 1] !== c) out += c;
+    });
+    return out;
+  }
+  const keyOf = (s) => s.split(' ').filter(Boolean).map((w) => (HE.test(w) ? hebKey(w) : w)).join('');
+
+  function editDist(a, b) {                          // Damerau-Levenshtein: a swap of two neighbours is one slip
+    const m = a.length, n = b.length;
+    const d = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]);
+    for (let j = 1; j <= n; j++) d[0][j] = j;
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+        if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      }
+    }
+    return d[m][n];
+  }
+  function approxIn(text, pat, k) {                  // does some stretch of text lie within k slips of pat?
+    let prev = Array.from({ length: pat.length + 1 }, (_, i) => i);
+    for (const ch of text) {
+      const cur = [0];
+      for (let j = 1; j <= pat.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (pat[j - 1] === ch ? 0 : 1));
+      if (cur[pat.length] <= k) return true;
+      prev = cur;
+    }
+    return false;
+  }
+  const slips = (key) => Math.floor(key.length / (HE.test(key) ? 6 : 5));   // slips allowed grow with the length; short keys must be exact (Hebrew keys are already compressed)
+  const near = (a, b) => a === b || (a.length >= 3 && editDist(a, b) <= slips(b));
+
   const titleNames = [answer.title, ...(answer.titleAlt || [])].flatMap((t) => [norm(stripExtras(t)), norm(t)]).filter(Boolean);
-  const artistWords = new Set([answer.artist, ...(answer.artistAlt || [])].flatMap(wordsOf).filter((w) => w.length >= 3 && !STOP_WORDS.has(w)));
-  const hasArtist = (text) => wordsOf(text).some((w) => artistWords.has(w));
+  const titleKeys = titleNames.map(keyOf).filter((k) => k.length >= 3);
+  const artistNames = [answer.artist, ...(answer.artistAlt || [])].map(norm).filter(Boolean);
+  const artistKeys = artistNames.map(keyOf).filter((k) => k.length >= 3);
+  const artistWords = new Set(artistNames.flatMap((n) => n.split(' ')).filter((w) => w.length >= 3 && !STOP_WORDS.has(w)));
+  const artistWordKeys = [...artistWords].map(keyOf).filter((k) => k.length >= 3);
+
+  const inKeys = (text, keys) => { const tk = keyOf(text); return keys.some((k) => approxIn(tk, k, slips(k))); };
+  // doubled letters count once ("הללוייה" is "הללויה", "Bille" is "Bile"), which also covers titles whose key is too short to be fuzzy
+  const squeeze = (s) => s.replace(/(\S)\1+/gu, '$1');
+  const titleSq = titleNames.map(squeeze), artistSq = artistNames.map(squeeze);
+  const titleIn = (text) => titleSq.some((n) => hasPhrase(squeeze(text), n)) || inKeys(text, titleKeys);
+  const titleIs = (text) => titleSq.includes(squeeze(text)) || titleKeys.some((k) => near(keyOf(text), k));
+  const artistIn = (text) => artistSq.some((n) => hasPhrase(squeeze(text), n)) || inKeys(text, artistKeys)
+    || text.split(' ').some((w) => artistWords.has(w) || artistWordKeys.some((k) => near(keyOf(w), k)));
 
   // a suggestion picked from the catalog: the title and the artist both have to fit
-  const judgePick = (p) => titleNames.some((n) => hasPhrase(norm(stripExtras(p.title)), n)) && hasArtist(p.artist);
-  // free text: the exact title, or the title together with the artist
+  const judgePick = (p) => titleIn(norm(stripExtras(p.title))) && artistIn(norm(p.artist));
+  // free text: just the title, or the title together with the artist
   function judgeText(raw) {
     const text = norm(raw);
     if (!text) return false;
-    return titleNames.includes(text) || (titleNames.some((n) => hasPhrase(text, n)) && hasArtist(text));
+    return titleIs(text) || (titleIn(text) && artistIn(text));
   }
 
   function closeList() {
@@ -676,7 +764,9 @@
     return SONGS.filter((s) => toks.length && toks.every((t) => s._hay.includes(t))).map((s) => ({ title: s.title, artist: s.artist }));
   }
   function suggestions(found, raw) {
-    const pool = found && found.length ? found : localMatches(raw);
+    // the catalog knows nothing about Hebrew spellings of English names, so for Hebrew queries our own list goes first
+    const local = localMatches(raw);
+    const pool = HE.test(raw) ? [...local, ...(found || [])] : found && found.length ? found : local;
     const guessed = new Set(rec.g.filter((g) => g !== 'skip').map((g) => norm(g.t)));
     const seen = new Set();
     return pool.filter((s) => {
@@ -767,6 +857,9 @@
 
   // ---------- boot ----------
   $('dayLabel').textContent = previewMode ? `תצוגה מקדימה: שיר מספר ${dayNo}` : `שיר מספר ${dayNo}`;
+  // best effort: a generic title for the system media controls instead of the video's own
+  // (the iframe is another origin, so whether the browser prefers this one cannot be checked from here)
+  try { navigator.mediaSession.metadata = new MediaMetadata({ title: 'מה השיר?', artist: 'השיר היומי' }); } catch (e) { /* unsupported */ }
   buildTimeline();
   render();
   if (rec.done) $('playerWrap').classList.add('revealed');
