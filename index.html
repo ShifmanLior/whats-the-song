@@ -192,33 +192,31 @@
   .btn.ghost:hover:not(:disabled) { border-color: var(--ink); }
   .btn.danger { background: transparent; border-color: var(--ink); }
 
-  /* result: an inverted card, so the end of the game stands out */
+  /* result: a plain card with a hairline border, so the end of the game stands out without turning the page black */
   .result {
     margin-top: 20px; padding: 24px 20px;
-    background: var(--ink);
-    color: var(--paper);
+    border: 1px solid var(--ink);
     text-align: center;
   }
   .result[hidden] { display: none; }
   .result h2 { margin: 0; font-size: 26px; font-weight: 300; }
   .song-title { margin: 14px 0 0; font-size: 24px; font-weight: 400; }
-  .song-artist { margin: 0; opacity: .7; }
+  .song-artist { margin: 0; color: var(--muted); }
   .squares { display: flex; justify-content: center; gap: 5px; margin: 18px 0; }
   .squares i {
     position: relative; flex: 1 1 0; max-width: 28px; aspect-ratio: 1;
-    border: 1px solid var(--paper); opacity: .3;
+    border: 1px solid var(--ink); opacity: .25;
   }
-  .squares i.win { background: var(--paper); border-color: var(--paper); opacity: 1; }
-  .squares i.skip { background: var(--paper); opacity: .35; }
+  .squares i.win { background: var(--ink); opacity: 1; }
+  .squares i.skip { background: var(--ink); opacity: .3; }
   .squares i.bad { border-width: 2px; opacity: 1; }
   .squares i.bad::before, .squares i.bad::after {
     content: ""; position: absolute; left: 50%; top: 50%; width: 14px; height: 2px;
-    margin: -1px 0 0 -7px; background: var(--paper); transform: rotate(45deg);
+    margin: -1px 0 0 -7px; background: var(--ink); transform: rotate(45deg);
   }
   .squares i.bad::after { transform: rotate(-45deg); }
   .result .btn { width: 100%; }
-  .result .btn.primary { background: var(--paper); color: var(--ink); }
-  .next { margin: 16px 0 0; opacity: .7; font-size: 14px; }
+  .next { margin: 16px 0 0; color: var(--muted); font-size: 14px; }
   .next b { font-variant-numeric: tabular-nums; }
 
   /* YouTube player: kept off-screen while guessing, shown at the end */
