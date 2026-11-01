@@ -354,6 +354,11 @@
 
   // ---------- which song is today's ----------
   const params = new URLSearchParams(location.search);
+  // On Android, sound starts a little after YouTube reports PLAYING (audio output warm-up), so the first moments of a
+  // clip were silent and short clips got cut off before they were heard. Extend every clip by that gap.
+  // ?lag=400 overrides it in milliseconds (try ?lag=0 to compare, and raise it if the start is still missing).
+  const START_LAG = params.has('lag') ? Math.max(0, parseFloat(params.get('lag')) || 0) / 1000
+    : /Android/i.test(navigator.userAgent) ? 0.35 : 0;
   const previewMode = params.has('day');            // ?day=5 previews another day without saving anything
   const dayNumberOf = (d) => Math.round((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - EPOCH) / 86400000) + 1;
   const today = dayNumberOf(new Date());
@@ -534,8 +539,8 @@
       return;
     }
     const elapsed = ((clip.stalledAt || now) - clip.wall0) / 1000;
-    $('tlPlayed').style.width = (Math.min(elapsed, clip.len) / MAX) * 100 + '%';
-    if (elapsed >= clip.len - STOP_LEAD) stopClip();
+    $('tlPlayed').style.width = (Math.min(Math.max(elapsed - START_LAG, 0), clip.len) / MAX) * 100 + '%';
+    if (elapsed >= START_LAG + clip.len - STOP_LEAD) stopClip();
   }
 
   function stopClip() {
