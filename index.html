@@ -6,30 +6,29 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
-<title>מה השיר?</title>
+<title>תו השעה</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@200;300;400;600&display=swap" rel="stylesheet">
 <style>
 
-  /* Monochrome, Uber-like: flat black and white, hairlines, bold type. State is shown with
+  /* Monochrome and quiet: flat black and white, hairlines, light type, square corners. State is shown with
      fill, outline and icons rather than colour. Dark mode inverts the same tokens. */
   :root {
     color-scheme: light dark;
     --paper: #ffffff;
     --ink: #000000;
-    --muted: #6b6b6b;
+    --muted: #595959;
     --line: #e2e2e2;
     --soft: #f3f3f3;
     --soft-2: #e8e8e8;
     --mid: #bdbdbd;
-    --radius: 12px;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --paper: #000000;
       --ink: #ffffff;
-      --muted: #9b9b9b;
+      --muted: #a8a8a8;
       --line: #2b2b2b;
       --soft: #141414;
       --soft-2: #1f1f1f;
@@ -43,8 +42,9 @@
     min-height: 100vh;
     background: var(--paper);
     color: var(--ink);
-    font-family: "Heebo", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
-    font-size: 16px;
+    font-family: "Assistant", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    font-size: 17px;
+    font-weight: 300;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
@@ -64,18 +64,17 @@
     padding-bottom: 20px;
     border-bottom: 1px solid var(--line);
   }
-  h1 { margin: 0; font-size: 38px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; }
-  .sub { margin: 6px 0 0; color: var(--muted); font-size: 14px; font-weight: 500; }
+  h1 { margin: 0; font-size: 42px; font-weight: 200; letter-spacing: -0.02em; line-height: 1.05; }
+  .sub { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
   .stats { display: flex; gap: 8px; }
   .stat {
     min-width: 60px;
     padding: 6px 10px;
     text-align: center;
-    background: var(--soft);
-    border-radius: 10px;
+    border: 1px solid var(--line);
   }
-  .stat b { display: block; font-size: 20px; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
-  .stat span { display: block; color: var(--muted); font-size: 12px; }
+  .stat b { display: block; font-size: 22px; font-weight: 300; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .stat span { display: block; color: var(--muted); font-size: 13px; }
   .lead { margin: 18px 0 0; color: var(--muted); font-size: 15px; }
 
   /* player stage */
@@ -84,6 +83,7 @@
   .play {
     position: relative;
     width: 88px; height: 88px;
+    margin-bottom: 16px;                            /* room for the ring that pulses around it */
     border: 0; border-radius: 50%;
     background: var(--ink);
     color: var(--paper);
@@ -114,9 +114,8 @@
   .timeline-wrap { width: 100%; }
   .timeline {
     position: relative;
-    height: 6px;
+    height: 4px;
     background: var(--soft-2);
-    border-radius: 999px;
     overflow: hidden;
   }
   .tl-unlocked, .tl-played { position: absolute; inset-block: 0; left: 0; }
@@ -135,23 +134,22 @@
     display: flex; align-items: center; gap: 12px;
     min-height: 48px; padding: 7px 14px 7px 12px;
     border: 1px solid var(--line);
-    border-radius: var(--radius);
     font-size: 15px;
   }
   .attempt .badge {
-    flex: none; min-width: 34px; height: 34px; padding: 0 6px; border-radius: 8px;
+    flex: none; min-width: 34px; height: 34px; padding: 0 6px;
     display: grid; place-items: center;
     background: var(--soft); color: var(--muted);
-    font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;
+    font-size: 13px; font-weight: 400; font-variant-numeric: tabular-nums;
   }
   .attempt .txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .attempt.bad .txt { color: var(--muted); text-decoration: line-through; }
-  .attempt.bad::after { content: "\2715"; font-weight: 700; }
+  .attempt.bad::after { content: "\2715"; font-weight: 400; }
   .attempt.skip { border-style: dashed; border-color: var(--mid); }
   .attempt.skip .txt { color: var(--muted); }
   .attempt.win { background: var(--ink); border-color: var(--ink); color: var(--paper); }
   .attempt.win .badge { background: var(--paper); color: var(--ink); }
-  .attempt.win::after { content: "\2713"; font-weight: 800; }
+  .attempt.win::after { content: "\2713"; font-weight: 400; }
 
   /* guess area */
   .guess { margin-top: 20px; }
@@ -159,40 +157,39 @@
   .combo { position: relative; }
   .combo input {
     width: 100%; height: 54px; padding: 0 16px;
-    background: var(--soft);
-    border: 2px solid transparent;
-    border-radius: var(--radius);
+    background: var(--paper);
+    border: 1px solid var(--mid);
     font-size: 17px;
   }
   .combo input::placeholder { color: var(--muted); }
-  .combo input:focus { outline: none; border-color: var(--ink); background: var(--paper); }
+  .combo input:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
   .list {
     position: absolute; z-index: 5; inset-inline: 0; top: calc(100% + 6px);
-    margin: 0; padding: 6px; list-style: none;
+    margin: 0; padding: 0; list-style: none;
     background: var(--paper);
     border: 1px solid var(--line);
-    border-radius: var(--radius);
-    box-shadow: 0 14px 36px rgba(0, 0, 0, .16);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .1);
     max-height: 320px; overflow-y: auto;
   }
   .list[hidden] { display: none; }
-  .list li { padding: 10px 12px; border-radius: 8px; cursor: pointer; }
-  .list li b { display: block; font-weight: 700; }
+  .list li { padding: 11px 14px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .list li:last-child { border-bottom: 0; }
+  .list li b { display: block; font-weight: 400; }
   .list li small { display: block; color: var(--muted); font-size: 13px; }
   .list li[aria-selected="true"], .list li:hover { background: var(--soft); }
   .list li.status { color: var(--muted); font-size: 14px; cursor: default; }
   .list li.status:hover { background: none; }
   .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
   .btn {
-    height: 52px; border-radius: var(--radius); border: 2px solid transparent;
-    font-weight: 700; font-size: 16px; cursor: pointer;
+    height: 52px; border: 1px solid transparent;
+    font-weight: 400; font-size: 16px; cursor: pointer;
     transition: transform .1s ease, background-color .15s ease;
   }
   .btn:active:not(:disabled) { transform: scale(0.98); }
   .btn:disabled { opacity: .3; cursor: not-allowed; }
-  .btn.primary { background: var(--ink); color: var(--paper); }
-  .btn.ghost { background: var(--soft); color: var(--ink); }
-  .btn.ghost:hover:not(:disabled) { background: var(--soft-2); }
+  .btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .btn.ghost { background: transparent; border-color: var(--mid); color: var(--ink); }
+  .btn.ghost:hover:not(:disabled) { border-color: var(--ink); }
   .btn.danger { background: transparent; border-color: var(--ink); }
 
   /* result: an inverted card, so the end of the game stands out */
@@ -200,16 +197,15 @@
     margin-top: 20px; padding: 24px 20px;
     background: var(--ink);
     color: var(--paper);
-    border-radius: 16px;
     text-align: center;
   }
   .result[hidden] { display: none; }
-  .result h2 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
-  .song-title { margin: 14px 0 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+  .result h2 { margin: 0; font-size: 26px; font-weight: 300; }
+  .song-title { margin: 14px 0 0; font-size: 24px; font-weight: 400; }
   .song-artist { margin: 0; opacity: .7; }
   .squares { display: flex; justify-content: center; gap: 5px; margin: 18px 0; }
   .squares i {
-    position: relative; flex: 1 1 0; max-width: 28px; aspect-ratio: 1; border-radius: 7px;
+    position: relative; flex: 1 1 0; max-width: 28px; aspect-ratio: 1;
     border: 1px solid var(--paper); opacity: .3;
   }
   .squares i.win { background: var(--paper); border-color: var(--paper); opacity: 1; }
@@ -231,7 +227,7 @@
     width: 220px; height: 220px;
     pointer-events: none;
   }
-  .player-wrap iframe { width: 100%; height: 100%; border: 0; border-radius: var(--radius); }
+  .player-wrap iframe { width: 100%; height: 100%; border: 0; }
   .player-wrap.revealed {
     position: static; left: auto;
     width: 100%; height: auto; aspect-ratio: 16 / 9;
@@ -240,17 +236,17 @@
 
   .notice {
     margin: 16px 0 0; padding: 12px 14px;
-    background: var(--soft); border: 1px solid var(--ink); border-radius: var(--radius);
+    background: var(--soft); border: 1px solid var(--ink);
     font-size: 14px;
   }
   .notice[hidden] { display: none; }
-  .notice code { direction: ltr; unicode-bidi: embed; background: var(--soft-2); padding: 1px 6px; border-radius: 6px; }
+  .notice code { direction: ltr; unicode-bidi: embed; background: var(--soft-2); padding: 1px 6px; }
   .foot { margin-top: 32px; text-align: center; color: var(--muted); font-size: 13px; }
 
   .toast {
     position: fixed; inset-inline: 0; bottom: 24px; margin: 0 auto; width: max-content; max-width: calc(100% - 32px);
-    padding: 10px 18px; border-radius: 999px;
-    background: var(--ink); color: var(--paper); font-weight: 700;
+    padding: 10px 18px;
+    background: var(--ink); color: var(--paper); font-weight: 400;
     opacity: 0; transform: translateY(12px); pointer-events: none;
     transition: opacity .2s ease, transform .2s ease;
   }
@@ -260,11 +256,11 @@
   /* small phones: keep the guess box and buttons above the fold */
   @media (max-width: 480px) {
     .app { padding: 16px 16px 48px; }
-    h1 { font-size: 30px; }
+    h1 { font-size: 34px; }
     .top { padding-bottom: 14px; }
     .lead { margin-top: 10px; font-size: 14px; }
     .stage { margin-top: 18px; gap: 12px; }
-    .play { width: 76px; height: 76px; }
+    .play { width: 76px; height: 76px; margin-bottom: 12px; }
     .play svg { width: 32px; height: 32px; }
     .attempts { margin-top: 14px; gap: 5px; }
     .attempt { min-height: 38px; padding-block: 2px; }
@@ -280,7 +276,7 @@
 <main class="app">
   <header class="top">
     <div>
-      <h1>מה השיר?</h1>
+      <h1>תו השעה</h1>
       <p class="sub" id="dayLabel"></p>
     </div>
     <div class="stats">
@@ -701,19 +697,20 @@
   // doubled letters count once ("הללוייה" is "הללויה", "Bille" is "Bile"), which also covers titles whose key is too short to be fuzzy
   const squeeze = (s) => s.replace(/(\S)\1+/gu, '$1');
   const titleSq = titleNames.map(squeeze), artistSq = artistNames.map(squeeze);
+
+  // what the list search looks through: the keys of every name of a song, and of artist and title together
+  SONGS.forEach((s) => {
+    const ts = [s.title, ...(s.titleAlt || [])].map((t) => keyOf(norm(t)));
+    const as = [s.artist, ...(s.artistAlt || [])].map((a) => keyOf(norm(a)));
+    s._keys = [...ts, ...as, ...ts.flatMap((t) => as.flatMap((a) => [t + a, a + t]))];
+    s._haySq = squeeze(s._hay);
+  });
   const titleIn = (text) => titleSq.some((n) => hasPhrase(squeeze(text), n)) || inKeys(text, titleKeys);
-  const titleIs = (text) => titleSq.includes(squeeze(text)) || titleKeys.some((k) => near(keyOf(text), k));
   const artistIn = (text) => artistSq.some((n) => hasPhrase(squeeze(text), n)) || inKeys(text, artistKeys)
     || text.split(' ').some((w) => artistWords.has(w) || artistWordKeys.some((k) => near(keyOf(w), k)));
 
-  // a suggestion picked from the catalog: the title and the artist both have to fit
+  // the song picked from the list: the title and the artist both have to fit
   const judgePick = (p) => titleIn(norm(stripExtras(p.title))) && artistIn(norm(p.artist));
-  // free text: just the title, or the title together with the artist
-  function judgeText(raw) {
-    const text = norm(raw);
-    if (!text) return false;
-    return titleIs(text) || (titleIn(text) && artistIn(text));
-  }
 
   function closeList() {
     list.hidden = true; active = -1;
@@ -759,14 +756,19 @@
     catalogCache.set(q, out);
     return out;
   }
+  // our own songs match by words, and also by spelling key, so "ביילי גין" and "bilie jean" find Billie Jean
   function localMatches(raw) {
-    const toks = norm(raw).split(' ').filter(Boolean);
-    return SONGS.filter((s) => toks.length && toks.every((t) => s._hay.includes(t))).map((s) => ({ title: s.title, artist: s.artist }));
+    const q = norm(raw), toks = q.split(' ').filter(Boolean), qk = keyOf(q);
+    return SONGS.filter((s) => toks.length && (toks.every((t) => s._hay.includes(t) || s._haySq.includes(squeeze(t)))
+      || (qk.length >= 3 && s._keys.some((k) => approxIn(k, qk, slips(qk))))))
+      .map((s) => ({ title: s.title, artist: s.artist }));
   }
   function suggestions(found, raw) {
-    // the catalog knows nothing about Hebrew spellings of English names, so for Hebrew queries our own list goes first
     const local = localMatches(raw);
-    const pool = HE.test(raw) ? [...local, ...(found || [])] : found && found.length ? found : local;
+    // the catalog knows nothing about Hebrew spellings of English names, so for Hebrew our own list goes first;
+    // otherwise two of our own songs are added after the catalog's, so that today's song can always be found
+    const pool = HE.test(raw) ? [...local, ...(found || [])]
+      : found && found.length ? [...found.slice(0, 6), ...local.slice(0, 2)] : local;
     const guessed = new Set(rec.g.filter((g) => g !== 'skip').map((g) => norm(g.t)));
     const seen = new Set();
     return pool.filter((s) => {
@@ -780,7 +782,7 @@
   function updateList() {
     picked = null;
     const raw = input.value.trim();
-    $('guessBtn').disabled = !raw;                  // free text is allowed, so any text can be sent
+    $('guessBtn').disabled = true;                  // only a song picked from the list can be sent
     cancelSearch();
     if (raw.length < 2) { matches = []; closeList(); return; }
     if (!matches.length) renderList('מחפש...');
@@ -793,7 +795,7 @@
       if (seq !== searchSeq) return;
       matches = suggestions(found, raw);
       active = -1;
-      renderList(matches.length ? '' : 'אין הצעות. אפשר לנחש בטקסט חופשי');
+      renderList(matches.length ? '' : 'לא נמצא שיר כזה. נסו לכתוב אחרת');
     }, 280);
   }
   function pick(i) {
@@ -805,11 +807,10 @@
     closeList();
   }
   function guessFromInput() {
-    const text = input.value.trim();
-    if (!text) return;
-    const key = norm(text);
+    if (!picked || input.value.trim() !== picked.text) return;   // typed text is never sent, only a song from the list
+    const key = norm(picked.text);
     if (rec.g.some((g) => g !== 'skip' && norm(g.t) === key)) { toast('כבר ניחשתם את זה'); return; }
-    submit({ t: text, ok: picked && picked.text === text ? judgePick(picked) : judgeText(text) });
+    submit({ t: picked.text, ok: judgePick(picked) });
   }
   input.addEventListener('input', updateList);
   input.addEventListener('blur', () => setTimeout(closeList, 120));
@@ -820,7 +821,7 @@
     else if (e.key === 'Escape') { closeList(); }
     else if (e.key === 'Enter') {
       e.preventDefault();
-      if (open && active >= 0) pick(active);
+      if (open && matches.length) pick(active >= 0 ? active : 0);   // Enter takes the highlighted song, or the first
       else guessFromInput();
     }
   });
@@ -831,7 +832,7 @@
   // ---------- share + countdown ----------
   const EMOJI = { win: '🟩', bad: '🟥', skip: '⬛', '': '⬜' };
   $('shareBtn').addEventListener('click', async () => {
-    const text = `מה השיר? #${dayNo}\n🔊${squaresFor(rec.g).map((c) => EMOJI[c]).join('')}\n${SHARE_URL}`;
+    const text = `תו השעה #${dayNo}\n🔊${squaresFor(rec.g).map((c) => EMOJI[c]).join('')}\n${SHARE_URL}`;
     try { await navigator.clipboard.writeText(text); toast('התוצאה הועתקה'); }
     catch (e) {
       const ta = document.createElement('textarea');
@@ -859,7 +860,14 @@
   $('dayLabel').textContent = previewMode ? `תצוגה מקדימה: שיר מספר ${dayNo}` : `שיר מספר ${dayNo}`;
   // best effort: a generic title for the system media controls instead of the video's own
   // (the iframe is another origin, so whether the browser prefers this one cannot be checked from here)
-  try { navigator.mediaSession.metadata = new MediaMetadata({ title: 'מה השיר?', artist: 'השיר היומי' }); } catch (e) { /* unsupported */ }
+  try { navigator.mediaSession.metadata = new MediaMetadata({ title: 'תו השעה', artist: 'השיר היומי' }); } catch (e) { /* unsupported */ }
+  // visitor counts with Vercel Web Analytics (no cookies, no personal data), only on the real site
+  if (!previewMode && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    const va = document.createElement('script');
+    va.defer = true; va.src = '/_vercel/insights/script.js';
+    document.head.appendChild(va);
+  }
   buildTimeline();
   render();
   if (rec.done) $('playerWrap').classList.add('revealed');
