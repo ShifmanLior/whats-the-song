@@ -267,6 +267,8 @@
   }
   .remind .btn { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 56px; font-size: 15px; text-align: center; text-decoration: none; line-height: 1.25; }
   .remind .btn small { color: var(--muted); font-size: 12px; font-weight: 300; }
+  .remind .alt { display: block; width: 100%; margin-top: 10px; padding: 6px; background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
+  .remind .alt[hidden] { display: none; }
 
   .toast {
     position: fixed; inset-inline: 0; bottom: 24px; margin: 0 auto; width: max-content; max-width: calc(100% - 32px);
@@ -360,8 +362,9 @@
       <label>באיזו שעה?<input type="time" id="remindTime" value="09:00"></label>
       <div class="actions">
         <a class="btn ghost" id="remindGoogle" href="#" target="_blank" rel="noopener">יומן Google<small>Android · Gmail</small></a>
-        <button class="btn ghost" id="remindIcs" type="button">קובץ ליומן<small>iPhone · Outlook</small></button>
+        <button class="btn ghost" id="remindOpen" type="button">קובץ ליומן<small>Outlook · Apple</small></button>
       </div>
+      <button class="alt" id="remindFile" type="button" hidden>לא נפתח? שמרו כקובץ</button>
     </div>
   </details>
   <p class="foot">השיר מתחלף בחצות</p>
@@ -391,8 +394,9 @@
   // time, so a clock started by that event cut short clips before they were heard. The clip clock now follows the media
   // position instead (see tick); START_LAG is only a small allowance on top for the audio output buffer.
   // ?lag=<ms> overrides it (?lag=0 to compare). ?debug shows timings on screen.
+  const IS_ANDROID = /Android/i.test(navigator.userAgent);
   const START_LAG = params.has('lag') ? Math.max(0, parseFloat(params.get('lag')) || 0) / 1000
-    : /Android/i.test(navigator.userAgent) ? 0.1 : 0;
+    : IS_ANDROID ? 0.1 : 0;
   const MEDIA_WAIT = 1200;                          // ms to wait after PLAYING for the media position to move before using the event time
   const DEBUG = params.has('debug');
   let dbgEl = null;
@@ -959,16 +963,16 @@
     if (start <= new Date()) start.setDate(start.getDate() + 1);
     return [start, new Date(start.getTime() + 15 * 60000)];
   }
+  const googleUrl = (a, b) => 'https://calendar.google.com/calendar/render?' + new URLSearchParams({
+    action: 'TEMPLATE', text: REMIND_TITLE, details: REMIND_TEXT, dates: `${calLocal(a)}/${calLocal(b)}`, recur: 'RRULE:FREQ=DAILY',
+  });
   function updateGoogleLink() {
     const [a, b] = reminderSlot();
-    $('remindGoogle').href = 'https://calendar.google.com/calendar/render?' + new URLSearchParams({
-      action: 'TEMPLATE', text: REMIND_TITLE, details: REMIND_TEXT, dates: `${calLocal(a)}/${calLocal(b)}`, recur: 'RRULE:FREQ=DAILY',
-    });
+    $('remindGoogle').href = googleUrl(a, b);
   }
-  function downloadIcs() {
-    const [a, b] = reminderSlot();
-    const esc = (s) => s.replace(/[\\;,]/g, '\\$&').replace(/\n/g, '\\n');
-    const ics = [
+  function icsText(a, b) {
+    const esc = (s) => s.replace(/[\;,]/g, '\\$&').replace(/\n/g, '\\n');
+    return [
       'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//whats-the-song//he//EN', 'CALSCALE:GREGORIAN',
       'BEGIN:VEVENT', 'UID:daily-reminder@whats-the-song.vercel.app',
       `DTSTAMP:${new Date().toISOString().replace(/[-:]|\.\d{3}/g, '')}`,
@@ -977,15 +981,41 @@
       'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${esc(REMIND_TITLE)}`, 'TRIGGER:PT0M', 'END:VALARM',
       'END:VEVENT', 'END:VCALENDAR',
     ].join('\r\n') + '\r\n';
-    const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
+  }
+  function downloadIcs() {
+    const [a, b] = reminderSlot();
+    const url = URL.createObjectURL(new Blob([icsText(a, b)], { type: 'text/calendar;charset=utf-8' }));
     const link = document.createElement('a');
     link.href = url; link.download = 'tav-hashaa.ics';
     document.body.appendChild(link); link.click(); link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 10000);
     toast('הקובץ מוכן. פתחו אותו כדי להוסיף ליומן');
   }
+  // Android: Chrome turns an intent: link into the phone's own "new event" screen, prefilled and repeating daily.
+  // If no app handles it, Chrome goes to the Google Calendar link instead.
+  function androidCalendarUrl(a, b) {
+    const x = encodeURIComponent;
+    return 'intent:#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.dir/event'
+      + `;S.title=${x(REMIND_TITLE)};S.description=${x(REMIND_TEXT)}`
+      + `;l.beginTime=${a.getTime()};l.endTime=${b.getTime()};S.rrule=${x('FREQ=DAILY')}`
+      + `;S.browser_fallback_url=${x(googleUrl(a, b))};end`;
+  }
+  // iPhone: Safari answers a calendar document opened in the page with its "Add to Calendar" sheet, no file saved.
+  // Anywhere else (desktop) there is no calendar app to open, so the button saves the file.
+  const IS_IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);   // iPadOS says Mac
+  function openInCalendar() {
+    const [a, b] = reminderSlot();
+    if (IS_ANDROID) location.href = androidCalendarUrl(a, b);
+    else if (IS_IOS) location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsText(a, b));
+    else downloadIcs();
+  }
   $('remindTime').addEventListener('input', updateGoogleLink);
-  $('remindIcs').addEventListener('click', downloadIcs);
+  $('remindOpen').addEventListener('click', openInCalendar);
+  if (IS_ANDROID || IS_IOS) {                       // keep the file as a fallback if the phone does not open it
+    $('remindOpen').innerHTML = 'פתחו ביומן<small>היומן שבטלפון</small>';
+    $('remindFile').hidden = false;
+    $('remindFile').addEventListener('click', downloadIcs);
+  }
   updateGoogleLink();
 
   function tickCountdown() {
