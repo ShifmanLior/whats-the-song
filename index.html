@@ -362,6 +362,27 @@
 
   // ---------- which song is today's ----------
   const params = new URLSearchParams(location.search);
+  // On Android, sound starts a while after YouTube reports PLAYING (audio output warm-up), by a different amount each
+  // time, so a clock started by that event cut short clips before they were heard. The clip clock now follows the media
+  // position instead (see tick); START_LAG is only a small allowance on top for the audio output buffer.
+  // ?lag=<ms> overrides it (?lag=0 to compare). ?debug shows timings on screen.
+  const START_LAG = params.has('lag') ? Math.max(0, parseFloat(params.get('lag')) || 0) / 1000
+    : /Android/i.test(navigator.userAgent) ? 0.1 : 0;
+  const MEDIA_WAIT = 1200;                          // ms to wait after PLAYING for the media position to move before using the event time
+  const DEBUG = params.has('debug');
+  let dbgEl = null;
+  function dbg(msg) {
+    if (!DEBUG) return;
+    console.log(msg);
+    if (!dbgEl) {
+      dbgEl = document.createElement('pre');
+      dbgEl.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99;margin:0;padding:6px 8px;max-height:30vh;overflow:auto;'
+        + 'background:#000;color:#0f0;font:11px/1.4 monospace;direction:ltr;text-align:left;white-space:pre-wrap';
+      document.body.appendChild(dbgEl);
+    }
+    dbgEl.textContent += msg + '\n';
+    dbgEl.scrollTop = dbgEl.scrollHeight;
+  }
   const previewMode = params.has('day');            // ?day=5 previews another day without saving anything
   const dayNumberOf = (d) => Math.round((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - EPOCH) / 86400000) + 1;
   const today = dayNumberOf(new Date());
@@ -509,7 +530,7 @@
     stopClip(false);
     const start = answer.start || 0;
     const len = secsUnlocked();
-    clip = { start, len, armed: false, wall0: 0, stalledAt: 0, nudgedAt: 0, launched: performance.now() };
+    clip = { start, len, playing: false, playedAt: 0, lastCt: null, armed: false, fresh: false, wall0: 0, stalledAt: 0, nudgedAt: 0, launched: performance.now() };
     player.seekTo(start, true);
     player.playVideo();
     setPlayState('loading');
@@ -517,19 +538,37 @@
     clip.timer = setInterval(tick, 16);
   }
 
-  // The clip clock starts when YouTube reports PLAYING, not on click, so loading never eats into a short clip.
-  // getCurrentTime only updates in coarse steps, which is too blunt for half a second.
+  // The clip clock starts when the media position actually starts moving, not on click (loading would eat into a short
+  // clip) and not on YouTube's PLAYING event (on Android sound can start well after it, by a varying amount).
+  // getCurrentTime only updates in coarse steps, so each fresh value re-anchors the clock: wall0 is the wall-clock time
+  // at which the clip's position was `start`. Delivery delay and coarse steps only make that estimate later, so we keep
+  // the earliest one. If the position never moves, we fall back to the PLAYING event time.
   function onPlayerState(st) {                      // 1 playing, 2 paused, 3 buffering
     if (!clip) return;
     const now = performance.now();
     if (st === 1) {
-      if (!clip.armed) { clip.armed = true; clip.wall0 = now; setPlayState('playing'); }
-      else if (clip.stalledAt) { clip.wall0 += now - clip.stalledAt; clip.stalledAt = 0; }
-    } else if (st === 3 && clip.armed && !clip.stalledAt) {
-      clip.stalledAt = now;                         // buffering mid-clip: hold the clock
-    } else if (st === 2 && clip.armed) {
-      stopClip();                                   // paused from outside
+      if (!clip.armed) notePlaying(now);
+      else if (clip.stalledAt) { clip.wall0 += now - clip.stalledAt; clip.stalledAt = 0; clip.fresh = true; }
+    } else if (st === 3) {
+      if (!clip.armed) clip.playing = false;        // still loading: wait for the next PLAYING
+      else if (!clip.stalledAt) clip.stalledAt = now;   // buffering mid-clip: hold the clock
+    } else if (st === 2) {
+      if (clip.armed) stopClip();                   // paused from outside
+      else clip.playing = false;
     }
+  }
+
+  function notePlaying(now) {
+    if (clip.playing) return;
+    clip.playing = true; clip.playedAt = now;
+    clip.lastCt = player.getCurrentTime();          // may still be the old position until the seek lands
+    setPlayState('playing');
+    dbg(`PLAYING ${Math.round(now - clip.launched)}ms after click`);
+  }
+
+  function arm(now, wall0, how) {
+    clip.armed = true; clip.fresh = false; clip.wall0 = wall0;
+    dbg(`clock started ${Math.round(now - clip.playedAt)}ms after PLAYING (${how})`);
   }
 
   function tick() {
@@ -540,18 +579,34 @@
       if (now - clip.launched > 12000) {
         stopClip();
         showNotice('הנגן לא הצליח להתחיל להשמיע. נסו לרענן את העמוד.');
-      } else if (st === 1 && now - clip.launched > 250) {
-        // the PLAYING event was missed: arm from the media position instead
-        clip.armed = true; setPlayState('playing');
-        clip.wall0 = now - Math.max(0, player.getCurrentTime() - clip.start) * 1000;
-      } else if ((st === 2 || st === 5 || st === -1) && now - clip.launched > 1500 && now - clip.nudgedAt > 1500) {
-        clip.nudgedAt = now; player.playVideo();
+      } else if (!clip.playing) {
+        if (st === 1 && now - clip.launched > 250) {
+          notePlaying(now);                         // the PLAYING event was missed
+        } else if ((st === 2 || st === 5 || st === -1) && now - clip.launched > 1500 && now - clip.nudgedAt > 1500) {
+          clip.nudgedAt = now; player.playVideo();
+        }
+      } else {
+        const ct = player.getCurrentTime();
+        // a fresh value past the start means the media really is moving (the first value after a seek can be the old position)
+        if (ct !== clip.lastCt) {
+          clip.lastCt = ct;
+          if (ct > clip.start + 0.02 && ct < clip.start + clip.len + 2) { arm(now, now - (ct - clip.start) * 1000, 'media'); return; }
+        }
+        if (now - clip.playedAt > MEDIA_WAIT) arm(now, clip.playedAt, 'event');
       }
       return;
     }
+    if (!clip.stalledAt) {
+      const ct = player.getCurrentTime();
+      if (ct !== clip.lastCt) {
+        clip.lastCt = ct;
+        const anchor = now - (ct - clip.start) * 1000;
+        if (clip.fresh || anchor < clip.wall0) { clip.wall0 = anchor; clip.fresh = false; }
+      }
+    }
     const elapsed = ((clip.stalledAt || now) - clip.wall0) / 1000;
-    $('tlPlayed').style.width = (Math.min(elapsed, clip.len) / MAX) * 100 + '%';
-    if (elapsed >= clip.len - STOP_LEAD) stopClip();
+    $('tlPlayed').style.width = (Math.min(Math.max(elapsed - START_LAG, 0), clip.len) / MAX) * 100 + '%';
+    if (elapsed >= START_LAG + clip.len - STOP_LEAD) stopClip();
   }
 
   function stopClip(retire = true) {
@@ -563,9 +618,9 @@
       if (swap) buildPlayer();
       // the old iframe goes only after the pause has reached it, or the clip would end early;
       // ?debug logs how far the media really advanced, to tune STOP_LEAD
-      if (swap || (params.has('debug') && c.armed)) {
+      if (swap || (DEBUG && c.armed)) {
         setTimeout(() => {
-          if (params.has('debug') && c.armed) console.log(`clip ${c.len}s: media advanced ${(old.getCurrentTime() - c.start).toFixed(2)}s`);
+          if (DEBUG && c.armed) dbg(`clip ${c.len}s: media advanced ${(old.getCurrentTime() - c.start).toFixed(2)}s`);
           if (swap) { try { old.destroy(); } catch (e) { /* already gone */ } }
         }, 700);
       }
