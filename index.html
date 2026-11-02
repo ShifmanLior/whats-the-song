@@ -6,30 +6,41 @@
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
-<title>מה השיר?</title>
+<title>תו השעה</title>
+<meta name="description" content="שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="תו השעה">
+<meta property="og:title" content="תו השעה">
+<meta property="og:description" content="שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה.">
+<meta property="og:url" content="https://whats-the-song.vercel.app/">
+<meta property="og:locale" content="he_IL">
+<meta property="og:image" content="https://whats-the-song.vercel.app/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="תו השעה: כפתור נגינה ושיר חדש בכל יום">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@200;300;400;600&display=swap" rel="stylesheet">
 <style>
 
-  /* Monochrome, Uber-like: flat black and white, hairlines, bold type. State is shown with
+  /* Monochrome and quiet: flat black and white, hairlines, light type, square corners. State is shown with
      fill, outline and icons rather than colour. Dark mode inverts the same tokens. */
   :root {
     color-scheme: light dark;
     --paper: #ffffff;
     --ink: #000000;
-    --muted: #6b6b6b;
+    --muted: #595959;
     --line: #e2e2e2;
     --soft: #f3f3f3;
     --soft-2: #e8e8e8;
     --mid: #bdbdbd;
-    --radius: 12px;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --paper: #000000;
       --ink: #ffffff;
-      --muted: #9b9b9b;
+      --muted: #a8a8a8;
       --line: #2b2b2b;
       --soft: #141414;
       --soft-2: #1f1f1f;
@@ -43,8 +54,9 @@
     min-height: 100vh;
     background: var(--paper);
     color: var(--ink);
-    font-family: "Heebo", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
-    font-size: 16px;
+    font-family: "Assistant", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    font-size: 17px;
+    font-weight: 300;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
@@ -64,18 +76,17 @@
     padding-bottom: 20px;
     border-bottom: 1px solid var(--line);
   }
-  h1 { margin: 0; font-size: 38px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; }
-  .sub { margin: 6px 0 0; color: var(--muted); font-size: 14px; font-weight: 500; }
+  h1 { margin: 0; font-size: 42px; font-weight: 200; letter-spacing: -0.02em; line-height: 1.05; }
+  .sub { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
   .stats { display: flex; gap: 8px; }
   .stat {
     min-width: 60px;
     padding: 6px 10px;
     text-align: center;
-    background: var(--soft);
-    border-radius: 10px;
+    border: 1px solid var(--line);
   }
-  .stat b { display: block; font-size: 20px; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
-  .stat span { display: block; color: var(--muted); font-size: 12px; }
+  .stat b { display: block; font-size: 22px; font-weight: 300; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .stat span { display: block; color: var(--muted); font-size: 13px; }
   .lead { margin: 18px 0 0; color: var(--muted); font-size: 15px; }
 
   /* player stage */
@@ -84,6 +95,7 @@
   .play {
     position: relative;
     width: 88px; height: 88px;
+    margin-bottom: 16px;                            /* room for the ring that pulses around it */
     border: 0; border-radius: 50%;
     background: var(--ink);
     color: var(--paper);
@@ -114,9 +126,8 @@
   .timeline-wrap { width: 100%; }
   .timeline {
     position: relative;
-    height: 6px;
+    height: 4px;
     background: var(--soft-2);
-    border-radius: 999px;
     overflow: hidden;
   }
   .tl-unlocked, .tl-played { position: absolute; inset-block: 0; left: 0; }
@@ -135,23 +146,22 @@
     display: flex; align-items: center; gap: 12px;
     min-height: 48px; padding: 7px 14px 7px 12px;
     border: 1px solid var(--line);
-    border-radius: var(--radius);
     font-size: 15px;
   }
   .attempt .badge {
-    flex: none; min-width: 34px; height: 34px; padding: 0 6px; border-radius: 8px;
+    flex: none; min-width: 34px; height: 34px; padding: 0 6px;
     display: grid; place-items: center;
     background: var(--soft); color: var(--muted);
-    font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;
+    font-size: 13px; font-weight: 400; font-variant-numeric: tabular-nums;
   }
   .attempt .txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .attempt.bad .txt { color: var(--muted); text-decoration: line-through; }
-  .attempt.bad::after { content: "\2715"; font-weight: 700; }
+  .attempt.bad::after { content: "\2715"; font-weight: 400; }
   .attempt.skip { border-style: dashed; border-color: var(--mid); }
   .attempt.skip .txt { color: var(--muted); }
   .attempt.win { background: var(--ink); border-color: var(--ink); color: var(--paper); }
   .attempt.win .badge { background: var(--paper); color: var(--ink); }
-  .attempt.win::after { content: "\2713"; font-weight: 800; }
+  .attempt.win::after { content: "\2713"; font-weight: 400; }
 
   /* guess area */
   .guess { margin-top: 20px; }
@@ -159,70 +169,66 @@
   .combo { position: relative; }
   .combo input {
     width: 100%; height: 54px; padding: 0 16px;
-    background: var(--soft);
-    border: 2px solid transparent;
-    border-radius: var(--radius);
+    background: var(--paper);
+    border: 1px solid var(--mid);
     font-size: 17px;
   }
   .combo input::placeholder { color: var(--muted); }
-  .combo input:focus { outline: none; border-color: var(--ink); background: var(--paper); }
+  .combo input:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
   .list {
     position: absolute; z-index: 5; inset-inline: 0; top: calc(100% + 6px);
-    margin: 0; padding: 6px; list-style: none;
+    margin: 0; padding: 0; list-style: none;
     background: var(--paper);
     border: 1px solid var(--line);
-    border-radius: var(--radius);
-    box-shadow: 0 14px 36px rgba(0, 0, 0, .16);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .1);
     max-height: 320px; overflow-y: auto;
   }
   .list[hidden] { display: none; }
-  .list li { padding: 10px 12px; border-radius: 8px; cursor: pointer; }
-  .list li b { display: block; font-weight: 700; }
+  .list li { padding: 11px 14px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .list li:last-child { border-bottom: 0; }
+  .list li b { display: block; font-weight: 400; }
   .list li small { display: block; color: var(--muted); font-size: 13px; }
   .list li[aria-selected="true"], .list li:hover { background: var(--soft); }
   .list li.status { color: var(--muted); font-size: 14px; cursor: default; }
   .list li.status:hover { background: none; }
   .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
   .btn {
-    height: 52px; border-radius: var(--radius); border: 2px solid transparent;
-    font-weight: 700; font-size: 16px; cursor: pointer;
+    height: 52px; border: 1px solid transparent;
+    font-weight: 400; font-size: 16px; cursor: pointer;
     transition: transform .1s ease, background-color .15s ease;
   }
   .btn:active:not(:disabled) { transform: scale(0.98); }
   .btn:disabled { opacity: .3; cursor: not-allowed; }
-  .btn.primary { background: var(--ink); color: var(--paper); }
-  .btn.ghost { background: var(--soft); color: var(--ink); }
-  .btn.ghost:hover:not(:disabled) { background: var(--soft-2); }
+  .btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .btn.ghost { background: transparent; border-color: var(--mid); color: var(--ink); }
+  .btn.ghost:hover:not(:disabled) { border-color: var(--ink); }
   .btn.danger { background: transparent; border-color: var(--ink); }
 
-  /* result: an inverted card, so the end of the game stands out */
+  /* result: a plain card with a hairline border, so the end of the game stands out without turning the page black */
   .result {
     margin-top: 20px; padding: 24px 20px;
-    background: var(--ink);
-    color: var(--paper);
-    border-radius: 16px;
+    border: 1px solid var(--ink);
     text-align: center;
   }
   .result[hidden] { display: none; }
-  .result h2 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
-  .song-title { margin: 14px 0 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
-  .song-artist { margin: 0; opacity: .7; }
+  .result h2 { margin: 0; font-size: 26px; font-weight: 300; }
+  .song-title { margin: 14px 0 0; font-size: 24px; font-weight: 400; }
+  .song-artist { margin: 0; color: var(--muted); }
   .squares { display: flex; justify-content: center; gap: 5px; margin: 18px 0; }
   .squares i {
-    position: relative; flex: 1 1 0; max-width: 28px; aspect-ratio: 1; border-radius: 7px;
-    border: 1px solid var(--paper); opacity: .3;
+    position: relative; flex: 1 1 0; max-width: 28px; aspect-ratio: 1;
+    border: 1px solid var(--ink); opacity: .25;
   }
-  .squares i.win { background: var(--paper); border-color: var(--paper); opacity: 1; }
-  .squares i.skip { background: var(--paper); opacity: .35; }
+  .squares i.win { background: var(--ink); opacity: 1; }
+  .squares i.skip { background: var(--ink); opacity: .3; }
   .squares i.bad { border-width: 2px; opacity: 1; }
   .squares i.bad::before, .squares i.bad::after {
     content: ""; position: absolute; left: 50%; top: 50%; width: 14px; height: 2px;
-    margin: -1px 0 0 -7px; background: var(--paper); transform: rotate(45deg);
+    margin: -1px 0 0 -7px; background: var(--ink); transform: rotate(45deg);
   }
   .squares i.bad::after { transform: rotate(-45deg); }
   .result .btn { width: 100%; }
-  .result .btn.primary { background: var(--paper); color: var(--ink); }
-  .next { margin: 16px 0 0; opacity: .7; font-size: 14px; }
+  .next { margin: 16px 0 0; color: var(--muted); font-size: 14px; }
   .next b { font-variant-numeric: tabular-nums; }
 
   /* YouTube player: kept off-screen while guessing, shown at the end */
@@ -231,7 +237,7 @@
     width: 220px; height: 220px;
     pointer-events: none;
   }
-  .player-wrap iframe { width: 100%; height: 100%; border: 0; border-radius: var(--radius); }
+  .player-wrap iframe { width: 100%; height: 100%; border: 0; }
   .player-wrap.revealed {
     position: static; left: auto;
     width: 100%; height: auto; aspect-ratio: 16 / 9;
@@ -240,17 +246,18 @@
 
   .notice {
     margin: 16px 0 0; padding: 12px 14px;
-    background: var(--soft); border: 1px solid var(--ink); border-radius: var(--radius);
+    background: var(--soft); border: 1px solid var(--ink);
     font-size: 14px;
   }
   .notice[hidden] { display: none; }
-  .notice code { direction: ltr; unicode-bidi: embed; background: var(--soft-2); padding: 1px 6px; border-radius: 6px; }
+  .notice code { direction: ltr; unicode-bidi: embed; background: var(--soft-2); padding: 1px 6px; }
   .foot { margin-top: 32px; text-align: center; color: var(--muted); font-size: 13px; }
+  .foot.credit { margin-top: 6px; }
 
   .toast {
     position: fixed; inset-inline: 0; bottom: 24px; margin: 0 auto; width: max-content; max-width: calc(100% - 32px);
-    padding: 10px 18px; border-radius: 999px;
-    background: var(--ink); color: var(--paper); font-weight: 700;
+    padding: 10px 18px;
+    background: var(--ink); color: var(--paper); font-weight: 400;
     opacity: 0; transform: translateY(12px); pointer-events: none;
     transition: opacity .2s ease, transform .2s ease;
   }
@@ -260,11 +267,11 @@
   /* small phones: keep the guess box and buttons above the fold */
   @media (max-width: 480px) {
     .app { padding: 16px 16px 48px; }
-    h1 { font-size: 30px; }
+    h1 { font-size: 34px; }
     .top { padding-bottom: 14px; }
     .lead { margin-top: 10px; font-size: 14px; }
     .stage { margin-top: 18px; gap: 12px; }
-    .play { width: 76px; height: 76px; }
+    .play { width: 76px; height: 76px; margin-bottom: 12px; }
     .play svg { width: 32px; height: 32px; }
     .attempts { margin-top: 14px; gap: 5px; }
     .attempt { min-height: 38px; padding-block: 2px; }
@@ -280,7 +287,7 @@
 <main class="app">
   <header class="top">
     <div>
-      <h1>מה השיר?</h1>
+      <h1>תו השעה</h1>
       <p class="sub" id="dayLabel"></p>
     </div>
     <div class="stats">
@@ -309,12 +316,12 @@
     <div class="combo">
       <label class="sr-only" for="q">חפשו שיר או אמן</label>
       <input id="q" type="text" role="combobox" aria-expanded="false" aria-controls="list" aria-autocomplete="list"
-             autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="חפשו שיר, או הקלידו חופשי...">
+             autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="התחילו להקליד ובחרו מהרשימה">
       <ul class="list" id="list" role="listbox" aria-label="הצעות" hidden></ul>
     </div>
     <div class="actions">
       <button class="btn primary" id="guessBtn" type="button" disabled>נחשו</button>
-      <button class="btn ghost" id="skipBtn" type="button">עוד 2 שניות</button>
+      <button class="btn ghost" id="skipBtn" type="button">עוד חצי שנייה</button>
     </div>
   </section>
 
@@ -327,12 +334,13 @@
     <p class="next">השיר הבא בעוד <b id="countdown">--:--:--</b></p>
   </section>
 
-  <div class="player-wrap" id="playerWrap"><div id="yt"></div></div>
+  <div class="player-wrap" id="playerWrap"></div>
 
   <ol class="attempts" id="attempts" aria-label="הניחושים שלכם"></ol>
 
   <p class="notice" id="notice" role="alert" hidden></p>
   <p class="foot">השיר מתחלף בחצות</p>
+  <p class="foot credit">המשחק נבנה ב♥︎ על ידי ליאור ומוקדש לנילס ותמי</p>
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="sr-only" id="live" aria-live="polite"></div>
@@ -501,6 +509,13 @@
 
   // ---------- YouTube player: play only the first N seconds ----------
   let player = null, playerReady = false, clip = null;
+  let pending = null;                               // 'clip' or 'full': waits for a fresh player to get ready
+
+  // Chromium lists whatever a YouTube iframe has played in its media notification, lock screen and media hub, with the
+  // video's title, channel and a frame of it, which gives the answer away. So after every clip the iframe is thrown
+  // away and a fresh one that has never played takes its place. Safari keeps one iframe: its autoplay rules are
+  // stricter and a new iframe per clip could not be tested there.
+  const RETIRE_PLAYERS = !!navigator.userAgentData;     // only Chromium has this
 
   function setPlayState(state) {
     const b = $('play');
@@ -510,8 +525,9 @@
   }
 
   function startClip() {
-    if (!playerReady || rec.done) return;
-    stopClip();
+    if (rec.done) return;
+    if (!playerReady) { pending = 'clip'; setPlayState('loading'); return; }   // a fresh player is still loading
+    stopClip(false);
     const start = answer.start || 0;
     const len = secsUnlocked();
     clip = { start, len, playing: false, playedAt: 0, lastCt: null, armed: false, fresh: false, wall0: 0, stalledAt: 0, nudgedAt: 0, launched: performance.now() };
@@ -593,14 +609,20 @@
     if (elapsed >= START_LAG + clip.len - STOP_LEAD) stopClip();
   }
 
-  function stopClip() {
+  function stopClip(retire = true) {
     if (clip) {
-      const c = clip;
+      const c = clip, old = player;
       clearInterval(c.timer); clip = null;
-      try { player.pauseVideo(); } catch (e) { /* not ready */ }
+      try { old.pauseVideo(); } catch (e) { /* not ready */ }
+      const swap = retire && RETIRE_PLAYERS;
+      if (swap) buildPlayer();
+      // the old iframe goes only after the pause has reached it, or the clip would end early;
       // ?debug logs how far the media really advanced, to tune STOP_LEAD
-      if (DEBUG && c.armed) {
-        setTimeout(() => dbg(`clip ${c.len}s: media advanced ${(player.getCurrentTime() - c.start).toFixed(2)}s`), 600);
+      if (swap || (DEBUG && c.armed)) {
+        setTimeout(() => {
+          if (DEBUG && c.armed) dbg(`clip ${c.len}s: media advanced ${(old.getCurrentTime() - c.start).toFixed(2)}s`);
+          if (swap) { try { old.destroy(); } catch (e) { /* already gone */ } }
+        }, 700);
       }
     }
     $('tlPlayed').style.width = '0%';
@@ -609,26 +631,45 @@
 
   const YT_ERRORS = { 2: 'מזהה סרטון לא תקין', 5: 'שגיאת נגן', 100: 'הסרטון הוסר או פרטי', 101: 'הבעלים חסם הטמעה', 150: 'הבעלים חסם הטמעה', 153: 'הנגן לא קיבל מקור (Referer)' };
 
+  function buildPlayer() {
+    const holder = document.createElement('div');
+    $('playerWrap').appendChild(holder);
+    const vars = { playsinline: 1, rel: 0, modestbranding: 1, controls: 1, disablekb: 1, start: answer.start || 0 };
+    if (/^https?:$/.test(location.protocol)) vars.origin = location.origin;
+    playerReady = false;
+    const me = player = new YT.Player(holder, {
+      width: '100%', height: '100%', videoId: answer.id, playerVars: vars,
+      events: {
+        onReady: () => {
+          if (me !== player) return;
+          playerReady = true;
+          const job = pending; pending = null;
+          if (job === 'clip') startClip();
+          else if (job === 'full') playFull();
+          else setPlayState('idle');
+        },
+        onStateChange: (e) => { if (me === player) onPlayerState(e.data); },
+        onError: (e) => {
+          if (me !== player) return;
+          pending = null;
+          stopClip(false);
+          showNotice(`הסרטון של היום לא מתנגן כאן: ${YT_ERRORS[e.data] || 'שגיאה ' + e.data}. השיר: ${label(answer)}.`);
+        },
+      },
+    });
+  }
+
+  function playFull() {                             // the whole song, once the game is over
+    if (!playerReady) { pending = 'full'; return; }
+    player.seekTo(0, true); player.playVideo();
+  }
+
   function loadYouTube() {
     if (location.protocol === 'file:') {
       showNotice('יוטיוב לא משמיע כשהעמוד נפתח ישר מהקובץ. הריצו בתיקייה <code>python3 -m http.server 8123</code> ופתחו <code>localhost:8123</code>.');
       return;
     }
-    window.onYouTubeIframeAPIReady = () => {
-      const vars = { playsinline: 1, rel: 0, modestbranding: 1, controls: 1, disablekb: 1, start: answer.start || 0 };
-      if (/^https?:$/.test(location.protocol)) vars.origin = location.origin;
-      player = new YT.Player('yt', {
-        width: '100%', height: '100%', videoId: answer.id, playerVars: vars,
-        events: {
-          onReady: () => { playerReady = true; setPlayState('idle'); },
-          onStateChange: (e) => onPlayerState(e.data),
-          onError: (e) => {
-            stopClip();
-            showNotice(`הסרטון של היום לא מתנגן כאן: ${YT_ERRORS[e.data] || 'שגיאה ' + e.data}. השיר: ${label(answer)}.`);
-          },
-        },
-      });
-    };
+    window.onYouTubeIframeAPIReady = buildPlayer;
     const s = document.createElement('script');
     s.src = 'https://www.youtube.com/iframe_api';
     s.onerror = () => showNotice('לא הצלחתי לטעון את הנגן של יוטיוב. בדקו את החיבור לאינטרנט.');
@@ -638,17 +679,17 @@
   // ---------- guessing ----------
   function submit(entry) {                          // entry: 'skip' or { t: guess text, ok: correct }
     if (rec.done) return;
-    stopClip();
     rec.g.push(entry);
     const won = entry !== 'skip' && entry.ok;
     if (won || rec.g.length >= STAGES.length) { rec.done = true; rec.won = won; }
+    stopClip(!rec.done);                            // at the end the same player goes on to play the whole song
     persist();
     cancelSearch(); matches = [];
     $('q').value = ''; picked = null; $('guessBtn').disabled = true; closeList();
     render();
     if (rec.done) {
       announce(won ? 'נכון!' : 'לא הפעם');
-      if (playerReady) { player.seekTo(0, true); player.playVideo(); }   // play the full song
+      playFull();
     } else {
       announce(entry === 'skip' ? 'דילגתם' : 'ניחוש שגוי');
       startClip();
@@ -660,6 +701,7 @@
   let matches = [], active = -1, picked = null;
   const norm = (s) => s.toLowerCase().normalize('NFD')
     .replace(/[̀-֑ͯ-ׇ]/g, '')
+    .replace(/['’‘`׳]/g, '')            // apostrophes vanish: "ג'ין" is "גין", "V'eAta" is "veata"
     .replace(/[^\p{L}\p{N}\s]/gu, ' ')
     .replace(/\s+/g, ' ').trim();
   SONGS.forEach((s) => { s._hay = norm([s.artist, s.title, ...(s.artistAlt || []), ...(s.titleAlt || [])].join(' ')); });
@@ -667,20 +709,75 @@
   // ---------- judging a guess ----------
   const STOP_WORDS = new Set(['the', 'and', 'feat', 'ft', 'with', 'של']);
   const stripExtras = (s) => s.replace(/\(.*?\)|\[.*?\]/g, ' ').replace(/\s[-–]\s.*$/, '');   // "(Remastered)", "- Live"
-  const wordsOf = (s) => norm(s).split(' ').filter(Boolean);
   const hasPhrase = (text, phrase) => ` ${text} `.includes(` ${phrase} `);
-  const titleNames = [answer.title, ...(answer.titleAlt || [])].flatMap((t) => [norm(stripExtras(t)), norm(t)]).filter(Boolean);
-  const artistWords = new Set([answer.artist, ...(answer.artistAlt || [])].flatMap(wordsOf).filter((w) => w.length >= 3 && !STOP_WORDS.has(w)));
-  const hasArtist = (text) => wordsOf(text).some((w) => artistWords.has(w));
-
-  // a suggestion picked from the catalog: the title and the artist both have to fit
-  const judgePick = (p) => titleNames.some((n) => hasPhrase(norm(stripExtras(p.title)), n)) && hasArtist(p.artist);
-  // free text: the exact title, or the title together with the artist
-  function judgeText(raw) {
-    const text = norm(raw);
-    if (!text) return false;
-    return titleNames.includes(text) || (titleNames.some((n) => hasPhrase(text, n)) && hasArtist(text));
+  // A guess is only ever compared with today's song, so the matching can afford to be generous:
+  // small spelling slips are forgiven, and Hebrew spellings of English names match through the aliases in songs.js.
+  //
+  // Hebrew has several spellings for one sound (בילי / ביילי, ג'ין / גין), so Hebrew words are reduced to a key:
+  // vowel letters after the first letter are dropped, look-alike consonants are merged, doubled letters are collapsed.
+  const HE = /[֐-׿]/;
+  const HE_MERGE = { ק: 'כ', ך: 'כ', ח: 'כ', ט: 'ת', ש: 'ס', ז: 'ס', צ: 'ס', ץ: 'ס', ף: 'פ', ם: 'מ', ן: 'נ', ע: 'א' };
+  function hebKey(word) {
+    let out = '';
+    [...word].forEach((c, i) => {
+      if (i > 0 && 'אהויע'.includes(c)) return;
+      c = HE_MERGE[c] || c;
+      if (out[out.length - 1] !== c) out += c;
+    });
+    return out;
   }
+  const keyOf = (s) => s.split(' ').filter(Boolean).map((w) => (HE.test(w) ? hebKey(w) : w)).join('');
+
+  function editDist(a, b) {                          // Damerau-Levenshtein: a swap of two neighbours is one slip
+    const m = a.length, n = b.length;
+    const d = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]);
+    for (let j = 1; j <= n; j++) d[0][j] = j;
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+        if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      }
+    }
+    return d[m][n];
+  }
+  function approxIn(text, pat, k) {                  // does some stretch of text lie within k slips of pat?
+    let prev = Array.from({ length: pat.length + 1 }, (_, i) => i);
+    for (const ch of text) {
+      const cur = [0];
+      for (let j = 1; j <= pat.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (pat[j - 1] === ch ? 0 : 1));
+      if (cur[pat.length] <= k) return true;
+      prev = cur;
+    }
+    return false;
+  }
+  const slips = (key) => Math.floor(key.length / (HE.test(key) ? 6 : 5));   // slips allowed grow with the length; short keys must be exact (Hebrew keys are already compressed)
+  const near = (a, b) => a === b || (a.length >= 3 && editDist(a, b) <= slips(b));
+
+  const titleNames = [answer.title, ...(answer.titleAlt || [])].flatMap((t) => [norm(stripExtras(t)), norm(t)]).filter(Boolean);
+  const titleKeys = titleNames.map(keyOf).filter((k) => k.length >= 3);
+  const artistNames = [answer.artist, ...(answer.artistAlt || [])].map(norm).filter(Boolean);
+  const artistKeys = artistNames.map(keyOf).filter((k) => k.length >= 3);
+  const artistWords = new Set(artistNames.flatMap((n) => n.split(' ')).filter((w) => w.length >= 3 && !STOP_WORDS.has(w)));
+  const artistWordKeys = [...artistWords].map(keyOf).filter((k) => k.length >= 3);
+
+  const inKeys = (text, keys) => { const tk = keyOf(text); return keys.some((k) => approxIn(tk, k, slips(k))); };
+  // doubled letters count once ("הללוייה" is "הללויה", "Bille" is "Bile"), which also covers titles whose key is too short to be fuzzy
+  const squeeze = (s) => s.replace(/(\S)\1+/gu, '$1');
+  const titleSq = titleNames.map(squeeze), artistSq = artistNames.map(squeeze);
+
+  // what the list search looks through: the keys of every name of a song, and of artist and title together
+  SONGS.forEach((s) => {
+    const ts = [s.title, ...(s.titleAlt || [])].map((t) => keyOf(norm(t)));
+    const as = [s.artist, ...(s.artistAlt || [])].map((a) => keyOf(norm(a)));
+    s._keys = [...ts, ...as, ...ts.flatMap((t) => as.flatMap((a) => [t + a, a + t]))];
+    s._haySq = squeeze(s._hay);
+  });
+  const titleIn = (text) => titleSq.some((n) => hasPhrase(squeeze(text), n)) || inKeys(text, titleKeys);
+  const artistIn = (text) => artistSq.some((n) => hasPhrase(squeeze(text), n)) || inKeys(text, artistKeys)
+    || text.split(' ').some((w) => artistWords.has(w) || artistWordKeys.some((k) => near(keyOf(w), k)));
+
+  // the song picked from the list: the title and the artist both have to fit
+  const judgePick = (p) => titleIn(norm(stripExtras(p.title))) && artistIn(norm(p.artist));
 
   function closeList() {
     list.hidden = true; active = -1;
@@ -726,12 +823,19 @@
     catalogCache.set(q, out);
     return out;
   }
+  // our own songs match by words, and also by spelling key, so "ביילי גין" and "bilie jean" find Billie Jean
   function localMatches(raw) {
-    const toks = norm(raw).split(' ').filter(Boolean);
-    return SONGS.filter((s) => toks.length && toks.every((t) => s._hay.includes(t))).map((s) => ({ title: s.title, artist: s.artist }));
+    const q = norm(raw), toks = q.split(' ').filter(Boolean), qk = keyOf(q);
+    return SONGS.filter((s) => toks.length && (toks.every((t) => s._hay.includes(t) || s._haySq.includes(squeeze(t)))
+      || (qk.length >= 3 && s._keys.some((k) => approxIn(k, qk, slips(qk))))))
+      .map((s) => ({ title: s.title, artist: s.artist }));
   }
   function suggestions(found, raw) {
-    const pool = found && found.length ? found : localMatches(raw);
+    const local = localMatches(raw);
+    // the catalog knows nothing about Hebrew spellings of English names, so for Hebrew our own list goes first;
+    // otherwise two of our own songs are added after the catalog's, so that today's song can always be found
+    const pool = HE.test(raw) ? [...local, ...(found || [])]
+      : found && found.length ? [...found.slice(0, 6), ...local.slice(0, 2)] : local;
     const guessed = new Set(rec.g.filter((g) => g !== 'skip').map((g) => norm(g.t)));
     const seen = new Set();
     return pool.filter((s) => {
@@ -745,7 +849,7 @@
   function updateList() {
     picked = null;
     const raw = input.value.trim();
-    $('guessBtn').disabled = !raw;                  // free text is allowed, so any text can be sent
+    $('guessBtn').disabled = true;                  // only a song picked from the list can be sent
     cancelSearch();
     if (raw.length < 2) { matches = []; closeList(); return; }
     if (!matches.length) renderList('מחפש...');
@@ -758,7 +862,7 @@
       if (seq !== searchSeq) return;
       matches = suggestions(found, raw);
       active = -1;
-      renderList(matches.length ? '' : 'אין הצעות. אפשר לנחש בטקסט חופשי');
+      renderList(matches.length ? '' : 'לא נמצא שיר כזה. נסו לכתוב אחרת');
     }, 280);
   }
   function pick(i) {
@@ -770,11 +874,10 @@
     closeList();
   }
   function guessFromInput() {
-    const text = input.value.trim();
-    if (!text) return;
-    const key = norm(text);
+    if (!picked || input.value.trim() !== picked.text) return;   // typed text is never sent, only a song from the list
+    const key = norm(picked.text);
     if (rec.g.some((g) => g !== 'skip' && norm(g.t) === key)) { toast('כבר ניחשתם את זה'); return; }
-    submit({ t: text, ok: picked && picked.text === text ? judgePick(picked) : judgeText(text) });
+    submit({ t: picked.text, ok: judgePick(picked) });
   }
   input.addEventListener('input', updateList);
   input.addEventListener('blur', () => setTimeout(closeList, 120));
@@ -785,7 +888,7 @@
     else if (e.key === 'Escape') { closeList(); }
     else if (e.key === 'Enter') {
       e.preventDefault();
-      if (open && active >= 0) pick(active);
+      if (open && matches.length) pick(active >= 0 ? active : 0);   // Enter takes the highlighted song, or the first
       else guessFromInput();
     }
   });
@@ -796,7 +899,7 @@
   // ---------- share + countdown ----------
   const EMOJI = { win: '🟩', bad: '🟥', skip: '⬛', '': '⬜' };
   $('shareBtn').addEventListener('click', async () => {
-    const text = `מה השיר? #${dayNo}\n🔊${squaresFor(rec.g).map((c) => EMOJI[c]).join('')}\n${SHARE_URL}`;
+    const text = `תו השעה #${dayNo}\n🔊${squaresFor(rec.g).map((c) => EMOJI[c]).join('')}\n${SHARE_URL}`;
     try { await navigator.clipboard.writeText(text); toast('התוצאה הועתקה'); }
     catch (e) {
       const ta = document.createElement('textarea');
@@ -822,6 +925,16 @@
 
   // ---------- boot ----------
   $('dayLabel').textContent = previewMode ? `תצוגה מקדימה: שיר מספר ${dayNo}` : `שיר מספר ${dayNo}`;
+  // best effort: a generic title for the system media controls instead of the video's own
+  // (the iframe is another origin, so whether the browser prefers this one cannot be checked from here)
+  try { navigator.mediaSession.metadata = new MediaMetadata({ title: 'תו השעה', artist: 'השיר היומי' }); } catch (e) { /* unsupported */ }
+  // visitor counts with Vercel Web Analytics (no cookies, no personal data), only on the real site
+  if (!previewMode && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    const va = document.createElement('script');
+    va.defer = true; va.src = '/_vercel/insights/script.js';
+    document.head.appendChild(va);
+  }
   buildTimeline();
   render();
   if (rec.done) $('playerWrap').classList.add('revealed');
