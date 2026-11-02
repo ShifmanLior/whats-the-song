@@ -254,6 +254,20 @@
   .foot { margin-top: 32px; text-align: center; color: var(--muted); font-size: 13px; }
   .foot.credit { margin-top: 6px; }
 
+  /* daily reminder: a calendar event that repeats every day, so no account or email address is needed */
+  .remind { margin-top: 20px; border: 1px solid var(--line); font-size: 15px; }
+  .remind summary { padding: 12px 14px; text-align: center; cursor: pointer; font-weight: 400; }
+  .remind[open] summary { border-bottom: 1px solid var(--line); }
+  .remind .body { padding: 14px; }
+  .remind p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+  .remind label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .remind input[type="time"] {
+    height: 42px; padding: 0 10px; border: 1px solid var(--mid); border-radius: 0;
+    background: transparent; color: var(--ink); font: inherit; font-weight: 400;
+  }
+  .remind .btn { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 56px; font-size: 15px; text-align: center; text-decoration: none; line-height: 1.25; }
+  .remind .btn small { color: var(--muted); font-size: 12px; font-weight: 300; }
+
   .toast {
     position: fixed; inset-inline: 0; bottom: 24px; margin: 0 auto; width: max-content; max-width: calc(100% - 32px);
     padding: 10px 18px;
@@ -339,6 +353,17 @@
   <ol class="attempts" id="attempts" aria-label="הניחושים שלכם"></ol>
 
   <p class="notice" id="notice" role="alert" hidden></p>
+  <details class="remind" id="remind">
+    <summary>תזכורת יומית ביומן</summary>
+    <div class="body">
+      <p>נוסיף ליומן שלכם אירוע שחוזר כל יום, כדי שלא תפספסו את השיר החדש.</p>
+      <label>באיזו שעה?<input type="time" id="remindTime" value="09:00"></label>
+      <div class="actions">
+        <a class="btn ghost" id="remindGoogle" href="#" target="_blank" rel="noopener">יומן Google<small>Android · Gmail</small></a>
+        <button class="btn ghost" id="remindIcs" type="button">קובץ ליומן<small>iPhone · Outlook</small></button>
+      </div>
+    </div>
+  </details>
   <p class="foot">השיר מתחלף בחצות</p>
   <p class="foot credit">המשחק נבנה ב♥︎ על ידי ליאור ומוקדש לנילס ותמי</p>
 </main>
@@ -898,16 +923,70 @@
 
   // ---------- share + countdown ----------
   const EMOJI = { win: '🟩', bad: '🟥', skip: '⬛', '': '⬜' };
+  // The first line says whose result this is and how it went, so a pasted message does not read as just a link to play
+  // (the chat's link preview card sits right below it). The song itself is never named.
+  function shareText() {
+    const head = rec.won
+      ? `ניחשתי את תו השעה #${dayNo} בניסיון ${rec.g.length} מתוך ${STAGES.length} 🎯`
+      : `לא הצלחתי לנחש את תו השעה #${dayNo} 😅`;
+    return `${head}\n🔊${squaresFor(rec.g).map((c) => EMOJI[c]).join('')}\n\nנסו גם אתם: ${SHARE_URL}`;
+  }
+  // phones get the system share sheet (WhatsApp is one tap away); desktop copies, as before
+  const NATIVE_SHARE = !!navigator.share && window.matchMedia('(pointer: coarse)').matches;
   $('shareBtn').addEventListener('click', async () => {
-    const text = `תו השעה #${dayNo}\n🔊${squaresFor(rec.g).map((c) => EMOJI[c]).join('')}\n${SHARE_URL}`;
-    try { await navigator.clipboard.writeText(text); toast('התוצאה הועתקה'); }
+    const text = shareText();
+    if (NATIVE_SHARE) {
+      try { await navigator.share({ text }); return; }
+      catch (e) { if (e && e.name === 'AbortError') return; /* sharing failed: copy instead */ }
+    }
+    try { await navigator.clipboard.writeText(text); toast('התוצאה הועתקה. הדביקו אותה בצ׳אט'); }
     catch (e) {
       const ta = document.createElement('textarea');
       ta.value = text; document.body.appendChild(ta); ta.select();
-      try { document.execCommand('copy'); toast('התוצאה הועתקה'); } catch (_) { toast('לא הצלחתי להעתיק'); }
+      try { document.execCommand('copy'); toast('התוצאה הועתקה. הדביקו אותה בצ׳אט'); } catch (_) { toast('לא הצלחתי להעתיק'); }
       ta.remove();
     }
   });
+
+  // ---------- daily reminder: a repeating calendar event ----------
+  const REMIND_TITLE = 'תו השעה: השיר היומי';
+  const REMIND_TEXT = `השיר החדש מחכה לכם: ${SHARE_URL}`;
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const calLocal = (d) => `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}T${pad2(d.getHours())}${pad2(d.getMinutes())}00`;
+  function reminderSlot() {                         // next time the chosen hour comes round, for 15 minutes
+    const [h, m] = ($('remindTime').value || '09:00').split(':').map(Number);
+    const start = new Date(); start.setHours(h, m, 0, 0);
+    if (start <= new Date()) start.setDate(start.getDate() + 1);
+    return [start, new Date(start.getTime() + 15 * 60000)];
+  }
+  function updateGoogleLink() {
+    const [a, b] = reminderSlot();
+    $('remindGoogle').href = 'https://calendar.google.com/calendar/render?' + new URLSearchParams({
+      action: 'TEMPLATE', text: REMIND_TITLE, details: REMIND_TEXT, dates: `${calLocal(a)}/${calLocal(b)}`, recur: 'RRULE:FREQ=DAILY',
+    });
+  }
+  function downloadIcs() {
+    const [a, b] = reminderSlot();
+    const esc = (s) => s.replace(/[\\;,]/g, '\\$&').replace(/\n/g, '\\n');
+    const ics = [
+      'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//whats-the-song//he//EN', 'CALSCALE:GREGORIAN',
+      'BEGIN:VEVENT', 'UID:daily-reminder@whats-the-song.vercel.app',
+      `DTSTAMP:${new Date().toISOString().replace(/[-:]|\.\d{3}/g, '')}`,
+      `DTSTART:${calLocal(a)}`, `DTEND:${calLocal(b)}`, 'RRULE:FREQ=DAILY',
+      `SUMMARY:${esc(REMIND_TITLE)}`, `DESCRIPTION:${esc(REMIND_TEXT)}`, `URL:${SHARE_URL}`,
+      'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${esc(REMIND_TITLE)}`, 'TRIGGER:PT0M', 'END:VALARM',
+      'END:VEVENT', 'END:VCALENDAR',
+    ].join('\r\n') + '\r\n';
+    const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url; link.download = 'tav-hashaa.ics';
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    toast('הקובץ מוכן. פתחו אותו כדי להוסיף ליומן');
+  }
+  $('remindTime').addEventListener('input', updateGoogleLink);
+  $('remindIcs').addEventListener('click', downloadIcs);
+  updateGoogleLink();
 
   function tickCountdown() {
     if (!rec.done) return;
