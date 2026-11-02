@@ -228,6 +228,9 @@
   }
   .squares i.bad::after { transform: rotate(-45deg); }
   .result .btn { width: 100%; }
+  .result-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 10px; }
+  a.btn { display: grid; place-items: center; text-decoration: none; color: var(--ink); }
+  .btn[hidden] { display: none; }
   .next { margin: 16px 0 0; color: var(--muted); font-size: 14px; }
   .next b { font-variant-numeric: tabular-nums; }
 
@@ -264,6 +267,42 @@
   .toast.show { opacity: 1; transform: none; }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
+  /* header links and the calendar */
+  .links { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 2px 16px; font-size: 14px; }
+  .link {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 0; border: 0; background: none; color: var(--ink);
+    font: inherit; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; cursor: pointer;
+  }
+  .link[hidden] { display: none; }
+  .link svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+  dialog.cal { width: min(92vw, 380px); padding: 0; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); }
+  dialog.cal::backdrop { background: rgba(0, 0, 0, .45); }
+  .cal-body { padding: 20px 18px 18px; }
+  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .cal-head h2 { margin: 0; font-size: 22px; font-weight: 300; }
+  .cal-nav { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--mid); background: transparent; color: var(--ink); cursor: pointer; }
+  .cal-nav:disabled { opacity: .25; cursor: default; }
+  .cal-nav svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+  .cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+  .cal-week { margin-bottom: 6px; color: var(--muted); font-size: 13px; }
+  .cal-day {
+    position: relative; display: block; aspect-ratio: 1; padding: 0;
+    border: 1px solid var(--line); background: transparent; color: var(--ink);
+    font: inherit; font-size: 16px; font-style: normal; line-height: 1; cursor: pointer;
+  }
+  button.cal-day { line-height: normal; }
+  .cal-day:disabled { border-color: transparent; color: var(--mid); cursor: default; }
+  .cal-day.today { border-color: var(--ink); }
+  .cal-day.current { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .cal-day.won { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .cal-day.lost { color: var(--muted); text-decoration: line-through; }
+  .cal-day.going::after { content: ""; position: absolute; left: 50%; bottom: 5px; width: 4px; height: 4px; margin-left: -2px; background: currentColor; }
+  .cal-key { display: flex; flex-wrap: wrap; gap: 8px 10px; margin: 16px 0; color: var(--muted); font-size: 13px; }
+  .cal-key span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .cal-key .cal-day { width: 22px; font-size: 12px; display: inline-grid; place-items: center; cursor: default; }
+  .cal-body .btn { width: 100%; }
+
   /* small phones: keep the guess box and buttons above the fold */
   @media (max-width: 480px) {
     .app { padding: 16px 16px 48px; }
@@ -289,6 +328,10 @@
     <div>
       <h1>תו השעה</h1>
       <p class="sub" id="dayLabel"></p>
+      <p class="links">
+        <button class="link" id="calBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>לוח שנה</button>
+        <a class="link" id="todayLink" href="./" hidden>חזרה להיום</a>
+      </p>
     </div>
     <div class="stats">
       <div class="stat"><b id="statStreak">0</b><span>רצף</span></div>
@@ -331,7 +374,11 @@
     <p class="song-artist" id="resultArtist"></p>
     <div class="squares" id="resultSquares" aria-hidden="true"></div>
     <button class="btn primary" id="shareBtn" type="button">שתפו תוצאה</button>
-    <p class="next">השיר הבא בעוד <b id="countdown">--:--:--</b></p>
+    <div class="result-actions">
+      <button class="btn ghost" id="calBtn2" type="button">לוח שנה</button>
+      <a class="btn ghost" id="todayBtn" href="./" hidden>חזרה להיום</a>
+    </div>
+    <p class="next" id="next">השיר הבא בעוד <b id="countdown">--:--:--</b></p>
   </section>
 
   <div class="player-wrap" id="playerWrap"></div>
@@ -342,6 +389,19 @@
   <p class="foot">השיר מתחלף בחצות</p>
   <p class="foot credit">המשחק נבנה ב♥︎ על ידי ליאור ומוקדש לנילס ותמי</p>
 </main>
+<dialog class="cal" id="cal" aria-label="לוח שנה">
+  <div class="cal-body">
+    <div class="cal-head">
+      <button class="cal-nav" id="calPrev" type="button" aria-label="החודש הקודם"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      <h2 id="calTitle"></h2>
+      <button class="cal-nav" id="calNext" type="button" aria-label="החודש הבא"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    </div>
+    <div class="cal-week" aria-hidden="true"><span>א</span><span>ב</span><span>ג</span><span>ד</span><span>ה</span><span>ו</span><span>ש</span></div>
+    <div class="cal-grid" id="calGrid"></div>
+    <p class="cal-key" aria-hidden="true"><span><i class="cal-day won">1</i>ניחשתם</span><span><i class="cal-day lost">1</i>לא הצלחתם</span><span><i class="cal-day going">1</i>התחלתם</span></p>
+    <button class="btn ghost" id="calClose" type="button">סגירה</button>
+  </div>
+</dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="sr-only" id="live" aria-live="polite"></div>
 
@@ -362,10 +422,12 @@
 
   // ---------- which song is today's ----------
   const params = new URLSearchParams(location.search);
-  const previewMode = params.has('day');            // ?day=5 previews another day without saving anything
+  const previewMode = params.has('preview');        // ?preview&day=5 looks at any day, later ones too, and saves nothing
   const dayNumberOf = (d) => Math.round((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - EPOCH) / 86400000) + 1;
   const today = dayNumberOf(new Date());
-  const dayNo = previewMode ? (parseInt(params.get('day'), 10) || 1) : today;
+  const asked = parseInt(params.get('day'), 10);    // ?day=2 plays an earlier day, saved like any other; later days are not open yet
+  const dayNo = previewMode ? (asked || today) : asked >= 1 && asked <= today ? asked : today;
+  const isToday = dayNo === today;
   const answer = SONGS[(((dayNo - 1) % SONGS.length) + SONGS.length) % SONGS.length];
 
   // ---------- saved progress ----------
@@ -386,7 +448,7 @@
     let streak = 0;
     let n = today;
     if (!(store.days[n] && store.days[n].done)) n--;   // today not finished yet: streak runs through yesterday
-    while (store.days[n] && store.days[n].won) { streak++; n--; }
+    while (store.days[n] && store.days[n].won && !store.days[n].late) { streak++; n--; }   // days made up later do not count
     return { wins, streak };
   }
 
@@ -624,6 +686,7 @@
   // ---------- guessing ----------
   function submit(entry) {                          // entry: 'skip' or { t: guess text, ok: correct }
     if (rec.done) return;
+    if (!rec.g.length && !isToday) rec.late = true;   // started after its own date
     rec.g.push(entry);
     const won = entry !== 'skip' && entry.ok;
     if (won || rec.g.length >= STAGES.length) { rec.done = true; rec.won = won; }
@@ -841,6 +904,52 @@
   $('skipBtn').addEventListener('click', () => submit('skip'));
   $('play').addEventListener('click', () => { if (clip) stopClip(); else startClip(); });
 
+  // ---------- calendar: every day since the first one can be played ----------
+  const DAY_MS = 86400000;
+  const dateOfDay = (n) => new Date(EPOCH + (n - 1) * DAY_MS);               // its UTC parts are the calendar date
+  const monthOf = (d) => d.getUTCFullYear() * 12 + d.getUTCMonth();
+  const firstMonth = monthOf(dateOfDay(1)), lastMonth = monthOf(dateOfDay(today));
+  const MONTH_FMT = new Intl.DateTimeFormat('he-IL', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const DAY_FMT = new Intl.DateTimeFormat('he-IL', { day: 'numeric', month: 'long', timeZone: 'UTC' });
+  const STATE_TEXT = { won: 'ניחשתם', lost: 'לא הצלחתם', going: 'התחלתם', '': 'עוד לא שיחקתם' };
+  const dayState = (n) => { const r = store.days[n]; return !r ? '' : r.done ? (r.won ? 'won' : 'lost') : r.g.length ? 'going' : ''; };
+  const cal = $('cal');
+  let shownMonth = 0;
+
+  function renderCalendar() {
+    const year = Math.floor(shownMonth / 12), month = shownMonth % 12;
+    $('calTitle').textContent = MONTH_FMT.format(new Date(Date.UTC(year, month, 1)));
+    $('calPrev').disabled = shownMonth <= firstMonth;
+    $('calNext').disabled = shownMonth >= lastMonth;
+    const grid = $('calGrid');
+    grid.textContent = '';
+    for (let i = new Date(Date.UTC(year, month, 1)).getUTCDay(); i > 0; i--) grid.appendChild(document.createElement('span'));
+    const length = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+    for (let d = 1; d <= length; d++) {
+      const n = Math.round((Date.UTC(year, month, d) - EPOCH) / DAY_MS) + 1;
+      const open = n >= 1 && n <= today;
+      const state = open ? dayState(n) : '';
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = d; b.disabled = !open;
+      b.className = ['cal-day', state, n === today && 'today', n === dayNo && 'current'].filter(Boolean).join(' ');
+      if (n === today) b.setAttribute('aria-current', 'date');
+      b.setAttribute('aria-label', `${DAY_FMT.format(new Date(Date.UTC(year, month, d)))}, ${open ? STATE_TEXT[state] : 'עוד לא נפתח'}`);
+      if (open) b.addEventListener('click', () => { location.href = n === today ? './' : `?day=${n}`; });
+      grid.appendChild(b);
+    }
+  }
+  const openCalendar = () => {
+    shownMonth = Math.min(monthOf(dateOfDay(dayNo)), lastMonth);
+    renderCalendar();
+    cal.showModal();
+  };
+  $('calBtn').addEventListener('click', openCalendar);
+  $('calBtn2').addEventListener('click', openCalendar);
+  $('calPrev').addEventListener('click', () => { shownMonth--; renderCalendar(); });
+  $('calNext').addEventListener('click', () => { shownMonth++; renderCalendar(); });
+  $('calClose').addEventListener('click', () => cal.close());
+  cal.addEventListener('click', (e) => { if (e.target === cal) cal.close(); });   // a tap on the dimmed area
+
   // ---------- share + countdown ----------
   const EMOJI = { win: '🟩', bad: '🟥', skip: '⬛', '': '⬜' };
   $('shareBtn').addEventListener('click', async () => {
@@ -855,7 +964,7 @@
   });
 
   function tickCountdown() {
-    if (!rec.done) return;
+    if (!rec.done || !isToday) return;               // an earlier day has no countdown
     const now = new Date();
     const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     const ms = Math.max(0, next - now);
@@ -869,7 +978,10 @@
   });
 
   // ---------- boot ----------
-  $('dayLabel').textContent = previewMode ? `תצוגה מקדימה: שיר מספר ${dayNo}` : `שיר מספר ${dayNo}`;
+  $('dayLabel').textContent = previewMode ? `תצוגה מקדימה: שיר מספר ${dayNo}` : isToday ? `שיר מספר ${dayNo}` : `שיר מספר ${dayNo}, ${DAY_FMT.format(dateOfDay(dayNo))}`;
+  $('todayLink').hidden = isToday;
+  $('todayBtn').hidden = isToday;
+  $('next').hidden = !isToday;                      // an earlier day has no countdown to the next song
   // best effort: a generic title for the system media controls instead of the video's own
   // (the iframe is another origin, so whether the browser prefers this one cannot be checked from here)
   try { navigator.mediaSession.metadata = new MediaMetadata({ title: 'תו השעה', artist: 'השיר היומי' }); } catch (e) { /* unsupported */ }
