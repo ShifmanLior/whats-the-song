@@ -4,8 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#ffffff">
 <title>תו השעה</title>
 <meta name="description" content="שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה.">
 <meta property="og:type" content="website">
@@ -25,9 +24,9 @@
 <style>
 
   /* Monochrome and quiet: flat black and white, hairlines, light type, square corners. State is shown with
-     fill, outline and icons rather than colour. Dark mode inverts the same tokens. */
+     fill, outline and icons rather than colour. White only, no dark mode. */
   :root {
-    color-scheme: light dark;
+    color-scheme: light;
     --paper: #ffffff;
     --ink: #000000;
     --muted: #595959;
@@ -35,17 +34,6 @@
     --soft: #f3f3f3;
     --soft-2: #e8e8e8;
     --mid: #bdbdbd;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --paper: #000000;
-      --ink: #ffffff;
-      --muted: #a8a8a8;
-      --line: #2b2b2b;
-      --soft: #141414;
-      --soft-2: #1f1f1f;
-      --mid: #4d4d4d;
-    }
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
@@ -96,9 +84,9 @@
     position: relative;
     width: 88px; height: 88px;
     margin-bottom: 16px;                            /* room for the ring that pulses around it */
-    border: 0; border-radius: 50%;
-    background: var(--ink);
-    color: var(--paper);
+    border: 1px solid var(--ink); border-radius: 50%;
+    background: var(--paper);
+    color: var(--ink);
     cursor: pointer;
     display: grid; place-items: center;
     transition: transform .12s ease;
@@ -193,13 +181,14 @@
   .list li.status:hover { background: none; }
   .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
   .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     height: 52px; border: 1px solid transparent;
     font-weight: 400; font-size: 16px; cursor: pointer;
     transition: transform .1s ease, background-color .15s ease;
   }
   .btn:active:not(:disabled) { transform: scale(0.98); }
   .btn:disabled { opacity: .3; cursor: not-allowed; }
-  .btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .btn.primary { background: transparent; border-color: var(--ink); color: var(--ink); }
   .btn.ghost { background: transparent; border-color: var(--mid); color: var(--ink); }
   .btn.ghost:hover:not(:disabled) { border-color: var(--ink); }
   .btn.danger { background: transparent; border-color: var(--ink); }
@@ -228,8 +217,10 @@
   }
   .squares i.bad::after { transform: rotate(-45deg); }
   .result .btn { width: 100%; }
-  .result-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 10px; }
-  a.btn { display: grid; place-items: center; text-decoration: none; color: var(--ink); }
+  .result-actions { display: grid; gap: 10px; margin-top: 10px; }
+  a.btn { text-decoration: none; color: var(--ink); }
+  .btn svg { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+  .result .btn.share { border-color: var(--ink); }
   .btn[hidden] { display: none; }
   .next { margin: 16px 0 0; color: var(--muted); font-size: 14px; }
   .next b { font-variant-numeric: tabular-nums; }
@@ -311,7 +302,7 @@
   .cal-day:disabled { border-color: transparent; color: var(--mid); cursor: default; }
   .cal-day.today { border-color: var(--ink); }
   .cal-day.current { outline: 2px solid var(--ink); outline-offset: 2px; }
-  .cal-day.won { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .cal-day.won { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
   .cal-day.lost { color: var(--muted); text-decoration: line-through; }
   .cal-day.going::after { content: ""; position: absolute; left: 50%; bottom: 5px; width: 4px; height: 4px; margin-left: -2px; background: currentColor; }
   .cal-key { display: flex; flex-wrap: wrap; gap: 8px 10px; margin: 16px 0; color: var(--muted); font-size: 13px; }
@@ -379,8 +370,8 @@
       <ul class="list" id="list" role="listbox" aria-label="הצעות" hidden></ul>
     </div>
     <div class="actions">
-      <button class="btn primary" id="guessBtn" type="button" disabled>נחשו</button>
-      <button class="btn ghost" id="skipBtn" type="button">עוד חצי שנייה</button>
+      <button class="btn primary" id="guessBtn" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>נחשו</button>
+      <button class="btn ghost" id="skipBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 6l-6 6 6 6M19 6l-6 6 6 6"/></svg><span id="skipText">עוד חצי שנייה</span></button>
     </div>
   </section>
 
@@ -389,10 +380,9 @@
     <p class="song-title" id="resultSong"></p>
     <p class="song-artist" id="resultArtist"></p>
     <div class="squares" id="resultSquares" aria-hidden="true"></div>
-    <button class="btn primary" id="shareBtn" type="button">שתפו תוצאה</button>
+    <button class="btn ghost share" id="shareBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M5 13v7h14v-7"/></svg>שתפו תוצאה</button>
     <div class="result-actions">
-      <button class="btn ghost" id="calBtn2" type="button">לוח שנה</button>
-      <a class="btn ghost" id="todayBtn" href="./" hidden>חזרה להיום</a>
+      <button class="btn ghost" id="calBtn2" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>שחקו בימים קודמים</button>
     </div>
     <p class="next" id="next">השיר הבא בעוד <b id="countdown">--:--:--</b></p>
   </section>
@@ -402,8 +392,8 @@
   <ol class="attempts" id="attempts" aria-label="הניחושים שלכם"></ol>
 
   <p class="notice" id="notice" role="alert" hidden></p>
-  <details class="remind" id="remind">
-    <summary>תזכורת יומית ביומן</summary>
+  <details class="remind" id="remind" hidden>
+    <summary>🔔 תזכורת יומית ביומן</summary>
     <div class="body">
       <p>נוסיף ליומן שלכם אירוע שחוזר כל יום, כדי שלא תפספסו את השיר החדש.</p>
       <label>באיזו שעה?<input type="time" id="remindTime" value="09:00"></label>
@@ -561,7 +551,7 @@
     const i = rec.g.length;
     const last = i >= STAGES.length - 1;
     const skip = $('skipBtn');
-    skip.textContent = last ? 'ויתור' : `עוד ${secsText(STAGES[i + 1] - STAGES[i])}`;
+    $('skipText').textContent = last ? 'ויתור' : `עוד ${secsText(STAGES[i + 1] - STAGES[i])}`;
     skip.classList.toggle('danger', last);
     $('stage').hidden = rec.done;
     $('guess').hidden = rec.done;
@@ -583,12 +573,13 @@
     box.hidden = false;
     box.classList.toggle('won', rec.won);
     box.classList.toggle('lost', !rec.won);
-    $('resultTitle').textContent = rec.won ? `נכון! ניחשתם בניסיון ${rec.g.length}` : 'לא הפעם';
+    $('resultTitle').textContent = rec.won ? `נכון! ניחשתם בניסיון ${rec.g.length} 🎯` : 'לא הפעם 😅';
     $('resultSong').textContent = answer.title;
     $('resultArtist').textContent = answer.artist;
     const sq = $('resultSquares'); sq.textContent = '';
     squaresFor(rec.g).forEach((c) => { const i = document.createElement('i'); if (c) i.className = c; sq.appendChild(i); });
     $('playerWrap').classList.add('revealed');
+    $('remind').hidden = false;                     // the reminder is offered once the game is over
     tickCountdown();
   }
 
@@ -1144,7 +1135,6 @@
   // ---------- boot ----------
   $('dayLabel').textContent = previewMode ? `תצוגה מקדימה: שיר מספר ${dayNo}` : isToday ? `שיר מספר ${dayNo}` : `שיר מספר ${dayNo}, ${DAY_FMT.format(dateOfDay(dayNo))}`;
   $('todayLink').hidden = isToday;
-  $('todayBtn').hidden = isToday;
   $('next').hidden = !isToday;                      // an earlier day has no countdown to the next song
   // best effort: a generic title for the system media controls instead of the video's own
   // (the iframe is another origin, so whether the browser prefers this one cannot be checked from here)
