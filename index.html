@@ -23,17 +23,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@200;300;400;600&display=swap" rel="stylesheet">
 <style>
 
-  /* Monochrome and quiet: flat black and white, hairlines, light type, square corners. State is shown with
-     fill, outline and icons rather than colour. White only, no dark mode. */
+  /* Quiet and flat: white, cool blue-grays, hairlines, light type, square corners. Indigo is only an accent, in a few
+     small places: progress, rings, correct answers, links and focus. State is still shown with fill, outline and icons
+     as well as colour. Light only, no dark mode.
+     Contrast on white: --ink 15.9:1, --muted 6.8:1, --mid 3.2:1 (borders), --accent 5.8:1. --accent is used for fills,
+     rings and lines; --accent-l is the light tint for marks on a dark (--ink) row. */
   :root {
     color-scheme: light;
     --paper: #ffffff;
-    --ink: #000000;
-    --muted: #595959;
-    --line: #e2e2e2;
-    --soft: #f3f3f3;
-    --soft-2: #e8e8e8;
-    --mid: #bdbdbd;
+    --ink: #1e2133;
+    --muted: #555a74;
+    --line: #e5e6ec;
+    --soft: #f6f6f8;
+    --soft-2: #ebecf0;
+    --mid: #8a8fa8;
+    --accent: #5058d0;
+    --accent-l: #c4c9f6;
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
@@ -100,12 +105,12 @@
   .play[data-state="playing"] .i-pause { display: block; }
   .play[data-state="playing"]::after {
     content: ""; position: absolute; inset: -8px; border-radius: 50%;
-    border: 2px solid var(--ink); opacity: 0;
+    border: 2px solid var(--accent); opacity: 0;
     animation: pulse 1.2s ease-out infinite;
   }
   .play[data-state="loading"]::after {
     content: ""; position: absolute; inset: -8px; border-radius: 50%;
-    border: 2px solid transparent; border-top-color: var(--ink);
+    border: 2px solid transparent; border-top-color: var(--accent);
     animation: spin .8s linear infinite;
   }
   @keyframes pulse { from { transform: scale(0.9); opacity: .6; } to { transform: scale(1.25); opacity: 0; } }
@@ -119,8 +124,8 @@
     overflow: hidden;
   }
   .tl-unlocked, .tl-played { position: absolute; inset-block: 0; left: 0; }
-  .tl-unlocked { background: var(--mid); transition: width .35s ease; }
-  .tl-played { background: var(--ink); }
+  .tl-unlocked { background: var(--mid); opacity: .5; transition: width .35s ease; }
+  .tl-played { background: var(--accent); }
   .tl-tick { position: absolute; inset-block: 0; width: 2px; background: var(--paper); }
   .tl-marks { position: relative; height: 20px; margin-top: 8px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
   .tl-marks span { position: absolute; transform: translateX(-50%); }
@@ -149,7 +154,7 @@
   .attempt.skip .txt { color: var(--muted); }
   .attempt.win { background: var(--ink); border-color: var(--ink); color: var(--paper); }
   .attempt.win .badge { background: var(--paper); color: var(--ink); }
-  .attempt.win::after { content: "\2713"; font-weight: 400; }
+  .attempt.win::after { content: "\2713"; font-weight: 400; color: var(--accent-l); }
 
   /* guess area */
   .guess { margin-top: 20px; }
@@ -162,13 +167,13 @@
     font-size: 17px;
   }
   .combo input::placeholder { color: var(--muted); }
-  .combo input:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+  .combo input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
   .list {
     position: absolute; z-index: 5; inset-inline: 0; top: calc(100% + 6px);
     margin: 0; padding: 0; list-style: none;
     background: var(--paper);
     border: 1px solid var(--line);
-    box-shadow: 0 10px 28px rgba(0, 0, 0, .1);
+    box-shadow: 0 10px 28px rgba(46, 42, 48, .12);
     max-height: 320px; overflow-y: auto;
   }
   .list[hidden] { display: none; }
@@ -196,7 +201,7 @@
   /* result: a plain card with a hairline border, so the end of the game stands out without turning the page black */
   .result {
     margin-top: 20px; padding: 24px 20px;
-    border: 1px solid var(--ink);
+    border: 1px solid var(--accent);
     text-align: center;
   }
   .result[hidden] { display: none; }
@@ -208,7 +213,7 @@
     position: relative; flex: 1 1 0; max-width: 28px; aspect-ratio: 1;
     border: 1px solid var(--ink); opacity: .25;
   }
-  .squares i.win { background: var(--ink); opacity: 1; }
+  .squares i.win { background: var(--accent); border-color: var(--accent); opacity: 1; }
   .squares i.skip { background: var(--ink); opacity: .3; }
   .squares i.bad { border-width: 2px; opacity: 1; }
   .squares i.bad::before, .squares i.bad::after {
@@ -279,12 +284,12 @@
   .link {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 0; border: 0; background: none; color: var(--ink);
-    font: inherit; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; cursor: pointer;
+    font: inherit; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; white-space: nowrap; cursor: pointer;
   }
   .link[hidden] { display: none; }
   .link svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; }
   dialog.cal { width: min(92vw, 380px); padding: 0; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); }
-  dialog.cal::backdrop { background: rgba(0, 0, 0, .45); }
+  dialog.cal::backdrop { background: rgba(46, 42, 48, .45); }
   .cal-body { padding: 20px 18px 18px; }
   .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .cal-head h2 { margin: 0; font-size: 22px; font-weight: 300; }
@@ -302,7 +307,7 @@
   .cal-day:disabled { border-color: transparent; color: var(--mid); cursor: default; }
   .cal-day.today { border-color: var(--ink); }
   .cal-day.current { outline: 2px solid var(--ink); outline-offset: 2px; }
-  .cal-day.won { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+  .cal-day.won { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--soft); }
   .cal-day.lost { color: var(--muted); text-decoration: line-through; }
   .cal-day.going::after { content: ""; position: absolute; left: 50%; bottom: 5px; width: 4px; height: 4px; margin-left: -2px; background: currentColor; }
   .cal-key { display: flex; flex-wrap: wrap; gap: 8px 10px; margin: 16px 0; color: var(--muted); font-size: 13px; }
