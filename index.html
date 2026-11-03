@@ -63,15 +63,11 @@
     padding: 28px 20px 56px;
   }
 
-  /* header */
-  .top {
-    display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--line);
-  }
+  /* the name, the day, the calendar link and the stats, at the foot of the home screen: part of the page, not a bar */
+  .info { margin-top: 40px; text-align: center; }
   h1 { margin: 0; font-size: 42px; font-weight: 200; letter-spacing: -0.02em; line-height: 1.05; }
   .sub { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
-  .stats { display: flex; gap: 8px; }
+  .stats { display: flex; justify-content: center; gap: 8px; margin-top: 18px; }
   .stat {
     min-width: 60px;
     padding: 6px 10px;
@@ -256,9 +252,9 @@
   /* screens: show only what belongs to the current one (home or game); home also has two states, before and after the game */
   .app[data-screen="home"] > :not([data-s~="home"]),
   .app[data-screen="game"] > :not([data-s~="game"]) { display: none; }
-  .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .bar .sub { margin: 0; }
-  .start { margin-top: 14px; text-align: center; }
+  .start { margin-top: 6px; text-align: center; }
   .status { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
 
   /* home hero: a fan of flat record sleeves, and a vinyl record that is the play button. Everything moves with
@@ -338,7 +334,7 @@
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   /* header links and the calendar */
-  .links { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 2px 16px; font-size: 14px; }
+  .links { margin: 6px 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 16px; font-size: 14px; }
   .link {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 0; border: 0; background: none; color: var(--ink);
@@ -377,7 +373,6 @@
   @media (max-width: 480px) {
     .app { padding: 16px 16px 48px; }
     h1 { font-size: 34px; }
-    .top { padding-bottom: 14px; }
     .lead { margin-top: 10px; font-size: 14px; }
     .stage { margin-top: 18px; gap: 12px; }
     .play { width: 76px; height: 76px; margin-bottom: 12px; }
@@ -397,20 +392,6 @@
   <!-- Two screens in one page: home and game. Home has two states, before the game (data-when="before") and after it
        (data-when="after"). Each direct child of .app lists the screens it belongs to in data-s; the others are hidden by
        CSS. The YouTube player stays on both screens (it must not be display:none to play). -->
-  <header class="top" data-s="home">
-    <div>
-      <h1>תו השעה</h1>
-      <p class="sub" id="dayLabel"></p>
-      <p class="links">
-        <button class="link" id="calBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>לוח שנה</button>
-        <a class="link" id="todayLink" href="./" hidden>חזרה להיום</a>
-      </p>
-    </div>
-    <div class="stats">
-      <div class="stat"><b id="statStreak">0</b><span>רצף</span></div>
-      <div class="stat"><b id="statWins">0</b><span>ניצחונות</span></div>
-    </div>
-  </header>
   <!-- home, before the game: the way in. The play button is a record; it is the control, the sleeves are decoration -->
   <section class="start" data-s="home" data-when="before" aria-label="התחלה">
     <!-- decoration only: five flat sleeves in a fan, dealt in on load and lifted one after another -->
@@ -495,6 +476,19 @@
       <button class="alt" id="remindFile" type="button" hidden>לא נפתח? שמרו כקובץ</button>
     </div>
   </details>
+  <!-- home, both states: what used to be the top bar (the name, the day, the calendar, the stats) is part of the screen, at its foot -->
+  <section class="info" data-s="home" aria-label="על המשחק">
+    <h1>תו השעה</h1>
+    <p class="sub" id="dayLabel"></p>
+    <p class="links">
+      <button class="link" id="calBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>לוח שנה</button>
+      <a class="link" id="todayLink" href="./" hidden>חזרה להיום</a>
+    </p>
+    <div class="stats">
+      <div class="stat"><b id="statStreak">0</b><span>רצף</span></div>
+      <div class="stat"><b id="statWins">0</b><span>ניצחונות</span></div>
+    </div>
+  </section>
   <p class="foot" data-s="home" data-when="before">השיר מתחלף בחצות</p>
   <p class="foot credit" data-s="home">המשחק נבנה ב<svg class="heart" viewBox="0 0 24 24" aria-label="אהבה" role="img"><path d="M12 21s-7.2-4.5-9.1-9.4C1.6 8.3 3.6 5 7 5c2 0 3.4 1 5 3 1.6-2 3-3 5-3 3.4 0 5.4 3.3 4.1 6.6C19.2 16.5 12 21 12 21z"/></svg> על ידי ליאור ומוקדש לנילס ותמי</p>
 </main>
