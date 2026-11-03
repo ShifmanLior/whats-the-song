@@ -258,9 +258,52 @@
   .app[data-screen="game"] > :not([data-s~="game"]) { display: none; }
   .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
   .bar .sub { margin: 0; }
-  .start { margin-top: 28px; text-align: center; }
-  .status { margin: 0 0 14px; color: var(--muted); font-size: 15px; }
-  .btn.cta { width: 100%; height: 60px; font-size: 18px; }
+  .start { margin-top: 14px; text-align: center; }
+  .status { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
+
+  /* home hero: a fan of flat record sleeves, and a vinyl record that is the play button. Everything moves with
+     transform and opacity only; with reduced motion the animations are off and the fan and the record stand still. */
+  .hero { --s: clamp(84px, 26vw, 112px); position: relative; height: calc(var(--s) * 1.2); margin-top: 10px; }
+  .sleeve {
+    position: absolute; left: 50%; top: 0; width: var(--s); height: var(--s); margin-left: calc(var(--s) / -2);
+    background: var(--soft-2); box-shadow: 0 8px 20px rgba(30, 33, 51, .16), 0 0 0 1px rgba(30, 33, 51, .06);
+    transform: translate(calc(var(--s) * var(--x)), var(--y)) rotate(var(--r));
+    animation: deal .8s cubic-bezier(.2, .8, .2, 1) calc(var(--i) * 90ms) both,
+               lift 7s ease-in-out calc(1.4s + var(--i) * .7s) infinite;
+  }
+  .sleeve svg { display: block; width: 100%; height: 100%; }
+  .sleeve .a { fill: var(--accent); } .sleeve .l { fill: var(--accent-l); } .sleeve .i { fill: var(--ink); }
+  .sleeve .p { fill: var(--paper); } .sleeve .s { fill: var(--soft-2); }
+  @keyframes deal { from { transform: translate(0, 26px) rotate(0deg) scale(.7); opacity: 0; } }
+  @keyframes lift {
+    0%, 60%, 100% { transform: translate(calc(var(--s) * var(--x)), var(--y)) rotate(var(--r)); }
+    20% { transform: translate(calc(var(--s) * var(--x)), calc(var(--y) - 12px)) rotate(calc(var(--r) * .5)); }
+  }
+  .vinyl {
+    position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    margin: -44px auto 0; padding: 0; background: none; border: 0; color: var(--ink); cursor: pointer;
+  }
+  .vwrap { position: relative; display: block; width: 112px; height: 112px; transition: transform .15s ease; animation: rise .7s cubic-bezier(.2, .8, .2, 1) .5s both; }
+  .vinyl:active .vwrap { transform: scale(.96); }
+  .vwrap::after {
+    content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--accent); opacity: 0; pointer-events: none;
+    animation: ring 2.6s ease-out 1.6s infinite;
+  }
+  .disc { position: absolute; inset: 0; border-radius: 50%; background: var(--ink); overflow: hidden; box-shadow: 0 0 0 4px var(--paper), 0 10px 26px rgba(30, 33, 51, .28); }
+  .disc::before {
+    content: ""; position: absolute; inset: 0; border-radius: 50%;
+    background: repeating-radial-gradient(circle, rgba(255, 255, 255, .08) 0 1px, transparent 1px 4px),
+                conic-gradient(from 20deg, transparent 0 14%, rgba(255, 255, 255, .2) 22%, transparent 30%, transparent 64%, rgba(255, 255, 255, .2) 72%, transparent 80%);
+    animation: spin 7s linear infinite;
+  }
+  .disc::after { content: ""; position: absolute; inset: 27%; border-radius: 50%; background: var(--accent); }
+  .vinyl .tri { position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; margin: -13px 0 0 -13px; fill: #fff; }
+  .vinyl:hover .disc::before { animation-duration: 2.4s; }
+  .vinyl:focus-visible { outline: none; }
+  .vinyl:focus-visible .vwrap { outline: 3px solid var(--ink); outline-offset: 6px; border-radius: 50%; }
+  #startText { font-size: 22px; font-weight: 300; letter-spacing: .01em; }
+  @keyframes rise { from { transform: translateY(14px) scale(.85); opacity: 0; } }
+  @keyframes ring { 0% { transform: scale(1); opacity: .6; } 100% { transform: scale(1.4); opacity: 0; } }
   .app[data-state="before"] [data-when="after"], .app[data-state="after"] [data-when="before"] { display: none; }   /* the home screen's two states */
   .guesses .attempts { margin: 0; }
   .foot .heart { width: 13px; height: 13px; vertical-align: -2px; fill: currentColor; }
@@ -366,16 +409,23 @@
       <div class="stat"><b id="statWins">0</b><span>ניצחונות</span></div>
     </div>
   </header>
-  <p class="lead" data-s="home" data-when="before">שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה, עד 5 שניות.</p>
-
-  <!-- home, before the game: the rules and the way in -->
+  <!-- home, before the game: the way in. The play button is a record; it is the control, the sleeves are decoration -->
   <section class="start" data-s="home" data-when="before" aria-label="התחלה">
-    <p class="status" id="homeStatus"></p>
-    <button class="btn primary cta" id="startBtn" type="button">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z"/></svg>
+    <!-- decoration only: five flat sleeves in a fan, dealt in on load and lifted one after another -->
+    <div class="hero" aria-hidden="true">
+      <div class="sleeve" style="--i:0;--x:-1.15;--y:18px;--r:-14deg"><svg viewBox="0 0 100 100"><rect width="100" height="100" class="l"/><circle cx="50" cy="50" r="42" class="a"/><circle cx="50" cy="50" r="30" class="l"/><circle cx="50" cy="50" r="18" class="a"/><circle cx="50" cy="50" r="6" class="l"/></svg></div>
+      <div class="sleeve" style="--i:4;--x:1.15;--y:18px;--r:14deg"><svg viewBox="0 0 100 100"><rect width="100" height="100" class="i"/><path d="M12 100a38 38 0 0 1 76 0z" class="l"/><circle cx="74" cy="26" r="9" class="a"/></svg></div>
+      <div class="sleeve" style="--i:1;--x:-0.58;--y:6px;--r:-7deg"><svg viewBox="0 0 100 100"><rect width="100" height="100" class="s"/><rect x="14" y="46" width="9" height="54" class="i"/><rect x="28" y="28" width="9" height="72" class="i"/><rect x="42" y="58" width="9" height="42" class="i"/><rect x="56" y="16" width="9" height="84" class="a"/><rect x="70" y="40" width="9" height="60" class="i"/><rect x="84" y="64" width="9" height="36" class="i"/></svg></div>
+      <div class="sleeve" style="--i:3;--x:0.58;--y:6px;--r:7deg"><svg viewBox="0 0 100 100"><rect width="100" height="100" class="a"/><path d="M0 100L100 0v100z" class="i"/><circle cx="30" cy="30" r="11" class="p"/></svg></div>
+      <div class="sleeve" style="--i:2;--x:0;--y:0px;--r:0deg"><svg viewBox="0 0 100 100"><rect width="100" height="100" class="p"/><circle cx="100" cy="0" r="92" class="l"/><circle cx="100" cy="0" r="70" class="a"/><circle cx="100" cy="0" r="48" class="l"/><circle cx="100" cy="0" r="26" class="i"/></svg></div>
+    </div>
+    <button class="vinyl" id="startBtn" type="button" aria-describedby="homeStatus">
+      <span class="vwrap" aria-hidden="true"><span class="disc"></span><svg class="tri" viewBox="0 0 24 24"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z"/></svg></span>
       <span id="startText">שחקו</span>
     </button>
+    <p class="status" id="homeStatus"></p>
   </section>
+  <p class="lead" data-s="home" data-when="before">שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה, עד 5 שניות.</p>
 
   <div class="bar" data-s="game">
     <button class="link" id="backBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>מסך ראשי</button>
