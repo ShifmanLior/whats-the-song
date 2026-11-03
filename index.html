@@ -272,6 +272,8 @@
                lift 7s ease-in-out calc(1.4s + var(--i) * .7s) infinite;
   }
   .sleeve svg { display: block; width: 100%; height: 100%; }
+  .sleeve img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .6s ease; }
+  .sleeve img.on { opacity: 1; }
   .sleeve .a { fill: var(--accent); } .sleeve .l { fill: var(--accent-l); } .sleeve .i { fill: var(--ink); }
   .sleeve .p { fill: var(--paper); } .sleeve .s { fill: var(--soft-2); }
   @keyframes deal { from { transform: translate(0, 26px) rotate(0deg) scale(.7); opacity: 0; } }
@@ -1264,6 +1266,58 @@
     if (!document.hidden && !previewMode && dayNumberOf(new Date()) !== today) location.reload();
   });
 
+  // ---------- real album covers on the home screen ----------
+  // When five covers have loaded from the iTunes Search API they fade in over the drawn sleeves; otherwise (no network,
+  // blocked, an image that will not load) the drawn sleeves stay. The albums are fixed and famous, none is by an artist
+  // in songs.js, and one by today's artist would be skipped, so a cover can never hint at the answer. The picked image
+  // addresses are kept for a week, so the API is asked about once a week per visitor, and only while the hero is shown.
+  const COVER_ALBUMS = [
+    ['Pink Floyd', 'The Dark Side of the Moon'], ['Fleetwood Mac', 'Rumours'], ['Miles Davis', 'Kind of Blue'],
+    ['Radiohead', 'OK Computer'], ['David Bowie', 'Aladdin Sane'], ['Amy Winehouse', 'Back to Black'],
+    ['Prince', 'Purple Rain'], ['Joy Division', 'Unknown Pleasures'],
+  ];
+  const COVERS_KEY = 'whats-the-song.covers.v1';
+  async function findCover([artist, album], signal) {
+    const r = await fetch('https://itunes.apple.com/search?media=music&entity=album&limit=5&country=US&term=' + encodeURIComponent(`${artist} ${album}`), { signal });
+    if (!r.ok) return null;
+    const hit = ((await r.json()).results || []).find((x) => x.artworkUrl100 && x.artistName && x.collectionName
+      && norm(x.artistName).includes(norm(artist)) && norm(x.collectionName).includes(norm(album)));
+    if (!hit || artistIn(norm(hit.artistName))) return null;   // never today's artist
+    return hit.artworkUrl100.replace(/\/\d+x\d+bb\./, '/300x300bb.');
+  }
+  const preload = (url) => new Promise((resolve) => { const im = new Image(); im.onload = () => resolve(im); im.onerror = () => resolve(null); im.src = url; });
+  async function loadCovers() {
+    if (rec.done) return;                           // the hero is only shown before the game
+    const sleeves = [...document.querySelectorAll('.sleeve')], n = sleeves.length;
+    let candidates = null, cached = false;
+    try {
+      const c = JSON.parse(localStorage.getItem(COVERS_KEY));
+      if (c && Date.now() - c.t < 7 * 86400000 && c.urls.length === n) { candidates = c.urls; cached = true; }
+    } catch (e) { /* nothing saved */ }
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 5000);
+    try {
+      if (!candidates) {
+        const picked = COVER_ALBUMS.slice().sort(() => Math.random() - 0.5);
+        candidates = (await Promise.all(picked.map((a) => findCover(a, ctl.signal).catch((e) => { dbg('cover: ' + e.message); return null; })))).filter(Boolean);
+        if (candidates.length < n) return;
+      }
+      const used = candidates.slice(0, n);
+      const imgs = await Promise.all(used.map(preload));
+      let next = n;
+      for (let i = 0; i < n; i++) {                 // an image that will not load is replaced by one of the spare covers
+        while (!imgs[i] && next < candidates.length) { used[i] = candidates[next++]; imgs[i] = await preload(used[i]); }
+      }
+      if (imgs.some((im) => !im)) {                 // not enough covers load: keep the drawn sleeves
+        if (cached) { try { localStorage.removeItem(COVERS_KEY); } catch (e) { /* ignore */ } }
+        return;
+      }
+      if (!cached || used.some((u, i) => u !== candidates[i])) { try { localStorage.setItem(COVERS_KEY, JSON.stringify({ t: Date.now(), urls: used })); } catch (e) { /* ignore */ } }
+      sleeves.forEach((sl, i) => { imgs[i].alt = ''; sl.appendChild(imgs[i]); });
+      requestAnimationFrame(() => requestAnimationFrame(() => sleeves.forEach((sl) => sl.lastElementChild.classList.add('on'))));
+    } catch (e) { dbg('covers: ' + e.message); }   // offline or blocked: the drawn sleeves stay
+    finally { clearTimeout(timer); }
+  }
+
   // ---------- boot ----------
   $('dayLabel').textContent = $('barLabel').textContent = previewMode ? `תצוגה מקדימה: שיר מספר ${dayNo}` : isToday ? `שיר מספר ${dayNo}` : `שיר מספר ${dayNo}, ${DAY_FMT.format(dateOfDay(dayNo))}`;
   $('todayLink').hidden = isToday;
@@ -1282,6 +1336,7 @@
   render();
   history.replaceState({ screen: 'home' }, '');
   loadYouTube();
+  loadCovers();
 })();
 </script>
 </body>
