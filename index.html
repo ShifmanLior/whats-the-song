@@ -252,10 +252,12 @@
   .notice code { direction: ltr; unicode-bidi: embed; background: var(--soft-2); padding: 1px 6px; }
   .foot { margin-top: 32px; text-align: center; color: var(--muted); font-size: 13px; }
   .foot.credit { margin-top: 6px; }
+  .foot .heart { width: 13px; height: 13px; vertical-align: -2px; fill: currentColor; }
 
   /* daily reminder: a calendar event that repeats every day, so no account or email address is needed */
   .remind { margin-top: 20px; border: 1px solid var(--line); font-size: 15px; }
   .remind summary { padding: 12px 14px; text-align: center; cursor: pointer; font-weight: 400; }
+  .remind summary svg { width: 18px; height: 18px; margin-inline-end: 6px; vertical-align: -4px; fill: none; stroke: currentColor; stroke-width: 1.5; }
   .remind[open] summary { border-bottom: 1px solid var(--line); }
   .remind .body { padding: 14px; }
   .remind p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
@@ -398,7 +400,7 @@
 
   <p class="notice" id="notice" role="alert" hidden></p>
   <details class="remind" id="remind" hidden>
-    <summary>🔔 תזכורת יומית ביומן</summary>
+    <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0112 0v5.5l1.5 2h-15zM10 21a2 2 0 004 0"/></svg>תזכורת יומית ביומן</summary>
     <div class="body">
       <p>נוסיף ליומן שלכם אירוע שחוזר כל יום, כדי שלא תפספסו את השיר החדש.</p>
       <label>באיזו שעה?<input type="time" id="remindTime" value="09:00"></label>
@@ -410,7 +412,7 @@
     </div>
   </details>
   <p class="foot">השיר מתחלף בחצות</p>
-  <p class="foot credit">המשחק נבנה ב♥︎ על ידי ליאור ומוקדש לנילס ותמי</p>
+  <p class="foot credit">המשחק נבנה ב<svg class="heart" viewBox="0 0 24 24" aria-label="אהבה" role="img"><path d="M12 21s-7.2-4.5-9.1-9.4C1.6 8.3 3.6 5 7 5c2 0 3.4 1 5 3 1.6-2 3-3 5-3 3.4 0 5.4 3.3 4.1 6.6C19.2 16.5 12 21 12 21z"/></svg> על ידי ליאור ומוקדש לנילס ותמי</p>
 </main>
 <dialog class="cal" id="cal" aria-label="לוח שנה">
   <div class="cal-body">
@@ -578,7 +580,7 @@
     box.hidden = false;
     box.classList.toggle('won', rec.won);
     box.classList.toggle('lost', !rec.won);
-    $('resultTitle').textContent = rec.won ? `נכון! ניחשתם בניסיון ${rec.g.length} 🎯` : 'לא הפעם 😅';
+    $('resultTitle').textContent = rec.won ? `נכון! ניחשתם בניסיון ${rec.g.length}` : 'לא הפעם';
     $('resultSong').textContent = answer.title;
     $('resultArtist').textContent = answer.artist;
     const sq = $('resultSquares'); sq.textContent = '';
@@ -1031,6 +1033,7 @@
   cal.addEventListener('click', (e) => { if (e.target === cal) cal.close(); });   // a tap on the dimmed area
 
   // ---------- share + countdown ----------
+  // the page itself uses icons only, but the shared message is plain text, so it keeps emoji
   const EMOJI = { win: '🟩', bad: '🟥', skip: '⬛', '': '⬜' };
   // The first line says whose result this is and how it went, so a pasted message does not read as just a link to play
   // (the chat's link preview card sits right below it). The song itself is never named.
