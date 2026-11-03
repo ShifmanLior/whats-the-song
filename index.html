@@ -334,7 +334,16 @@
   .remind .alt { display: block; width: 100%; margin-top: 10px; padding: 6px; background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
   .remind .alt[hidden] { display: none; }
 
-  /* feedback: a dialog with a message and an email address that is optional */
+  /* feedback: a quiet line of text above the credit opens a dialog with a message and an email address that is optional */
+  .fbrow { margin: 24px 0 0; text-align: center; }
+  .fbrow[hidden] { display: none; }
+  .fblink {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 6px;
+    background: none; border: 0; color: var(--muted); font: inherit; font-size: 14px; cursor: pointer;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .fblink svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; }
+  @media (hover: hover) { .fblink:hover { color: var(--ink); } }
   .fb h2 { margin: 0 0 6px; font-size: 22px; font-weight: 300; text-align: center; }
   .fb h2:focus { outline: none; }
   .fb .lead { margin: 0 0 14px; color: var(--muted); font-size: 14px; text-align: center; }
@@ -529,8 +538,8 @@
   <section class="more" data-s="home" data-when="after">
     <button class="btn ghost" id="calBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 4v6h6M3.5 15a9 9 0 1 0 2.1-9.4L1.5 10M12 7v5l3 2"/></svg>שחקו בימים קודמים</button>
     <button class="btn ghost" id="remindBtn" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0112 0v5.5l1.5 2h-15zM10 21a2 2 0 004 0"/></svg>תזכורת יומית ביומן</button>
-    <button class="btn ghost" id="feedbackBtn" type="button" aria-haspopup="dialog" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>כתבו לנו פידבק</button>
   </section>
+  <p class="fbrow" id="feedbackRow" data-s="home" data-when="after" hidden><button class="fblink" id="feedbackBtn" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>יש הצעה או בעיה? כתבו לנו</button></p>
   <p class="foot" data-s="home" data-when="before">השיר מתחלף בחצות</p>
   <p class="foot credit" data-s="home">המשחק נבנה ב<svg class="heart" viewBox="0 0 24 24" aria-label="אהבה" role="img"><path d="M12 21s-7.2-4.5-9.1-9.4C1.6 8.3 3.6 5 7 5c2 0 3.4 1 5 3 1.6-2 3-3 5-3 3.4 0 5.4 3.3 4.1 6.6C19.2 16.5 12 21 12 21z"/></svg> על ידי ליאור ומוקדש לנילס ותמי</p>
 </main>
@@ -1361,11 +1370,11 @@
   // ---------- feedback: a message, and an email address if the player wants an answer ----------
   // The page has no server, so the message goes to Web3Forms (web3forms.com), which mails it to the owner. To switch this on:
   // enter the owner's address on web3forms.com, which mails an access key; put it in FEEDBACK_KEY. The key is meant to be public.
-  // Until then the button stays hidden. Sent with the message: the text, the address if given, the day and the kind of device.
-  const FEEDBACK_KEY = '';
+  // Until then the line that opens the dialog stays hidden. Sent with the message: the text, the address if given, the day and the kind of device.
+  const FEEDBACK_KEY = '7738efec-1726-488d-9a83-b798424a3f5b';
   const FEEDBACK_URL = 'https://api.web3forms.com/submit';
   const fb = $('feedback');
-  if (FEEDBACK_KEY) $('feedbackBtn').hidden = false;
+  if (FEEDBACK_KEY) $('feedbackRow').hidden = false;
   const fbReset = () => { $('fbFields').hidden = false; $('fbThanks').hidden = true; $('fbNote').textContent = ''; $('fbNote').className = 'note'; fbCheck(); };
   const fbCheck = () => { $('fbSend').disabled = $('fbText').value.trim().length < 3; };
   $('feedbackBtn').addEventListener('click', () => { track('feedback_open', { day: dayNo }); fbReset(); fb.showModal(); });
