@@ -13,7 +13,7 @@
 <meta property="og:description" content="שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה.">
 <meta property="og:url" content="https://whats-the-song.vercel.app/">
 <meta property="og:locale" content="he_IL">
-<meta property="og:image" content="https://whats-the-song.vercel.app/og.png?v=5">
+<meta property="og:image" content="https://whats-the-song.vercel.app/og.png?v=6">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="תו השעה: מניפת עטיפות אלבומים מאוירות ותקליט עם כפתור נגינה, שיר חדש בכל יום">
@@ -24,12 +24,13 @@
 <style>
 
   /* Quiet and flat: warm cream paper, near-black ink, warm grays, hairlines, light type, square corners. The colours come
-     from the album covers in covers/: their cream and black, and their red-orange as the one accent, used only in small
-     places (progress, rings, the record's label, correct answers, link underlines, focus). State is still shown with
-     fill, outline and icons as well as colour. Light only, no dark mode.
-     Contrast on the paper: --ink 17.3:1, --muted 7.1:1, --mid 3.7:1 (borders), --accent 4.1:1 (white on it 4.4:1).
-     --accent is for fills, rings and lines, not for text; --accent-l (mustard) is the light tint for marks on a dark
-     (--ink) row and for the drawn sleeves. The line and soft tints are --mid mixed into the paper. */
+     from the album covers in covers/: their cream and black, and one accent that changes every day (see ACCENTS in the
+     head), used only in small places (progress, rings, the record's label, correct answers, link underlines, focus).
+     State is still shown with fill, outline and icons as well as colour. Light only, no dark mode.
+     Contrast on the paper: --ink 17.3:1, --muted 7.1:1, --mid 3.7:1 (borders); every accent of the week is at least
+     3.8:1 on it, and white on any of them as well. --accent is for fills, rings and lines, not for text; --accent-l is
+     the accent mixed with white, the light tint for marks on a dark (--ink) row and for the drawn sleeves. The line and
+     soft tints are --mid mixed into the paper. */
   :root {
     color-scheme: light;
     --paper: #fbf6ee;
@@ -39,8 +40,8 @@
     --soft: #f2ece4;
     --soft-2: #e9e3d9;
     --mid: #8a7d6c;
-    --accent: #d9431c;
-    --accent-l: #f2b705;
+    --accent: #d82828;                              /* the accent changes every day (see ACCENTS in the head); this is the fallback */
+    --accent-l: #f3bfbf;
     --shade: 23, 18, 13;                            /* the colour of shadows, as r, g, b */
   }
   * { box-sizing: border-box; }
@@ -282,7 +283,7 @@
   .sleeve .p { fill: var(--paper); } .sleeve .s { fill: var(--soft-2); }
   @keyframes deal { from { transform: translate(0, 26px) rotate(0deg) scale(.7); } }
   .vinyl {
-    position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 28px;   /* room for the ring that pulses around the record */
     margin: 0 auto; padding: 0; background: none; border: 0; color: var(--ink); cursor: pointer;
   }
   .vwrap { position: relative; display: block; width: 112px; height: 112px; transition: transform .15s ease; animation: rise .7s cubic-bezier(.2, .8, .2, 1) .5s both; }
@@ -393,6 +394,26 @@
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
 </style>
+<script>
+  // One accent colour per day. The seven come from the covers in covers/ (their reds, blues, oranges, greens, purples and
+  // golds, taken from the most common colour of each hue and darkened where needed to reach about 4:1 on the paper). Only
+  // the accent changes: the paper, the ink and the grays stay as they are. Day N gets ACCENTS[(N - 1) % 7], and the order
+  // alternates warm and cool so two days in a row never look alike. --accent-l, the light tint, is the accent mixed with
+  // white. This runs before the page is drawn so nothing flashes; the main script sets it again with the exact day.
+  window.ACCENTS = ['#d82828', '#0a6eaa', '#977a05', '#884898', '#cf5714', '#386848', '#8c1d2c'];
+  window.setAccent = function (day) {
+    var c = window.ACCENTS[(((day - 1) % window.ACCENTS.length) + window.ACCENTS.length) % window.ACCENTS.length], t = [1, 3, 5].map(function (i) {
+      return Math.round(parseInt(c.substr(i, 2), 16) * 0.28 + 255 * 0.72);
+    });
+    document.documentElement.style.setProperty('--accent', c);
+    document.documentElement.style.setProperty('--accent-l', 'rgb(' + t.join(',') + ')');
+  };
+  (function () {
+    var q = new URLSearchParams(location.search), n = new Date(), asked = parseInt(q.get('day'), 10);
+    var today = Math.round((Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) - Date.UTC(2026, 9, 31)) / 86400000) + 1;
+    window.setAccent(q.has('preview') ? (asked || today) : (asked >= 1 && asked <= today ? asked : today));
+  })();
+</script>
 </head>
 <body>
 <main class="app" data-screen="home" data-state="before">
@@ -562,6 +583,7 @@
   const asked = parseInt(params.get('day'), 10);    // ?day=2 plays an earlier day, saved like any other; later days are not open yet
   const dayNo = previewMode ? (asked || today) : asked >= 1 && asked <= today ? asked : today;
   const isToday = dayNo === today;
+  window.setAccent(dayNo);                          // the accent of this day (the head already set it from the same rule)
   const answer = SONGS[(((dayNo - 1) % SONGS.length) + SONGS.length) % SONGS.length];
 
   // ---------- saved progress ----------
