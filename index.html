@@ -262,8 +262,8 @@
   .start { margin-top: 28px; text-align: center; }
   .status { margin: 0 0 14px; color: var(--muted); font-size: 15px; }
   .btn.cta { width: 100%; height: 60px; font-size: 18px; }
-  .btn.cta .i-done, .btn.cta.is-done .i-play { display: none; }
-  .btn.cta.is-done .i-done { display: block; }
+  .app[data-state="before"] [data-when="after"], .app[data-state="after"] [data-when="before"] { display: none; }   /* the home screen's two states */
+  .result.after { margin-top: 28px; }
   .sec { margin: 28px 0 0; font-size: 15px; font-weight: 400; color: var(--muted); }
   .sec + .attempts { margin-top: 10px; }
   .foot .heart { width: 13px; height: 13px; vertical-align: -2px; fill: currentColor; }
@@ -351,7 +351,7 @@
 </style>
 </head>
 <body>
-<main class="app" data-screen="home">
+<main class="app" data-screen="home" data-state="before">
   <!-- Three screens in one page: home, game and summary. Each direct child of .app lists the screens it belongs to in
        data-s; the others are hidden by CSS. The YouTube player stays on every screen (it must not be display:none to play). -->
   <header class="top" data-s="home">
@@ -368,15 +368,26 @@
       <div class="stat"><b id="statWins">0</b><span>ניצחונות</span></div>
     </div>
   </header>
-  <p class="lead" data-s="home">שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה, עד 5 שניות.</p>
+  <p class="lead" data-s="home" data-when="before">שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה, עד 5 שניות.</p>
 
-  <section class="start" data-s="home" aria-label="התחלה">
+  <!-- home, before the game: the rules and the way in -->
+  <section class="start" data-s="home" data-when="before" aria-label="התחלה">
     <p class="status" id="homeStatus"></p>
     <button class="btn primary cta" id="startBtn" type="button">
-      <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z"/></svg>
-      <svg class="i-done" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z"/></svg>
       <span id="startText">שחקו</span>
     </button>
+  </section>
+
+  <!-- home, after the game: how it went, when the next song comes, and the way on to the summary -->
+  <section class="result after" data-s="home" data-when="after" aria-label="התוצאה">
+    <h2 id="afterTitle"></h2>
+    <div class="squares" id="afterSquares" aria-hidden="true"></div>
+    <div class="result-actions">
+      <button class="btn primary" id="summaryBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>לסיכום</button>
+      <button class="btn ghost share" id="shareBtn2" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M5 13v7h14v-7"/></svg>שתפו תוצאה</button>
+    </div>
+    <p class="next" id="afterNext">השיר הבא בעוד <b data-countdown>--:--:--</b></p>
   </section>
 
   <div class="bar" data-s="game summary">
@@ -421,7 +432,7 @@
     <div class="result-actions">
       <button class="btn ghost" id="calBtn2" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>שחקו בימים קודמים</button>
     </div>
-    <p class="next" id="next">השיר הבא בעוד <b id="countdown">--:--:--</b></p>
+    <p class="next" id="next">השיר הבא בעוד <b data-countdown>--:--:--</b></p>
   </section>
 
   <div class="player-wrap" id="playerWrap" data-s="home game summary"></div>
@@ -442,7 +453,7 @@
       <button class="alt" id="remindFile" type="button" hidden>לא נפתח? שמרו כקובץ</button>
     </div>
   </details>
-  <p class="foot" data-s="home">השיר מתחלף בחצות</p>
+  <p class="foot" data-s="home" data-when="before">השיר מתחלף בחצות</p>
   <p class="foot credit" data-s="home">המשחק נבנה ב<svg class="heart" viewBox="0 0 24 24" aria-label="אהבה" role="img"><path d="M12 21s-7.2-4.5-9.1-9.4C1.6 8.3 3.6 5 7 5c2 0 3.4 1 5 3 1.6-2 3-3 5-3 3.4 0 5.4 3.3 4.1 6.6C19.2 16.5 12 21 12 21z"/></svg> על ידי ליאור ומוקדש לנילס ותמי</p>
 </main>
 <dialog class="cal" id="cal" aria-label="לוח שנה">
@@ -606,6 +617,11 @@
     });
   }
 
+  function fillSquares(el) {
+    el.textContent = '';
+    squaresFor(rec.g).forEach((c) => { const i = document.createElement('i'); if (c) i.className = c; el.appendChild(i); });
+  }
+
   function renderResult() {
     const box = $('result');
     box.hidden = false;
@@ -614,22 +630,24 @@
     $('resultTitle').textContent = rec.won ? `נכון! ניחשתם בניסיון ${rec.g.length}` : 'לא הפעם';
     $('resultSong').textContent = answer.title;
     $('resultArtist').textContent = answer.artist;
-    const sq = $('resultSquares'); sq.textContent = '';
-    squaresFor(rec.g).forEach((c) => { const i = document.createElement('i'); if (c) i.className = c; sq.appendChild(i); });
+    fillSquares($('resultSquares'));
     $('remind').hidden = false;                     // the reminder is offered once the game is over
     tickCountdown();
   }
 
   // home: where the day stands, and the one button that goes on from there
+  // before the game it offers to start or go on; after it, it shows how the day went
   function renderHome() {
     const n = rec.g.length;
-    let text, cta;
-    if (rec.done) { text = rec.won ? `ניחשתם בניסיון ${n}` : 'לא הצלחתם הפעם'; cta = 'לסיכום'; }
-    else if (n) { text = `ניסיון ${n + 1} מתוך ${STAGES.length}`; cta = 'המשיכו'; }
-    else { text = isToday ? 'השיר של היום מחכה לכם' : 'עוד לא שיחקתם בשיר הזה'; cta = 'שחקו'; }
-    $('homeStatus').textContent = text;
-    $('startText').textContent = cta;
-    $('startBtn').classList.toggle('is-done', rec.done);
+    app.dataset.state = rec.done ? 'after' : 'before';
+    if (rec.done) {
+      $('afterTitle').textContent = rec.won ? `ניחשתם בניסיון ${n}` : 'לא הצלחתם הפעם';
+      fillSquares($('afterSquares'));
+      tickCountdown();
+    } else {
+      $('homeStatus').textContent = n ? `ניסיון ${n + 1} מתוך ${STAGES.length}` : isToday ? 'השיר של היום מחכה לכם' : 'עוד לא שיחקתם בשיר הזה';
+      $('startText').textContent = n ? 'המשיכו' : 'שחקו';
+    }
   }
 
   function render() {
@@ -660,7 +678,8 @@
     if (!focus.disabled) focus.focus({ preventScroll: true });
   }
   window.addEventListener('popstate', (e) => showScreen((e.state && e.state.screen) || 'home', 'pop'));
-  $('startBtn').addEventListener('click', () => showScreen(rec.done ? 'summary' : 'game', 'push'));
+  $('startBtn').addEventListener('click', () => showScreen('game', 'push'));
+  $('summaryBtn').addEventListener('click', () => showScreen('summary', 'push'));
   $('backBtn').addEventListener('click', () => {
     if (history.state && history.state.screen) history.back(); else showScreen('home', 'replace');
   });
@@ -1119,7 +1138,7 @@
   }
   // phones get the system share sheet (WhatsApp is one tap away); desktop copies, as before
   const NATIVE_SHARE = !!navigator.share && window.matchMedia('(pointer: coarse)').matches;
-  $('shareBtn').addEventListener('click', async () => {
+  const onShare = async () => {
     const text = shareText();
     if (NATIVE_SHARE) {
       try { await navigator.share({ text }); return; }
@@ -1132,7 +1151,9 @@
       try { document.execCommand('copy'); toast('התוצאה הועתקה. הדביקו אותה בצ׳אט'); } catch (_) { toast('לא הצלחתי להעתיק'); }
       ta.remove();
     }
-  });
+  };
+  $('shareBtn').addEventListener('click', onShare);
+  $('shareBtn2').addEventListener('click', onShare);
 
   // ---------- daily reminder: a repeating calendar event ----------
   const REMIND_TITLE = 'תו השעה: השיר היומי';
@@ -1206,7 +1227,8 @@
     const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     const ms = Math.max(0, next - now);
     const p = (n) => String(n).padStart(2, '0');
-    $('countdown').textContent = `${p(Math.floor(ms / 3600000))}:${p(Math.floor(ms / 60000) % 60)}:${p(Math.floor(ms / 1000) % 60)}`;
+    const text = `${p(Math.floor(ms / 3600000))}:${p(Math.floor(ms / 60000) % 60)}:${p(Math.floor(ms / 1000) % 60)}`;
+    document.querySelectorAll('[data-countdown]').forEach((el) => { el.textContent = text; });
     if (ms === 0 && !previewMode) location.reload();
   }
   setInterval(tickCountdown, 1000);
@@ -1217,7 +1239,7 @@
   // ---------- boot ----------
   $('dayLabel').textContent = $('barLabel').textContent = previewMode ? `תצוגה מקדימה: שיר מספר ${dayNo}` : isToday ? `שיר מספר ${dayNo}` : `שיר מספר ${dayNo}, ${DAY_FMT.format(dateOfDay(dayNo))}`;
   $('todayLink').hidden = isToday;
-  $('next').hidden = !isToday;                      // an earlier day has no countdown to the next song
+  $('next').hidden = $('afterNext').hidden = !isToday;                      // an earlier day has no countdown to the next song
   // best effort: a generic title for the system media controls instead of the video's own
   // (the iframe is another origin, so whether the browser prefers this one cannot be checked from here)
   try { navigator.mediaSession.metadata = new MediaMetadata({ title: 'תו השעה', artist: 'השיר היומי' }); } catch (e) { /* unsupported */ }
