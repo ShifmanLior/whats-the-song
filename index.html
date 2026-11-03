@@ -13,7 +13,7 @@
 <meta property="og:description" content="שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה.">
 <meta property="og:url" content="https://whats-the-song.vercel.app/">
 <meta property="og:locale" content="he_IL">
-<meta property="og:image" content="https://whats-the-song.vercel.app/og.png?v=3">
+<meta property="og:image" content="https://whats-the-song.vercel.app/og.png?v=4">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="תו השעה: מניפת עטיפות תקליטים ותקליט עם כפתור נגינה, שיר חדש בכל יום">
@@ -1277,11 +1277,19 @@
   ];
   const COVERS_KEY = 'whats-the-song.covers.v1';
   async function findCover([artist, album], signal) {
-    const r = await fetch('https://itunes.apple.com/search?media=music&entity=album&limit=5&country=US&term=' + encodeURIComponent(`${artist} ${album}`), { signal });
-    if (!r.ok) return null;
-    const hit = ((await r.json()).results || []).find((x) => x.artworkUrl100 && x.artistName && x.collectionName
+    const t0 = performance.now(), ms = () => Math.round(performance.now() - t0) + 'ms';
+    let r;
+    try {
+      r = await fetch('https://itunes.apple.com/search?media=music&entity=album&limit=5&country=US&term=' + encodeURIComponent(`${artist} ${album}`), { signal });
+    } catch (e) { dbg(`cover ${artist}: request failed (${e.name}: ${e.message}) after ${ms()}`); return null; }   // blocked, offline, or given up on
+    if (!r.ok) { dbg(`cover ${artist}: HTTP ${r.status}`); return null; }
+    let results;
+    try { results = (await r.json()).results || []; } catch (e) { dbg(`cover ${artist}: the answer was not JSON (${e.message})`); return null; }
+    const hit = results.find((x) => x.artworkUrl100 && x.artistName && x.collectionName
       && norm(x.artistName).includes(norm(artist)) && norm(x.collectionName).includes(norm(album)));
-    if (!hit || artistIn(norm(hit.artistName))) return null;   // never today's artist
+    if (!hit) { dbg(`cover ${artist}: no match among ${results.length} results${results[0] ? `, first is "${results[0].artistName} - ${results[0].collectionName}"` : ''}`); return null; }
+    if (artistIn(norm(hit.artistName))) { dbg(`cover ${artist}: skipped, it is today's artist`); return null; }   // never today's artist
+    dbg(`cover ${artist}: found in ${ms()}`);
     return hit.artworkUrl100.replace(/\/\d+x\d+bb\./, '/300x300bb.');
   }
   const preload = (url) => new Promise((resolve) => { const im = new Image(); im.onload = () => resolve(im); im.onerror = () => resolve(null); im.src = url; });
@@ -1293,21 +1301,26 @@
       const c = JSON.parse(localStorage.getItem(COVERS_KEY));
       if (c && Date.now() - c.t < 7 * 86400000 && c.urls.length >= n) { urls = c.urls; cached = true; }
     } catch (e) { /* nothing saved */ }
-    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 5000);
+    const ctl = new AbortController(), timer = setTimeout(() => { dbg('covers: 5 seconds are up, giving up on the rest'); ctl.abort(); }, 5000);
+    dbg(cached ? 'covers: using the addresses saved from last time' : `covers: asking Apple about ${COVER_ALBUMS.length} albums`);
     try {
       if (!urls) {
         const picked = COVER_ALBUMS.slice().sort(() => Math.random() - 0.5);
         urls = (await Promise.all(picked.map((a) => findCover(a, ctl.signal).catch((e) => { dbg('cover: ' + e.message); return null; })))).filter(Boolean);
+        dbg(`covers: found ${urls.length} of ${COVER_ALBUMS.length}, ${n} are needed`);
         if (urls.length < n) return;
       }
       // all of them are loaded first, so that a cover coming in later is already there
       const loaded = (await Promise.all(urls.map(async (u) => ({ u, im: await preload(u) })))).filter((x) => x.im);
+      if (loaded.length < urls.length) dbg(`covers: ${urls.length - loaded.length} image(s) would not load`);
       if (loaded.length < n) {                      // not enough covers load: keep the drawn sleeves
+        dbg(`covers: only ${loaded.length} images loaded, ${n} are needed: keeping the drawn sleeves`);
         if (cached) { try { localStorage.removeItem(COVERS_KEY); } catch (e) { /* ignore */ } }
         return;
       }
       if (!cached || loaded.length !== urls.length) { try { localStorage.setItem(COVERS_KEY, JSON.stringify({ t: Date.now(), urls: loaded.map((x) => x.u) })); } catch (e) { /* ignore */ } }
       coverPool = loaded.map((x) => x.u); nextCover = n;
+      dbg(`covers: showing real covers (${loaded.length} loaded)`);
       sleeves.forEach((sl, i) => { loaded[i].im.alt = ''; sl.appendChild(loaded[i].im); });
       requestAnimationFrame(() => requestAnimationFrame(() => sleeves.forEach((sl) => sl.lastElementChild.classList.add('on'))));
     } catch (e) { dbg('covers: ' + e.message); }   // offline or blocked: the drawn sleeves stay
@@ -1322,7 +1335,7 @@
   const ART = [
     '<rect width="100" height="100" class="l"/><circle cx="50" cy="50" r="42" class="a"/><circle cx="50" cy="50" r="30" class="l"/><circle cx="50" cy="50" r="18" class="a"/><circle cx="50" cy="50" r="6" class="l"/>',
     '<rect width="100" height="100" class="s"/><rect x="14" y="46" width="9" height="54" class="i"/><rect x="28" y="28" width="9" height="72" class="i"/><rect x="42" y="58" width="9" height="42" class="i"/><rect x="56" y="16" width="9" height="84" class="a"/><rect x="70" y="40" width="9" height="60" class="i"/><rect x="84" y="64" width="9" height="36" class="i"/>',
-    '<rect width="100" height="100" class="p"/><circle cx="100" cy="0" r="92" class="l"/><circle cx="100" cy="0" r="70" class="a"/><circle cx="100" cy="0" r="48" class="l"/><circle cx="100" cy="0" r="26" class="i"/>',
+    '<rect width="100" height="100" class="s"/><circle cx="100" cy="0" r="92" class="l"/><circle cx="100" cy="0" r="70" class="a"/><circle cx="100" cy="0" r="48" class="l"/><circle cx="100" cy="0" r="26" class="i"/>',
     '<rect width="100" height="100" class="a"/><path d="M0 100L100 0v100z" class="i"/><circle cx="30" cy="30" r="11" class="p"/>',
     '<rect width="100" height="100" class="i"/><path d="M12 100a38 38 0 0 1 76 0z" class="l"/><circle cx="74" cy="26" r="9" class="a"/>',
     '<rect width="100" height="100" class="i"/><circle cx="20" cy="20" r="7" class="a"/><circle cx="50" cy="20" r="7" class="l"/><circle cx="80" cy="20" r="7" class="a"/><circle cx="20" cy="50" r="7" class="l"/><circle cx="50" cy="50" r="7" class="p"/><circle cx="80" cy="50" r="7" class="l"/><circle cx="20" cy="80" r="7" class="a"/><circle cx="50" cy="80" r="7" class="l"/><circle cx="80" cy="80" r="7" class="a"/>',
