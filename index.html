@@ -13,32 +13,36 @@
 <meta property="og:description" content="שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה.">
 <meta property="og:url" content="https://whats-the-song.vercel.app/">
 <meta property="og:locale" content="he_IL">
-<meta property="og:image" content="https://whats-the-song.vercel.app/og.png?v=4">
+<meta property="og:image" content="https://whats-the-song.vercel.app/og.png?v=8">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="תו השעה: מניפת עטיפות תקליטים ותקליט עם כפתור נגינה, שיר חדש בכל יום">
+<meta property="og:image:alt" content="תו השעה: מניפת עטיפות אלבומים מאוירות ותקליט עם כפתור נגינה, שיר חדש בכל יום">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@200;300;400;600&display=swap" rel="stylesheet">
 <style>
 
-  /* Quiet and flat: white, cool blue-grays, hairlines, light type, square corners. Indigo is only an accent, in a few
-     small places: progress, rings, correct answers, links and focus. State is still shown with fill, outline and icons
-     as well as colour. Light only, no dark mode.
-     Contrast on white: --ink 15.9:1, --muted 6.8:1, --mid 3.2:1 (borders), --accent 5.8:1. --accent is used for fills,
-     rings and lines; --accent-l is the light tint for marks on a dark (--ink) row. */
+  /* Quiet and flat: white paper, near-black ink, warm grays, hairlines, light type, square corners. The colours come
+     from the album covers in covers/: their cream and black, and one accent that changes every day (see ACCENTS in the
+     head), used only in small places (progress, rings, the record's label, correct answers, link underlines, focus).
+     State is still shown with fill, outline and icons as well as colour. Light only, no dark mode.
+     Contrast on the paper: --ink 18.6:1, --muted 7.6:1, --mid 4.0:1 (borders); every accent of the week is at least
+     4.1:1 on it, and white on any of them as well. --accent is for fills, rings and lines, not for text; --accent-l is
+     the accent mixed with white, the light tint for marks on a dark (--ink) row and for the drawn sleeves. The line and
+     soft tints are --mid mixed into the paper. */
   :root {
     color-scheme: light;
     --paper: #ffffff;
-    --ink: #1e2133;
-    --muted: #555a74;
-    --line: #e5e6ec;
-    --soft: #f6f6f8;
-    --soft-2: #ebecf0;
-    --mid: #8a8fa8;
-    --accent: #5058d0;
-    --accent-l: #c4c9f6;
+    --ink: #17120d;
+    --muted: #5c5246;
+    --line: #e5e2df;
+    --soft: #f6f5f3;
+    --soft-2: #eceae7;
+    --mid: #8a7d6c;
+    --accent: #d82828;                              /* the accent changes every day (see ACCENTS in the head); this is the fallback */
+    --accent-l: #f3bfbf;
+    --shade: 23, 18, 13;                            /* the colour of shadows, as r, g, b */
   }
   * { box-sizing: border-box; }
   body { overflow-x: clip; }
@@ -172,7 +176,7 @@
     margin: 0; padding: 0; list-style: none;
     background: var(--paper);
     border: 1px solid var(--line);
-    box-shadow: 0 10px 28px rgba(46, 42, 48, .12);
+    box-shadow: 0 10px 28px rgba(var(--shade), .12);
     max-height: 320px; overflow-y: auto;
   }
   .list[hidden] { display: none; }
@@ -266,7 +270,7 @@
   .hero { --s: clamp(84px, 26vw, 112px); position: relative; height: calc(var(--s) * 1.2); margin: 10px calc(50% - 50vw) 0; overflow-x: clip; }   /* as wide as the screen, so a sleeve leaves and comes in at its edges */
   .sleeve {
     position: absolute; left: 50%; top: 0; width: var(--s); height: var(--s); margin-left: calc(var(--s) / -2);
-    background: var(--soft-2); box-shadow: 0 8px 20px rgba(30, 33, 51, .16), 0 0 0 1px rgba(30, 33, 51, .06);
+    background: var(--soft-2); box-shadow: 0 8px 20px rgba(var(--shade), .16), 0 0 0 1px rgba(var(--shade), .06);
     z-index: var(--z, 1);
     transform: translate(calc(var(--s) * var(--x)), var(--y)) rotate(var(--r));
     transition: transform .9s cubic-bezier(.45, .05, .2, 1);   /* a change of seat glides */
@@ -279,7 +283,7 @@
   .sleeve .p { fill: var(--paper); } .sleeve .s { fill: var(--soft-2); }
   @keyframes deal { from { transform: translate(0, 26px) rotate(0deg) scale(.7); } }
   .vinyl {
-    position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 28px;   /* room for the ring that pulses around the record */
     margin: 0 auto; padding: 0; background: none; border: 0; color: var(--ink); cursor: pointer;
   }
   .vwrap { position: relative; display: block; width: 112px; height: 112px; transition: transform .15s ease; animation: rise .7s cubic-bezier(.2, .8, .2, 1) .5s both; }
@@ -288,7 +292,7 @@
     content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--accent); opacity: 0; pointer-events: none;
     animation: ring 2.6s ease-out 1.6s infinite;
   }
-  .disc { position: absolute; inset: 0; border-radius: 50%; background: var(--ink); overflow: hidden; box-shadow: 0 0 0 4px var(--paper), 0 10px 26px rgba(30, 33, 51, .28); }
+  .disc { position: absolute; inset: 0; border-radius: 50%; background: var(--ink); overflow: hidden; box-shadow: 0 0 0 4px var(--paper), 0 10px 26px rgba(var(--shade), .28); }
   .disc::before {
     content: ""; position: absolute; inset: 0; border-radius: 50%;
     background: repeating-radial-gradient(circle, rgba(255, 255, 255, .08) 0 1px, transparent 1px 4px),
@@ -347,7 +351,7 @@
   .link[hidden] { display: none; }
   .link svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; }
   dialog.cal { width: min(92vw, 380px); padding: 0; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); }
-  dialog.cal::backdrop { background: rgba(46, 42, 48, .45); }
+  dialog.cal::backdrop { background: rgba(var(--shade), .45); }
   .cal-body { padding: 20px 18px 18px; }
   .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .cal-head h2 { margin: 0; font-size: 22px; font-weight: 300; }
@@ -390,6 +394,26 @@
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
 </style>
+<script>
+  // One accent colour per day. The seven come from the covers in covers/ (their reds, blues, oranges, greens, purples and
+  // golds, taken from the most common colour of each hue and darkened where needed to reach about 4:1 on the paper). Only
+  // the accent changes: the paper, the ink and the grays stay as they are. Day N gets ACCENTS[(N - 1) % 7], and the order
+  // alternates warm and cool so two days in a row never look alike. --accent-l, the light tint, is the accent mixed with
+  // white. This runs before the page is drawn so nothing flashes; the main script sets it again with the exact day.
+  window.ACCENTS = ['#d82828', '#0a6eaa', '#977a05', '#884898', '#cf5714', '#386848', '#8c1d2c'];
+  window.setAccent = function (day) {
+    var c = window.ACCENTS[(((day - 1) % window.ACCENTS.length) + window.ACCENTS.length) % window.ACCENTS.length], t = [1, 3, 5].map(function (i) {
+      return Math.round(parseInt(c.substr(i, 2), 16) * 0.28 + 255 * 0.72);
+    });
+    document.documentElement.style.setProperty('--accent', c);
+    document.documentElement.style.setProperty('--accent-l', 'rgb(' + t.join(',') + ')');
+  };
+  (function () {
+    var q = new URLSearchParams(location.search), n = new Date(), asked = parseInt(q.get('day'), 10);
+    var today = Math.round((Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) - Date.UTC(2026, 9, 31)) / 86400000) + 1;
+    window.setAccent(q.has('preview') ? (asked || today) : (asked >= 1 && asked <= today ? asked : today));
+  })();
+</script>
 </head>
 <body>
 <main class="app" data-screen="home" data-state="before">
@@ -559,6 +583,7 @@
   const asked = parseInt(params.get('day'), 10);    // ?day=2 plays an earlier day, saved like any other; later days are not open yet
   const dayNo = previewMode ? (asked || today) : asked >= 1 && asked <= today ? asked : today;
   const isToday = dayNo === today;
+  window.setAccent(dayNo);                          // the accent of this day (the head already set it from the same rule)
   const answer = SONGS[(((dayNo - 1) % SONGS.length) + SONGS.length) % SONGS.length];
 
   // ---------- saved progress ----------
@@ -1265,66 +1290,53 @@
     if (!document.hidden && !previewMode && dayNumberOf(new Date()) !== today) location.reload();
   });
 
-  // ---------- real album covers on the home screen ----------
-  // When five covers have loaded from the iTunes Search API they fade in over the drawn sleeves; otherwise (no network,
-  // blocked, an image that will not load) the drawn sleeves stay. The albums are fixed and famous, none is by an artist
-  // in songs.js, and one by today's artist would be skipped, so a cover can never hint at the answer. The picked image
-  // addresses are kept for a week, so the API is asked about once a week per visitor.
-  const COVER_ALBUMS = [
-    ['Pink Floyd', 'The Dark Side of the Moon'], ['Fleetwood Mac', 'Rumours'], ['Miles Davis', 'Kind of Blue'],
-    ['Radiohead', 'OK Computer'], ['David Bowie', 'Aladdin Sane'], ['Amy Winehouse', 'Back to Black'],
-    ['Prince', 'Purple Rain'], ['Joy Division', 'Unknown Pleasures'],
+  // ---------- album covers on the home screen ----------
+  // Twenty illustrated album covers (twelve international, eight Israeli), without text, are kept in covers/ as 320px
+  // WebP, about 7KB each. They fill the fan and come in one by one as the sleeves take turns. The list gives the artist
+  // of each, and any cover by today's artist is left out, so a cover never hints at the answer. Nothing is fetched from
+  // anyone else. If the images do not load, the drawn sleeves stay.
+  const COVERS = [
+    ['01', 'Pink Floyd'],
+    ['02', 'Nirvana'],
+    ['03', 'The Beatles'],
+    ['04', 'Fleetwood Mac'],
+    ['05', 'Bob Dylan'],
+    ['06', 'Michael Jackson'],
+    ['07', 'U2'],
+    ['08', 'Radiohead'],
+    ['09', 'The Doors'],
+    ['10', 'Queen'],
+    ['11', 'שלמה ארצי'],
+    ['12', 'אהוד בנאי'],
+    ['13', 'כוורת'],
+    ['14', 'דודו טסה'],
+    ['15', 'עברי לידר'],
+    ['16', 'אריק איינשטיין'],
+    ['17', 'ריטה'],
+    ['18', 'ברי סחרוף'],
+    ['19', 'משינה'],
+    ['20', 'אסף אמדורסקי'],
   ];
-  const COVERS_KEY = 'whats-the-song.covers.v1';
-  async function findCover([artist, album], signal) {
-    const t0 = performance.now(), ms = () => Math.round(performance.now() - t0) + 'ms';
-    let r;
-    try {
-      r = await fetch('https://itunes.apple.com/search?media=music&entity=album&limit=5&country=US&term=' + encodeURIComponent(`${artist} ${album}`), { signal });
-    } catch (e) { dbg(`cover ${artist}: request failed (${e.name}: ${e.message}) after ${ms()}`); return null; }   // blocked, offline, or given up on
-    if (!r.ok) { dbg(`cover ${artist}: HTTP ${r.status}`); return null; }
-    let results;
-    try { results = (await r.json()).results || []; } catch (e) { dbg(`cover ${artist}: the answer was not JSON (${e.message})`); return null; }
-    const hit = results.find((x) => x.artworkUrl100 && x.artistName && x.collectionName
-      && norm(x.artistName).includes(norm(artist)) && norm(x.collectionName).includes(norm(album)));
-    if (!hit) { dbg(`cover ${artist}: no match among ${results.length} results${results[0] ? `, first is "${results[0].artistName} - ${results[0].collectionName}"` : ''}`); return null; }
-    if (artistIn(norm(hit.artistName))) { dbg(`cover ${artist}: skipped, it is today's artist`); return null; }   // never today's artist
-    dbg(`cover ${artist}: found in ${ms()}`);
-    return hit.artworkUrl100.replace(/\/\d+x\d+bb\./, '/300x300bb.');
-  }
+  try { localStorage.removeItem('whats-the-song.covers.v1'); } catch (e) { /* an older version kept addresses here */ }
   const preload = (url) => new Promise((resolve) => { const im = new Image(); im.onload = () => resolve(im); im.onerror = () => resolve(null); im.src = url; });
-  let coverPool = [], nextCover = 0;                // every loaded cover; the first five fill the fan, the rest come in later
+  let coverPool = [], nextCover = 0;                // the covers that may be shown today, shuffled; the first ones fill the fan
   async function loadCovers() {
     const sleeves = [...document.querySelectorAll('.sleeve')], n = sleeves.length;
-    let urls = null, cached = false;
-    try {
-      const c = JSON.parse(localStorage.getItem(COVERS_KEY));
-      if (c && Date.now() - c.t < 7 * 86400000 && c.urls.length >= n) { urls = c.urls; cached = true; }
-    } catch (e) { /* nothing saved */ }
-    const ctl = new AbortController(), timer = setTimeout(() => { dbg('covers: 5 seconds are up, giving up on the rest'); ctl.abort(); }, 5000);
-    dbg(cached ? 'covers: using the addresses saved from last time' : `covers: asking Apple about ${COVER_ALBUMS.length} albums`);
-    try {
-      if (!urls) {
-        const picked = COVER_ALBUMS.slice().sort(() => Math.random() - 0.5);
-        urls = (await Promise.all(picked.map((a) => findCover(a, ctl.signal).catch((e) => { dbg('cover: ' + e.message); return null; })))).filter(Boolean);
-        dbg(`covers: found ${urls.length} of ${COVER_ALBUMS.length}, ${n} are needed`);
-        if (urls.length < n) return;
-      }
-      // all of them are loaded first, so that a cover coming in later is already there
-      const loaded = (await Promise.all(urls.map(async (u) => ({ u, im: await preload(u) })))).filter((x) => x.im);
-      if (loaded.length < urls.length) dbg(`covers: ${urls.length - loaded.length} image(s) would not load`);
-      if (loaded.length < n) {                      // not enough covers load: keep the drawn sleeves
-        dbg(`covers: only ${loaded.length} images loaded, ${n} are needed: keeping the drawn sleeves`);
-        if (cached) { try { localStorage.removeItem(COVERS_KEY); } catch (e) { /* ignore */ } }
-        return;
-      }
-      if (!cached || loaded.length !== urls.length) { try { localStorage.setItem(COVERS_KEY, JSON.stringify({ t: Date.now(), urls: loaded.map((x) => x.u) })); } catch (e) { /* ignore */ } }
-      coverPool = loaded.map((x) => x.u); nextCover = n;
-      dbg(`covers: showing real covers (${loaded.length} loaded)`);
-      sleeves.forEach((sl, i) => { loaded[i].im.alt = ''; sl.appendChild(loaded[i].im); });
-      requestAnimationFrame(() => requestAnimationFrame(() => sleeves.forEach((sl) => sl.lastElementChild.classList.add('on'))));
-    } catch (e) { dbg('covers: ' + e.message); }   // offline or blocked: the drawn sleeves stay
-    finally { clearTimeout(timer); }
+    const usable = COVERS.filter(([, artist]) => !artistIn(norm(artist)));
+    const pool = usable.map(([file]) => `covers/${file}.webp`).sort(() => Math.random() - 0.5);
+    dbg(`covers: ${pool.length} of ${COVERS.length} may be shown today; left out: ${COVERS.filter(([, artist]) => artistIn(norm(artist))).map(([file, artist]) => file.slice(0, 2) + ' ' + artist).join(', ') || 'none'}`);
+    if (pool.length < n) return;
+    const used = pool.slice(0, n), failed = new Set();
+    const imgs = await Promise.all(used.map(preload));
+    let next = n;
+    for (let i = 0; i < n; i++) {                   // an image that will not load is replaced by the next one in the pool
+      while (!imgs[i] && next < pool.length) { dbg(`covers: ${used[i]} would not load`); failed.add(used[i]); used[i] = pool[next++]; imgs[i] = await preload(used[i]); }
+    }
+    if (imgs.some((im) => !im)) { dbg('covers: the images would not load, keeping the drawn sleeves'); return; }
+    coverPool = pool.filter((u) => !failed.has(u)); nextCover = n;   // the first n of it are the ones on show
+    sleeves.forEach((sl, i) => { imgs[i].alt = ''; sl.appendChild(imgs[i]); });
+    dbg(`covers: showing covers (${pool.length} in the pool)`);
+    requestAnimationFrame(() => requestAnimationFrame(() => sleeves.forEach((sl) => sl.lastElementChild.classList.add('on'))));
   }
 
   // ---------- the sleeves: one leaves, a new one comes in ----------
