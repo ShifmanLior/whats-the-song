@@ -163,13 +163,14 @@
     max-height: 320px; overflow-y: auto;
   }
   .list[hidden] { display: none; }
-  .list li { padding: 11px 14px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .list li { padding: 11px 14px; border-bottom: 1px solid var(--line); cursor: pointer; touch-action: manipulation; }
   .list li:last-child { border-bottom: 0; }
   .list li b { display: block; font-weight: 400; }
   .list li small { display: block; color: var(--muted); font-size: 13px; }
-  .list li[aria-selected="true"], .list li:hover { background: var(--soft); }
+  .list li[aria-selected="true"] { background: var(--soft); }
+  @media (hover: hover) { .list li:hover { background: var(--soft); } }
   .list li.status { color: var(--muted); font-size: 14px; cursor: default; }
-  .list li.status:hover { background: none; }
+  @media (hover: hover) { .list li.status:hover { background: none; } }
   /* typing mode: while the guess field has focus, the record shrinks to a small one beside the timeline and the back button
      steps aside, so the suggestions and the buttons fit above the keyboard and need no scrolling. The suggestions then
      sit in the page, under the field, instead of floating over what is below it. */
@@ -1090,14 +1091,19 @@
   // the song picked from the list: the title and the artist both have to fit
   const judgePick = (p) => titleIn(norm(stripExtras(p.title))) && artistIn(norm(p.artist));
 
+  let listSig = '';                                 // what the rows show now; identical results do not rebuild them
   function closeList() {
-    list.hidden = true; active = -1;
+    list.hidden = true; active = -1; listSig = '';
     input.setAttribute('aria-expanded', 'false');
     input.removeAttribute('aria-activedescendant');
   }
   function renderList(status) {
+    if (!matches.length && !status) { list.textContent = ''; closeList(); return; }
+    // rows that are rebuilt under a finger take the tap with them, so the same results leave the rows as they are
+    const sig = status + '|' + active + '|' + matches.map((m) => m.title + '/' + m.artist).join('|');
+    if (!list.hidden && sig === listSig) return;
+    listSig = sig;
     list.textContent = '';
-    if (!matches.length && !status) { closeList(); return; }
     if (status) {
       const li = document.createElement('li');
       li.className = 'status'; li.setAttribute('role', 'presentation'); li.textContent = status;
@@ -1105,12 +1111,11 @@
     }
     matches.forEach((s, i) => {
       const li = document.createElement('li');
-      li.id = 'opt-' + i; li.setAttribute('role', 'option');
+      li.id = 'opt-' + i; li.dataset.i = i; li.setAttribute('role', 'option');
       li.setAttribute('aria-selected', i === active ? 'true' : 'false');
       const b = document.createElement('b'); b.textContent = s.title; b.dir = 'auto';
       const sm = document.createElement('small'); sm.textContent = s.artist; sm.dir = 'auto';
       li.append(b, sm);
-      li.addEventListener('mousedown', (e) => { e.preventDefault(); pick(i); });
       list.appendChild(li);
     });
     list.hidden = false;
@@ -1178,11 +1183,14 @@
   }
   function pick(i) {
     const s = matches[i];
+    if (!s) return;
+    dbg('pick ' + i + ' ' + label(s));
     cancelSearch();
     picked = { ...s, text: label(s) };
     input.value = picked.text;
     $('guessBtn').disabled = false;
     closeList();
+    if (document.activeElement !== input) setTyping(false);   // the field lost focus on the way: typing mode ends here
   }
   function guessFromInput() {
     if (!picked || input.value.trim() !== picked.text) return;   // typed text is never sent, only a song from the list
@@ -1190,15 +1198,33 @@
     if (rec.g.some((g) => g !== 'skip' && norm(g.t) === key)) { toast('כבר ניחשתם את זה'); return; }
     submit({ t: picked.text, ok: judgePick(picked) });
   }
-  input.addEventListener('input', updateList);
-  input.addEventListener('blur', () => setTimeout(closeList, 120));
+  // A tap on a row: the press does not take focus from the field, the row is picked on the click, and while a finger is on
+  // the list (some phones blur the field as the finger goes down) the list is not closed under it.
+  let listPressed = false;
+  list.addEventListener('pointerdown', () => { listPressed = true; dbg('list: finger down'); });
+  window.addEventListener('pointerup', () => { if (listPressed) setTimeout(() => { listPressed = false; }, 400); });
+  window.addEventListener('pointercancel', () => { listPressed = false; });
+  list.addEventListener('mousedown', (e) => e.preventDefault());
+  list.addEventListener('click', (e) => {
+    const li = e.target.closest('li[data-i]');
+    dbg('list: click ' + (li ? 'row ' + li.dataset.i : 'nothing'));
+    if (li) pick(+li.dataset.i);
+  });
+  // a keyboard can send one more input event with the same text (committing its suggestion): that is not a new search
+  input.addEventListener('input', () => {
+    dbg('field: input "' + input.value + '"' + (picked && input.value.trim() === picked.text ? ' (same as the pick)' : ''));
+    if (picked && input.value.trim() === picked.text) return;
+    updateList();
+  });
+  input.addEventListener('blur', () => { dbg('field: blur'); setTimeout(() => { if (!listPressed) closeList(); }, 120); });
+  input.addEventListener('focus', () => dbg('field: focus'));
   // typing mode (see .app.typing): on while the field has focus. It goes a moment after the focus does, so a tap on a button
   // is not lost when the layout changes between the press and the release.
   let typingTimer = 0;
   function setTyping(on) {
     clearTimeout(typingTimer);
     if (on) { app.classList.add('typing'); requestAnimationFrame(() => window.scrollTo(0, 0)); return; }
-    typingTimer = setTimeout(() => { if (document.activeElement !== input) app.classList.remove('typing'); }, 250);
+    typingTimer = setTimeout(() => { if (document.activeElement !== input && !listPressed) app.classList.remove('typing'); }, 250);
   }
   input.addEventListener('focus', () => setTyping(true));
   input.addEventListener('blur', () => setTyping(false));
