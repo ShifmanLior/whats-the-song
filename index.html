@@ -80,23 +80,25 @@
   .lead { margin: 18px 0 0; color: var(--muted); font-size: 15px; text-align: center; }
 
   /* player stage */
-  .stage { margin-top: 32px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .stage { margin-top: clamp(20px, 7vh, 64px); display: flex; flex-direction: column; align-items: center; gap: 18px; }
   .stage[hidden] { display: none; }
-  .play {
+  .play {                                            /* a record, like the one on the home screen; the .disc inside is drawn with the home screen's styles */
     position: relative;
-    width: 88px; height: 88px;
-    margin-bottom: 16px;                            /* room for the ring that pulses around it */
-    border: 1px solid var(--ink); border-radius: 50%;
-    background: var(--paper);
-    color: var(--ink);
+    width: 112px; height: 112px;
+    margin-bottom: 18px;                            /* room for the ring around it */
+    padding: 0; border: 0; border-radius: 50%;
+    background: none;
+    color: #fff;
     cursor: pointer;
-    display: grid; place-items: center;
+    display: block;
     transition: transform .12s ease;
   }
   .play:hover:not(:disabled) { transform: scale(1.05); }
   .play:active:not(:disabled) { transform: scale(0.96); }
   .play:disabled { cursor: progress; opacity: .35; }
-  .play svg { width: 36px; height: 36px; fill: currentColor; grid-area: 1 / 1; }
+  .play svg { position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; margin: -13px 0 0 -13px; fill: currentColor; }
+  .play .disc::before { animation-play-state: paused; }                       /* the record turns only while it plays */
+  .play[data-state="playing"] .disc::before { animation-play-state: running; }
   .play .i-pause { display: none; }
   .play[data-state="playing"] .i-play { display: none; }
   .play[data-state="playing"] .i-pause { display: block; }
@@ -375,9 +377,9 @@
     .app { padding: 16px 16px 48px; }
     h1 { font-size: 34px; }
     .lead { margin-top: 10px; font-size: 14px; }
-    .stage { margin-top: 18px; gap: 12px; }
-    .play { width: 76px; height: 76px; margin-bottom: 12px; }
-    .play svg { width: 32px; height: 32px; }
+    .stage { margin-top: clamp(14px, 4vh, 36px); gap: 12px; }
+    .play { width: 96px; height: 96px; margin-bottom: 14px; }
+    .play svg { width: 22px; height: 22px; margin: -11px 0 0 -11px; }
     .attempts { margin-top: 14px; gap: 5px; }
     .attempt { min-height: 38px; padding-block: 2px; }
     .attempt .badge { min-width: 30px; height: 28px; }
@@ -432,6 +434,7 @@
 
   <section class="stage" id="stage" data-s="game" aria-label="נגן">
     <button class="play" id="play" type="button" aria-label="נגן את הקטע" data-state="loading" disabled>
+      <span class="disc" aria-hidden="true"></span>
       <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z"/></svg>
       <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>
     </button>
