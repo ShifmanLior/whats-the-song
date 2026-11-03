@@ -182,9 +182,12 @@
   .btn.primary { background: transparent; border-color: var(--ink); color: var(--ink); }
   .btn.ghost { background: transparent; border-color: var(--mid); color: var(--ink); }
   @media (hover: hover) { .btn.ghost:hover:not(:disabled) { border-color: var(--ink); } }
-  .btn.danger { background: transparent; border-color: var(--ink); }
-  .btn.ghost.quiet { border-color: transparent; color: var(--muted); font-weight: 300; }   /* same size and place, no frame: it is there, but the record is what to press */
-  @media (hover: hover) { .btn.ghost.quiet:hover:not(:disabled) { border-color: var(--mid); } }
+  /* "skip" is a plain line of text under the guess button: the guess is the main action, and until the clip has been played
+     (see needsPlay) the line is lighter still, so the record is what to press */
+  .btn.skip { height: 46px; border-color: transparent; background: transparent; color: var(--ink); font-size: 15px; font-weight: 300; }
+  .btn.skip.quiet { color: var(--muted); }
+  @media (hover: hover) { .btn.skip:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; } }
+  .guess .actions { grid-template-columns: 1fr; gap: 2px; }   /* the guess button across the width, the skip line under it */
 
   /* result: no frame; it lines up with the boxes below it, so it needs no side padding */
   .result {
@@ -469,7 +472,7 @@
     </div>
     <div class="actions">
       <button class="btn primary" id="guessBtn" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>נחשו</button>
-      <button class="btn ghost" id="skipBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 6l-6 6 6 6M19 6l-6 6 6 6"/></svg><span id="skipText">עוד חצי שנייה</span></button>
+      <button class="btn skip" id="skipBtn" type="button"><span id="skipText">לא הצלחתי, תן לי עוד חצי שנייה</span></button>
     </div>
   </section>
 
@@ -656,9 +659,7 @@
     $('tlLabel').textContent = `${secsText(s)} מתחילת השיר, ניסיון ${Math.min(rec.g.length + 1, STAGES.length)} מתוך ${STAGES.length}`;
     const i = rec.g.length;
     const last = i >= STAGES.length - 1;
-    const skip = $('skipBtn');
-    $('skipText').textContent = last ? 'ויתור' : `עוד ${secsText(STAGES[i + 1] - STAGES[i])}`;
-    skip.classList.toggle('danger', last);
+    $('skipText').textContent = last ? 'לא הצלחתי, גלה לי את השיר' : `לא הצלחתי, תן לי עוד ${secsText(STAGES[i + 1] - STAGES[i])}`;
     renderInvite();
     $('stage').hidden = rec.done;
     $('guess').hidden = rec.done;
