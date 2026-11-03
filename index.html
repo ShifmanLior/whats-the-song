@@ -13,29 +13,35 @@
 <meta property="og:description" content="שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה.">
 <meta property="og:url" content="https://whats-the-song.vercel.app/">
 <meta property="og:locale" content="he_IL">
-<meta property="og:image" content="https://whats-the-song.vercel.app/og.png">
+<meta property="og:image" content="https://whats-the-song.vercel.app/og.png?v=3">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="תו השעה: כפתור נגינה ושיר חדש בכל יום">
+<meta property="og:image:alt" content="תו השעה: מניפת עטיפות תקליטים ותקליט עם כפתור נגינה, שיר חדש בכל יום">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@200;300;400;600&display=swap" rel="stylesheet">
 <style>
 
-  /* Monochrome and quiet: flat black and white, hairlines, light type, square corners. State is shown with
-     fill, outline and icons rather than colour. White only, no dark mode. */
+  /* Quiet and flat: white, cool blue-grays, hairlines, light type, square corners. Indigo is only an accent, in a few
+     small places: progress, rings, correct answers, links and focus. State is still shown with fill, outline and icons
+     as well as colour. Light only, no dark mode.
+     Contrast on white: --ink 15.9:1, --muted 6.8:1, --mid 3.2:1 (borders), --accent 5.8:1. --accent is used for fills,
+     rings and lines; --accent-l is the light tint for marks on a dark (--ink) row. */
   :root {
     color-scheme: light;
     --paper: #ffffff;
-    --ink: #000000;
-    --muted: #595959;
-    --line: #e2e2e2;
-    --soft: #f3f3f3;
-    --soft-2: #e8e8e8;
-    --mid: #bdbdbd;
+    --ink: #1e2133;
+    --muted: #555a74;
+    --line: #e5e6ec;
+    --soft: #f6f6f8;
+    --soft-2: #ebecf0;
+    --mid: #8a8fa8;
+    --accent: #5058d0;
+    --accent-l: #c4c9f6;
   }
   * { box-sizing: border-box; }
+  body { overflow-x: clip; }
   html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
@@ -58,15 +64,11 @@
     padding: 28px 20px 56px;
   }
 
-  /* header */
-  .top {
-    display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--line);
-  }
+  /* the name, the day, the calendar link and the stats, at the foot of the home screen: part of the page, not a bar */
+  .info { margin-top: 6px; text-align: center; }
   h1 { margin: 0; font-size: 42px; font-weight: 200; letter-spacing: -0.02em; line-height: 1.05; }
   .sub { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
-  .stats { display: flex; gap: 8px; }
+  .stats { display: flex; justify-content: center; gap: 8px; margin-top: 18px; }
   .stat {
     min-width: 60px;
     padding: 6px 10px;
@@ -75,37 +77,39 @@
   }
   .stat b { display: block; font-size: 22px; font-weight: 300; line-height: 1.2; font-variant-numeric: tabular-nums; }
   .stat span { display: block; color: var(--muted); font-size: 13px; }
-  .lead { margin: 18px 0 0; color: var(--muted); font-size: 15px; }
+  .lead { margin: 18px 0 0; color: var(--muted); font-size: 15px; text-align: center; }
 
   /* player stage */
-  .stage { margin-top: 32px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .stage { margin-top: clamp(20px, 7vh, 64px); display: flex; flex-direction: column; align-items: center; gap: 18px; }
   .stage[hidden] { display: none; }
-  .play {
+  .play {                                            /* a record, like the one on the home screen; the .disc inside is drawn with the home screen's styles */
     position: relative;
-    width: 88px; height: 88px;
-    margin-bottom: 16px;                            /* room for the ring that pulses around it */
-    border: 1px solid var(--ink); border-radius: 50%;
-    background: var(--paper);
-    color: var(--ink);
+    width: 112px; height: 112px;
+    margin-bottom: 18px;                            /* room for the ring around it */
+    padding: 0; border: 0; border-radius: 50%;
+    background: none;
+    color: #fff;
     cursor: pointer;
-    display: grid; place-items: center;
+    display: block;
     transition: transform .12s ease;
   }
   .play:hover:not(:disabled) { transform: scale(1.05); }
   .play:active:not(:disabled) { transform: scale(0.96); }
   .play:disabled { cursor: progress; opacity: .35; }
-  .play svg { width: 36px; height: 36px; fill: currentColor; grid-area: 1 / 1; }
+  .play svg { position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; margin: -13px 0 0 -13px; fill: currentColor; }
+  .play .disc::before { animation-play-state: paused; }                       /* the record turns only while it plays */
+  .play[data-state="playing"] .disc::before { animation-play-state: running; }
   .play .i-pause { display: none; }
   .play[data-state="playing"] .i-play { display: none; }
   .play[data-state="playing"] .i-pause { display: block; }
   .play[data-state="playing"]::after {
     content: ""; position: absolute; inset: -8px; border-radius: 50%;
-    border: 2px solid var(--ink); opacity: 0;
+    border: 2px solid var(--accent); opacity: 0;
     animation: pulse 1.2s ease-out infinite;
   }
   .play[data-state="loading"]::after {
     content: ""; position: absolute; inset: -8px; border-radius: 50%;
-    border: 2px solid transparent; border-top-color: var(--ink);
+    border: 2px solid transparent; border-top-color: var(--accent);
     animation: spin .8s linear infinite;
   }
   @keyframes pulse { from { transform: scale(0.9); opacity: .6; } to { transform: scale(1.25); opacity: 0; } }
@@ -119,8 +123,8 @@
     overflow: hidden;
   }
   .tl-unlocked, .tl-played { position: absolute; inset-block: 0; left: 0; }
-  .tl-unlocked { background: var(--mid); transition: width .35s ease; }
-  .tl-played { background: var(--ink); }
+  .tl-unlocked { background: var(--mid); opacity: .5; transition: width .35s ease; }
+  .tl-played { background: var(--accent); }
   .tl-tick { position: absolute; inset-block: 0; width: 2px; background: var(--paper); }
   .tl-marks { position: relative; height: 20px; margin-top: 8px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
   .tl-marks span { position: absolute; transform: translateX(-50%); }
@@ -149,7 +153,7 @@
   .attempt.skip .txt { color: var(--muted); }
   .attempt.win { background: var(--ink); border-color: var(--ink); color: var(--paper); }
   .attempt.win .badge { background: var(--paper); color: var(--ink); }
-  .attempt.win::after { content: "\2713"; font-weight: 400; }
+  .attempt.win::after { content: "\2713"; font-weight: 400; color: var(--accent-l); }
 
   /* guess area */
   .guess { margin-top: 20px; }
@@ -162,13 +166,13 @@
     font-size: 17px;
   }
   .combo input::placeholder { color: var(--muted); }
-  .combo input:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+  .combo input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
   .list {
     position: absolute; z-index: 5; inset-inline: 0; top: calc(100% + 6px);
     margin: 0; padding: 0; list-style: none;
     background: var(--paper);
     border: 1px solid var(--line);
-    box-shadow: 0 10px 28px rgba(0, 0, 0, .1);
+    box-shadow: 0 10px 28px rgba(46, 42, 48, .12);
     max-height: 320px; overflow-y: auto;
   }
   .list[hidden] { display: none; }
@@ -196,7 +200,7 @@
   /* result: a plain card with a hairline border, so the end of the game stands out without turning the page black */
   .result {
     margin-top: 20px; padding: 24px 20px;
-    border: 1px solid var(--ink);
+    border: 1px solid var(--accent);
     text-align: center;
   }
   .result[hidden] { display: none; }
@@ -208,7 +212,7 @@
     position: relative; flex: 1 1 0; max-width: 28px; aspect-ratio: 1;
     border: 1px solid var(--ink); opacity: .25;
   }
-  .squares i.win { background: var(--ink); opacity: 1; }
+  .squares i.win { background: var(--accent); border-color: var(--accent); opacity: 1; }
   .squares i.skip { background: var(--ink); opacity: .3; }
   .squares i.bad { border-width: 2px; opacity: 1; }
   .squares i.bad::before, .squares i.bad::after {
@@ -217,7 +221,6 @@
   }
   .squares i.bad::after { transform: rotate(-45deg); }
   .result .btn { width: 100%; }
-  .result-actions { display: grid; gap: 10px; margin-top: 10px; }
   a.btn { text-decoration: none; color: var(--ink); }
   .btn svg { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; }
   .result .btn.share { border-color: var(--ink); }
@@ -248,13 +251,70 @@
   .foot { margin-top: 32px; text-align: center; color: var(--muted); font-size: 13px; }
   .foot.credit { margin-top: 6px; }
 
+  /* screens: show only what belongs to the current one (home or game); home also has two states, before and after the game */
+  .app[data-screen="home"] > :not([data-s~="home"]),
+  .app[data-screen="game"] > :not([data-s~="game"]) { display: none; }
+  .bar { display: flex; align-items: center; }
+  .back { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; background: transparent; border: 1px solid var(--mid); color: var(--ink); cursor: pointer; }
+  .back:hover { border-color: var(--ink); }
+  .back svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+  .start { margin-top: 26px; text-align: center; }
+  .status { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
+
+  /* home hero: a fan of flat record sleeves, and a vinyl record that is the play button. Everything moves with
+     transform and opacity only; with reduced motion the animations are off and the fan and the record stand still. */
+  .hero { --s: clamp(84px, 26vw, 112px); position: relative; height: calc(var(--s) * 1.2); margin: 10px calc(50% - 50vw) 0; overflow-x: clip; }   /* as wide as the screen, so a sleeve leaves and comes in at its edges */
+  .sleeve {
+    position: absolute; left: 50%; top: 0; width: var(--s); height: var(--s); margin-left: calc(var(--s) / -2);
+    background: var(--soft-2); box-shadow: 0 8px 20px rgba(30, 33, 51, .16), 0 0 0 1px rgba(30, 33, 51, .06);
+    z-index: var(--z, 1);
+    transform: translate(calc(var(--s) * var(--x)), var(--y)) rotate(var(--r));
+    transition: transform .9s cubic-bezier(.45, .05, .2, 1);   /* a change of seat glides */
+    animation: deal .8s cubic-bezier(.2, .8, .2, 1) calc(var(--i) * 90ms) backwards;
+  }
+  .sleeve svg { display: block; width: 100%; height: 100%; }
+  .sleeve img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .6s ease; }
+  .sleeve img.on { opacity: 1; }
+  .sleeve .a { fill: var(--accent); } .sleeve .l { fill: var(--accent-l); } .sleeve .i { fill: var(--ink); }
+  .sleeve .p { fill: var(--paper); } .sleeve .s { fill: var(--soft-2); }
+  @keyframes deal { from { transform: translate(0, 26px) rotate(0deg) scale(.7); } }
+  .vinyl {
+    position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    margin: 0 auto; padding: 0; background: none; border: 0; color: var(--ink); cursor: pointer;
+  }
+  .vwrap { position: relative; display: block; width: 112px; height: 112px; transition: transform .15s ease; animation: rise .7s cubic-bezier(.2, .8, .2, 1) .5s both; }
+  .vinyl:active .vwrap { transform: scale(.96); }
+  .vwrap::after {
+    content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--accent); opacity: 0; pointer-events: none;
+    animation: ring 2.6s ease-out 1.6s infinite;
+  }
+  .disc { position: absolute; inset: 0; border-radius: 50%; background: var(--ink); overflow: hidden; box-shadow: 0 0 0 4px var(--paper), 0 10px 26px rgba(30, 33, 51, .28); }
+  .disc::before {
+    content: ""; position: absolute; inset: 0; border-radius: 50%;
+    background: repeating-radial-gradient(circle, rgba(255, 255, 255, .08) 0 1px, transparent 1px 4px),
+                conic-gradient(from 20deg, transparent 0 14%, rgba(255, 255, 255, .2) 22%, transparent 30%, transparent 64%, rgba(255, 255, 255, .2) 72%, transparent 80%);
+    animation: spin 7s linear infinite;
+  }
+  .disc::after { content: ""; position: absolute; inset: 27%; border-radius: 50%; background: var(--accent); }
+  .vinyl .tri { position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; margin: -13px 0 0 -13px; fill: #fff; }
+  .vinyl:hover .disc::before { animation-duration: 2.4s; }
+  .vinyl:focus-visible { outline: none; }
+  .vinyl:focus-visible .vwrap { outline: 3px solid var(--ink); outline-offset: 6px; border-radius: 50%; }
+  #startText { font-size: 22px; font-weight: 300; letter-spacing: .01em; }
+  @keyframes rise { from { transform: translateY(14px) scale(.85); opacity: 0; } }
+  @keyframes ring { 0% { transform: scale(1); opacity: .6; } 100% { transform: scale(1.4); opacity: 0; } }
+  .app[data-state="before"] [data-when="after"], .app[data-state="after"] [data-when="before"] { display: none; }   /* the home screen's two states */
+  .guesses .attempts { margin: 0; }
+  .foot .heart { width: 13px; height: 13px; vertical-align: -2px; fill: currentColor; }
+
   /* daily reminder: a calendar event that repeats every day, so no account or email address is needed */
-  .remind { margin-top: 20px; border: 1px solid var(--line); font-size: 15px; }
-  .remind summary { padding: 12px 14px; text-align: center; cursor: pointer; font-weight: 400; }
-  .remind[open] summary { border-bottom: 1px solid var(--line); }
-  .remind .body { padding: 14px; }
-  .remind p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
-  .remind label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .remind, .guesses { margin-top: 20px; border: 1px solid var(--line); font-size: 15px; }
+  .remind summary, .guesses summary { padding: 12px 14px; text-align: center; cursor: pointer; font-weight: 400; }
+  .remind summary svg, .guesses summary svg { width: 18px; height: 18px; margin-inline-end: 6px; vertical-align: -4px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+  .remind[open] summary, .guesses[open] summary { border-bottom: 1px solid var(--line); }
+  .remind .body, .guesses .body { padding: 14px; }
+  .remind p { margin: 0 0 12px; color: var(--muted); font-size: 14px; text-align: center; }
+  .remind label { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 12px; }
   .remind input[type="time"] {
     height: 42px; padding: 0 10px; border: 1px solid var(--mid); border-radius: 0;
     background: transparent; color: var(--ink); font: inherit; font-weight: 400;
@@ -275,16 +335,19 @@
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   /* header links and the calendar */
-  .links { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 2px 16px; font-size: 14px; }
+  .more { margin-top: 28px; }
+  .more .btn { width: 100%; }
+  .links:has(> [hidden]:only-child) { display: none; }   /* nothing to show: no empty row */
+  .links { margin: 10px 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 16px; font-size: 14px; }
   .link {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 0; border: 0; background: none; color: var(--ink);
-    font: inherit; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; cursor: pointer;
+    font: inherit; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; white-space: nowrap; cursor: pointer;
   }
   .link[hidden] { display: none; }
   .link svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; }
   dialog.cal { width: min(92vw, 380px); padding: 0; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); }
-  dialog.cal::backdrop { background: rgba(0, 0, 0, .45); }
+  dialog.cal::backdrop { background: rgba(46, 42, 48, .45); }
   .cal-body { padding: 20px 18px 18px; }
   .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .cal-head h2 { margin: 0; font-size: 22px; font-weight: 300; }
@@ -302,7 +365,7 @@
   .cal-day:disabled { border-color: transparent; color: var(--mid); cursor: default; }
   .cal-day.today { border-color: var(--ink); }
   .cal-day.current { outline: 2px solid var(--ink); outline-offset: 2px; }
-  .cal-day.won { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+  .cal-day.won { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--soft); }
   .cal-day.lost { color: var(--muted); text-decoration: line-through; }
   .cal-day.going::after { content: ""; position: absolute; left: 50%; bottom: 5px; width: 4px; height: 4px; margin-left: -2px; background: currentColor; }
   .cal-key { display: flex; flex-wrap: wrap; gap: 8px 10px; margin: 16px 0; color: var(--muted); font-size: 13px; }
@@ -314,11 +377,10 @@
   @media (max-width: 480px) {
     .app { padding: 16px 16px 48px; }
     h1 { font-size: 34px; }
-    .top { padding-bottom: 14px; }
     .lead { margin-top: 10px; font-size: 14px; }
-    .stage { margin-top: 18px; gap: 12px; }
-    .play { width: 76px; height: 76px; margin-bottom: 12px; }
-    .play svg { width: 32px; height: 32px; }
+    .stage { margin-top: clamp(14px, 4vh, 36px); gap: 12px; }
+    .play { width: 96px; height: 96px; margin-bottom: 14px; }
+    .play svg { width: 22px; height: 22px; margin: -11px 0 0 -11px; }
     .attempts { margin-top: 14px; gap: 5px; }
     .attempt { min-height: 38px; padding-block: 2px; }
     .attempt .badge { min-width: 30px; height: 28px; }
@@ -330,25 +392,49 @@
 </style>
 </head>
 <body>
-<main class="app">
-  <header class="top">
-    <div>
-      <h1>תו השעה</h1>
-      <p class="sub" id="dayLabel"></p>
-      <p class="links">
-        <button class="link" id="calBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>לוח שנה</button>
-        <a class="link" id="todayLink" href="./" hidden>חזרה להיום</a>
-      </p>
-    </div>
+<main class="app" data-screen="home" data-state="before">
+  <!-- Two screens in one page: home and game. Home has two states, before the game (data-when="before") and after it
+       (data-when="after"). Each direct child of .app lists the screens it belongs to in data-s; the others are hidden by
+       CSS. The YouTube player stays on both screens (it must not be display:none to play). -->
+  <!-- home, both states: the sleeves, then the name, the day, the calendar link and the stats -->
+  <!-- decoration only: flat sleeves in a fan, dealt in on load; one leaves on the left and a new one comes in on the right, in turns -->
+  <div class="hero" data-s="home" aria-hidden="true">
+    <div class="sleeve" data-slot="0" style="--i:0;--x:-1.15;--y:18px;--r:-14deg"><svg viewBox="0 0 100 100"></svg></div>
+    <div class="sleeve" data-slot="4" style="--i:4;--x:1.15;--y:18px;--r:14deg"><svg viewBox="0 0 100 100"></svg></div>
+    <div class="sleeve" data-slot="1" style="--i:1;--x:-0.58;--y:6px;--r:-7deg"><svg viewBox="0 0 100 100"></svg></div>
+    <div class="sleeve" data-slot="3" style="--i:3;--x:0.58;--y:6px;--r:7deg"><svg viewBox="0 0 100 100"></svg></div>
+    <div class="sleeve" data-slot="2" style="--i:2;--x:0;--y:0px;--r:0deg"><svg viewBox="0 0 100 100"></svg></div>
+    <div class="sleeve" data-slot="5" style="--i:5;--x:3;--y:28px;--r:20deg"><svg viewBox="0 0 100 100"></svg></div>
+  </div>
+
+  <!-- home, both states: the name, the day, the calendar and the stats, right under the sleeves -->
+  <section class="info" data-s="home" aria-label="על המשחק">
+    <h1>תו השעה</h1>
+    <p class="sub" id="dayLabel"></p>
+    <p class="links"><a class="link" id="todayLink" href="./" hidden>חזרה להיום</a></p>
     <div class="stats">
       <div class="stat"><b id="statStreak">0</b><span>רצף</span></div>
       <div class="stat"><b id="statWins">0</b><span>ניצחונות</span></div>
     </div>
-  </header>
-  <p class="lead">שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה, עד 5 שניות.</p>
+  </section>
 
-  <section class="stage" id="stage" aria-label="נגן">
+  <!-- home, before the game: the way in. The play button is a record; it is the control, the sleeves are decoration -->
+  <section class="start" data-s="home" data-when="before" aria-label="התחלה">
+    <button class="vinyl" id="startBtn" type="button" aria-describedby="homeStatus">
+      <span class="vwrap" aria-hidden="true"><span class="disc"></span><svg class="tri" viewBox="0 0 24 24"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z"/></svg></span>
+      <span id="startText">שחקו</span>
+    </button>
+    <p class="status" id="homeStatus"></p>
+  </section>
+  <p class="lead" data-s="home" data-when="before">שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה, עד 5 שניות.</p>
+
+  <div class="bar" data-s="game">
+    <button class="back" id="backBtn" type="button" aria-label="חזרה למסך הראשי"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+  </div>
+
+  <section class="stage" id="stage" data-s="game" aria-label="נגן">
     <button class="play" id="play" type="button" aria-label="נגן את הקטע" data-state="loading" disabled>
+      <span class="disc" aria-hidden="true"></span>
       <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z"/></svg>
       <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>
     </button>
@@ -362,7 +448,7 @@
     <div class="tl-label" id="tlLabel"></div>
   </section>
 
-  <section class="guess" id="guess" aria-label="ניחוש">
+  <section class="guess" id="guess" data-s="game" aria-label="ניחוש">
     <div class="combo">
       <label class="sr-only" for="q">חפשו שיר או אמן</label>
       <input id="q" type="text" role="combobox" aria-expanded="false" aria-controls="list" aria-autocomplete="list"
@@ -375,25 +461,26 @@
     </div>
   </section>
 
-  <section class="result" id="result" hidden aria-live="polite">
+  <!-- home, after the game: how it went, the song, sharing and the countdown to the next one -->
+  <section class="result" id="result" data-s="home" data-when="after" hidden aria-live="polite">
     <h2 id="resultTitle"></h2>
     <p class="song-title" id="resultSong"></p>
     <p class="song-artist" id="resultArtist"></p>
     <div class="squares" id="resultSquares" aria-hidden="true"></div>
     <button class="btn ghost share" id="shareBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M5 13v7h14v-7"/></svg>שתפו תוצאה</button>
-    <div class="result-actions">
-      <button class="btn ghost" id="calBtn2" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>שחקו בימים קודמים</button>
-    </div>
-    <p class="next" id="next">השיר הבא בעוד <b id="countdown">--:--:--</b></p>
+    <p class="next" id="next">השיר הבא בעוד <b data-countdown>--:--:--</b></p>
   </section>
 
-  <div class="player-wrap" id="playerWrap"></div>
+  <div class="player-wrap" id="playerWrap" data-s="home game"></div>
 
-  <ol class="attempts" id="attempts" aria-label="הניחושים שלכם"></ol>
+  <details class="guesses" data-s="home" data-when="after">
+    <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg>הניחושים שלכם</summary>
+    <div class="body"><ol class="attempts" id="attempts" aria-label="הניחושים שלכם"></ol></div>
+  </details>
 
-  <p class="notice" id="notice" role="alert" hidden></p>
-  <details class="remind" id="remind" hidden>
-    <summary>🔔 תזכורת יומית ביומן</summary>
+  <p class="notice" id="notice" data-s="home game" role="alert" hidden></p>
+  <details class="remind" id="remind" data-s="home" data-when="after" hidden>
+    <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0112 0v5.5l1.5 2h-15zM10 21a2 2 0 004 0"/></svg>תזכורת יומית ביומן</summary>
     <div class="body">
       <p>נוסיף ליומן שלכם אירוע שחוזר כל יום, כדי שלא תפספסו את השיר החדש.</p>
       <label>באיזו שעה?<input type="time" id="remindTime" value="09:00"></label>
@@ -404,10 +491,14 @@
       <button class="alt" id="remindFile" type="button" hidden>לא נפתח? שמרו כקובץ</button>
     </div>
   </details>
-  <p class="foot">השיר מתחלף בחצות</p>
-  <p class="foot credit">המשחק נבנה ב♥︎ על ידי ליאור ומוקדש לנילס ותמי</p>
+  <!-- home, both states: the history of played days, at the bottom -->
+  <section class="more" data-s="home">
+    <button class="btn ghost" id="calBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 4v6h6M3.5 15a9 9 0 1 0 2.1-9.4L1.5 10M12 7v5l3 2"/></svg>שחקו בימים קודמים</button>
+  </section>
+  <p class="foot" data-s="home" data-when="before">השיר מתחלף בחצות</p>
+  <p class="foot credit" data-s="home">המשחק נבנה ב<svg class="heart" viewBox="0 0 24 24" aria-label="אהבה" role="img"><path d="M12 21s-7.2-4.5-9.1-9.4C1.6 8.3 3.6 5 7 5c2 0 3.4 1 5 3 1.6-2 3-3 5-3 3.4 0 5.4 3.3 4.1 6.6C19.2 16.5 12 21 12 21z"/></svg> על ידי ליאור ומוקדש לנילס ותמי</p>
 </main>
-<dialog class="cal" id="cal" aria-label="לוח שנה">
+<dialog class="cal" id="cal" aria-label="היסטוריית משחקים">
   <div class="cal-body">
     <div class="cal-head">
       <button class="cal-nav" id="calPrev" type="button" aria-label="החודש הקודם"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
@@ -529,7 +620,7 @@
   function renderAttempts() {
     const ol = $('attempts');
     ol.textContent = '';
-    for (let i = rec.g.length - 1; i >= 0; i--) {   // newest first, under the guess box
+    for (let i = 0; i < rec.g.length; i++) {         // in the order they were made
       const li = document.createElement('li');
       const badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = STAGES[i];
       const txt = document.createElement('span'); txt.className = 'txt';
@@ -568,26 +659,64 @@
     });
   }
 
+  function fillSquares(el) {
+    el.textContent = '';
+    squaresFor(rec.g).forEach((c) => { const i = document.createElement('i'); if (c) i.className = c; el.appendChild(i); });
+  }
+
   function renderResult() {
     const box = $('result');
     box.hidden = false;
     box.classList.toggle('won', rec.won);
     box.classList.toggle('lost', !rec.won);
-    $('resultTitle').textContent = rec.won ? `נכון! ניחשתם בניסיון ${rec.g.length} 🎯` : 'לא הפעם 😅';
+    $('resultTitle').textContent = rec.won ? `נכון! ניחשתם בניסיון ${rec.g.length}` : 'לא הפעם';
     $('resultSong').textContent = answer.title;
     $('resultArtist').textContent = answer.artist;
-    const sq = $('resultSquares'); sq.textContent = '';
-    squaresFor(rec.g).forEach((c) => { const i = document.createElement('i'); if (c) i.className = c; sq.appendChild(i); });
-    $('playerWrap').classList.add('revealed');
+    fillSquares($('resultSquares'));
     $('remind').hidden = false;                     // the reminder is offered once the game is over
     tickCountdown();
   }
 
+  // home: where the day stands, and the one button that goes on from there
+  // before the game it offers to start or go on; after it, the result card, the song and the rest are shown instead
+  function renderHome() {
+    const n = rec.g.length;
+    app.dataset.state = rec.done ? 'after' : 'before';
+    $('playerWrap').classList.toggle('revealed', rec.done && screen === 'home');   // the video is shown once the day is over
+    if (rec.done) return;
+    $('homeStatus').textContent = n ? `ניסיון ${n + 1} מתוך ${STAGES.length}` : isToday ? 'השיר של היום מחכה לכם' : 'עוד לא שיחקתם בשיר הזה';
+    $('startText').textContent = n ? 'המשיכו' : 'שחקו';
+  }
+
   function render() {
+    renderHome();
     renderAttempts();
     renderControls();
     if (rec.done) renderResult();
   }
+
+  // ---------- screens: home (before or after the game) and game ----------
+  const app = document.querySelector('.app');
+  let screen = 'home';
+  // how: 'push' adds a history entry (so Back goes to the home screen), 'pop' follows the browser's own Back / Forward,
+  // anything else leaves history alone
+  function showScreen(name, how) {
+    if (name === 'game' && rec.done) name = 'home';          // a finished day has no game left
+    if (screen === 'game' && name !== 'game') stopClip();
+    screen = name;
+    app.dataset.screen = name;
+    $('playerWrap').classList.toggle('revealed', name === 'home' && rec.done);
+    if (how === 'push') history.pushState({ screen: name }, '');
+    window.scrollTo(0, 0);
+    const focus = name === 'game' ? $('play') : rec.done ? $('resultTitle') : $('startBtn');
+    if (focus === $('resultTitle')) focus.tabIndex = -1;
+    if (!focus.disabled) focus.focus({ preventScroll: true });
+  }
+  window.addEventListener('popstate', (e) => showScreen((e.state && e.state.screen) || 'home', 'pop'));
+  $('startBtn').addEventListener('click', () => showScreen('game', 'push'));
+  $('backBtn').addEventListener('click', () => {
+    if (history.state && history.state.screen) history.back(); else showScreen('home', 'replace');
+  });
 
   // ---------- YouTube player: play only the first N seconds ----------
   let player = null, playerReady = false, clip = null;
@@ -772,6 +901,8 @@
     render();
     if (rec.done) {
       announce(won ? 'נכון!' : 'לא הפעם');
+      showScreen('home');                           // the finished day shows its result on the home screen
+      if (history.state && history.state.screen === 'game') history.back();   // and the game entry is left behind
       playFull();
     } else {
       announce(entry === 'skip' ? 'דילגתם' : 'ניחוש שגוי');
@@ -1019,13 +1150,13 @@
     cal.showModal();
   };
   $('calBtn').addEventListener('click', openCalendar);
-  $('calBtn2').addEventListener('click', openCalendar);
   $('calPrev').addEventListener('click', () => { shownMonth--; renderCalendar(); });
   $('calNext').addEventListener('click', () => { shownMonth++; renderCalendar(); });
   $('calClose').addEventListener('click', () => cal.close());
   cal.addEventListener('click', (e) => { if (e.target === cal) cal.close(); });   // a tap on the dimmed area
 
   // ---------- share + countdown ----------
+  // the page itself uses icons only, but the shared message is plain text, so it keeps emoji
   const EMOJI = { win: '🟩', bad: '🟥', skip: '⬛', '': '⬜' };
   // The first line says whose result this is and how it went, so a pasted message does not read as just a link to play
   // (the chat's link preview card sits right below it). The song itself is never named.
@@ -1037,7 +1168,7 @@
   }
   // phones get the system share sheet (WhatsApp is one tap away); desktop copies, as before
   const NATIVE_SHARE = !!navigator.share && window.matchMedia('(pointer: coarse)').matches;
-  $('shareBtn').addEventListener('click', async () => {
+  const onShare = async () => {
     const text = shareText();
     if (NATIVE_SHARE) {
       try { await navigator.share({ text }); return; }
@@ -1050,7 +1181,8 @@
       try { document.execCommand('copy'); toast('התוצאה הועתקה. הדביקו אותה בצ׳אט'); } catch (_) { toast('לא הצלחתי להעתיק'); }
       ta.remove();
     }
-  });
+  };
+  $('shareBtn').addEventListener('click', onShare);
 
   // ---------- daily reminder: a repeating calendar event ----------
   const REMIND_TITLE = 'תו השעה: השיר היומי';
@@ -1124,13 +1256,117 @@
     const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     const ms = Math.max(0, next - now);
     const p = (n) => String(n).padStart(2, '0');
-    $('countdown').textContent = `${p(Math.floor(ms / 3600000))}:${p(Math.floor(ms / 60000) % 60)}:${p(Math.floor(ms / 1000) % 60)}`;
+    const text = `${p(Math.floor(ms / 3600000))}:${p(Math.floor(ms / 60000) % 60)}:${p(Math.floor(ms / 1000) % 60)}`;
+    document.querySelectorAll('[data-countdown]').forEach((el) => { el.textContent = text; });
     if (ms === 0 && !previewMode) location.reload();
   }
   setInterval(tickCountdown, 1000);
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden && !previewMode && dayNumberOf(new Date()) !== today) location.reload();
   });
+
+  // ---------- real album covers on the home screen ----------
+  // When five covers have loaded from the iTunes Search API they fade in over the drawn sleeves; otherwise (no network,
+  // blocked, an image that will not load) the drawn sleeves stay. The albums are fixed and famous, none is by an artist
+  // in songs.js, and one by today's artist would be skipped, so a cover can never hint at the answer. The picked image
+  // addresses are kept for a week, so the API is asked about once a week per visitor.
+  const COVER_ALBUMS = [
+    ['Pink Floyd', 'The Dark Side of the Moon'], ['Fleetwood Mac', 'Rumours'], ['Miles Davis', 'Kind of Blue'],
+    ['Radiohead', 'OK Computer'], ['David Bowie', 'Aladdin Sane'], ['Amy Winehouse', 'Back to Black'],
+    ['Prince', 'Purple Rain'], ['Joy Division', 'Unknown Pleasures'],
+  ];
+  const COVERS_KEY = 'whats-the-song.covers.v1';
+  async function findCover([artist, album], signal) {
+    const r = await fetch('https://itunes.apple.com/search?media=music&entity=album&limit=5&country=US&term=' + encodeURIComponent(`${artist} ${album}`), { signal });
+    if (!r.ok) return null;
+    const hit = ((await r.json()).results || []).find((x) => x.artworkUrl100 && x.artistName && x.collectionName
+      && norm(x.artistName).includes(norm(artist)) && norm(x.collectionName).includes(norm(album)));
+    if (!hit || artistIn(norm(hit.artistName))) return null;   // never today's artist
+    return hit.artworkUrl100.replace(/\/\d+x\d+bb\./, '/300x300bb.');
+  }
+  const preload = (url) => new Promise((resolve) => { const im = new Image(); im.onload = () => resolve(im); im.onerror = () => resolve(null); im.src = url; });
+  let coverPool = [], nextCover = 0;                // every loaded cover; the first five fill the fan, the rest come in later
+  async function loadCovers() {
+    const sleeves = [...document.querySelectorAll('.sleeve')], n = sleeves.length;
+    let urls = null, cached = false;
+    try {
+      const c = JSON.parse(localStorage.getItem(COVERS_KEY));
+      if (c && Date.now() - c.t < 7 * 86400000 && c.urls.length >= n) { urls = c.urls; cached = true; }
+    } catch (e) { /* nothing saved */ }
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 5000);
+    try {
+      if (!urls) {
+        const picked = COVER_ALBUMS.slice().sort(() => Math.random() - 0.5);
+        urls = (await Promise.all(picked.map((a) => findCover(a, ctl.signal).catch((e) => { dbg('cover: ' + e.message); return null; })))).filter(Boolean);
+        if (urls.length < n) return;
+      }
+      // all of them are loaded first, so that a cover coming in later is already there
+      const loaded = (await Promise.all(urls.map(async (u) => ({ u, im: await preload(u) })))).filter((x) => x.im);
+      if (loaded.length < n) {                      // not enough covers load: keep the drawn sleeves
+        if (cached) { try { localStorage.removeItem(COVERS_KEY); } catch (e) { /* ignore */ } }
+        return;
+      }
+      if (!cached || loaded.length !== urls.length) { try { localStorage.setItem(COVERS_KEY, JSON.stringify({ t: Date.now(), urls: loaded.map((x) => x.u) })); } catch (e) { /* ignore */ } }
+      coverPool = loaded.map((x) => x.u); nextCover = n;
+      sleeves.forEach((sl, i) => { loaded[i].im.alt = ''; sl.appendChild(loaded[i].im); });
+      requestAnimationFrame(() => requestAnimationFrame(() => sleeves.forEach((sl) => sl.lastElementChild.classList.add('on'))));
+    } catch (e) { dbg('covers: ' + e.message); }   // offline or blocked: the drawn sleeves stay
+    finally { clearTimeout(timer); }
+  }
+
+  // ---------- the sleeves: one leaves, a new one comes in ----------
+  // Five seats in a fan and a sixth sleeve waiting just outside the screen on the right. Every few seconds each sleeve moves
+  // one seat along: the one at the far left slides off the left edge, and at the same time the waiting one slides in from the
+  // right edge into the free seat. Nothing fades. Once the one that left is out of sight it is given a new face (the next
+  // drawn sleeve, or the next cover) and waits on the right for its turn. The glide is a CSS transition on transform.
+  const ART = [
+    '<rect width="100" height="100" class="l"/><circle cx="50" cy="50" r="42" class="a"/><circle cx="50" cy="50" r="30" class="l"/><circle cx="50" cy="50" r="18" class="a"/><circle cx="50" cy="50" r="6" class="l"/>',
+    '<rect width="100" height="100" class="s"/><rect x="14" y="46" width="9" height="54" class="i"/><rect x="28" y="28" width="9" height="72" class="i"/><rect x="42" y="58" width="9" height="42" class="i"/><rect x="56" y="16" width="9" height="84" class="a"/><rect x="70" y="40" width="9" height="60" class="i"/><rect x="84" y="64" width="9" height="36" class="i"/>',
+    '<rect width="100" height="100" class="p"/><circle cx="100" cy="0" r="92" class="l"/><circle cx="100" cy="0" r="70" class="a"/><circle cx="100" cy="0" r="48" class="l"/><circle cx="100" cy="0" r="26" class="i"/>',
+    '<rect width="100" height="100" class="a"/><path d="M0 100L100 0v100z" class="i"/><circle cx="30" cy="30" r="11" class="p"/>',
+    '<rect width="100" height="100" class="i"/><path d="M12 100a38 38 0 0 1 76 0z" class="l"/><circle cx="74" cy="26" r="9" class="a"/>',
+    '<rect width="100" height="100" class="i"/><circle cx="20" cy="20" r="7" class="a"/><circle cx="50" cy="20" r="7" class="l"/><circle cx="80" cy="20" r="7" class="a"/><circle cx="20" cy="50" r="7" class="l"/><circle cx="50" cy="50" r="7" class="p"/><circle cx="80" cy="50" r="7" class="l"/><circle cx="20" cy="80" r="7" class="a"/><circle cx="50" cy="80" r="7" class="l"/><circle cx="80" cy="80" r="7" class="a"/>',
+    '<rect width="100" height="100" class="l"/><path d="M0 58Q25 28 50 58T100 58V100H0z" class="a"/><path d="M0 78Q25 50 50 78T100 78V100H0z" class="i"/>',
+    '<rect width="100" height="100" class="s"/><path d="M0 50a50 50 0 0 1 100 0z" class="a"/><path d="M0 50a50 50 0 0 0 100 0z" class="i"/><circle cx="50" cy="50" r="11" class="p"/>',
+  ];
+  const FAN = [{ x: -1.15, y: 18, r: -14 }, { x: -0.58, y: 6, r: -7 }, { x: 0, y: 0, r: 0 }, { x: 0.58, y: 6, r: 7 }, { x: 1.15, y: 18, r: 14 }];
+  const sleeveEls = [...document.querySelectorAll('.sleeve')];
+  const seatZ = (slot) => 6 - Math.abs(slot - 2);   // the middle sleeve is on top
+  // far enough out to be off the screen, in sleeve widths from the middle: half the screen, plus the sleeve and its tilt
+  const offX = () => (window.innerWidth / 2) / sleeveEls[0].offsetWidth + 0.8;
+  let nextArt = 6;
+  function pose(el, p, z) {
+    el.style.setProperty('--x', p.x); el.style.setProperty('--y', p.y + 'px'); el.style.setProperty('--r', p.r + 'deg'); el.style.setProperty('--z', z);
+  }
+  function seat(el, slot) { el.dataset.slot = slot; pose(el, FAN[slot], seatZ(slot)); }
+  const park = (el) => { el.dataset.slot = 5; pose(el, { x: offX(), y: 28, r: 20 }, 4); };   // waiting off the right edge
+  function freshArt(el) {                           // the face of a sleeve that is about to wait for its turn
+    el.querySelector('svg').innerHTML = ART[nextArt++ % ART.length];
+    const im = el.querySelector('img');
+    if (im && coverPool.length) im.src = coverPool[nextCover++ % coverPool.length];
+  }
+  function turnSleeves() {
+    if (screen !== 'home' || document.hidden) return;
+    sleeveEls.forEach((el) => {
+      const slot = Number(el.dataset.slot);
+      if (slot === 0) {                             // leaves off the left edge
+        el.dataset.slot = 'out'; pose(el, { x: -offX(), y: 28, r: -20 }, 0);
+        setTimeout(() => {                          // out of sight: a new face, and back to wait on the right
+          freshArt(el);
+          el.style.transition = 'none'; park(el);
+          void el.offsetWidth;
+          el.style.transition = '';
+        }, 1000);
+      } else seat(el, slot - 1);                    // the waiting one (5) comes in to seat 4, the others move along
+    });
+  }
+  sleeveEls.forEach((el) => {
+    const slot = Number(el.dataset.slot);
+    el.querySelector('svg').innerHTML = ART[slot];
+    if (slot === 5) { el.style.animation = 'none'; park(el); } else seat(el, slot);
+  });
+  window.addEventListener('resize', () => sleeveEls.forEach((el) => { if (el.dataset.slot === '5') park(el); }));
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(turnSleeves, 3400);
 
   // ---------- boot ----------
   $('dayLabel').textContent = previewMode ? `תצוגה מקדימה: שיר מספר ${dayNo}` : isToday ? `שיר מספר ${dayNo}` : `שיר מספר ${dayNo}, ${DAY_FMT.format(dateOfDay(dayNo))}`;
@@ -1148,8 +1384,9 @@
   }
   buildTimeline();
   render();
-  if (rec.done) $('playerWrap').classList.add('revealed');
+  history.replaceState({ screen: 'home' }, '');
   loadYouTube();
+  loadCovers();
 })();
 </script>
 </body>
