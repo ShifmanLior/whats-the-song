@@ -584,6 +584,25 @@
   const dayNo = previewMode ? (asked || today) : asked >= 1 && asked <= today ? asked : today;
   const isToday = dayNo === today;
   window.setAccent(dayNo);                          // the accent of this day (the head already set it from the same rule)
+
+  // ---------- events (Vercel Web Analytics) ----------
+  // Small anonymous events that say how the game is used. Only numbers, words and true/false are sent: never what someone
+  // typed, never the song or the artist. Nothing is sent from a ?preview day, or where analytics is not loaded (localhost);
+  // under ?debug every event is also written to the log.
+  //   game_open     { day, resume }               the start button on the home screen (resume: the day had been started)
+  //   clip_play     { day, attempt }              the first time a clip plays in each attempt
+  //   guess         { day, attempt, result }      result: wrong | correct | skip
+  //   game_end      { day, won, attempts, late }  the day is over (late: played after its own date)
+  //   share         { day, won, how }             how: native | copy
+  //   history_open  { day }                       the calendar of played days
+  //   history_pick  { day, state }                a day chosen from it (state: new | going | won | lost)
+  //   reminder      { how }                       google | android | ios | file
+  //   player_error  { day, code }                 YouTube could not play the day's video
+  function track(name, data) {
+    if (previewMode) return;
+    dbg('event ' + name + ' ' + JSON.stringify(data || {}));
+    try { if (window.va) window.va('event', { name, data }); } catch (e) { /* analytics must never break the game */ }
+  }
   const answer = SONGS[(((dayNo - 1) % SONGS.length) + SONGS.length) % SONGS.length];
 
   // ---------- saved progress ----------
@@ -738,13 +757,14 @@
     if (!focus.disabled) focus.focus({ preventScroll: true });
   }
   window.addEventListener('popstate', (e) => showScreen((e.state && e.state.screen) || 'home', 'pop'));
-  $('startBtn').addEventListener('click', () => showScreen('game', 'push'));
+  $('startBtn').addEventListener('click', () => { track('game_open', { day: dayNo, resume: rec.g.length > 0 }); showScreen('game', 'push'); });
   $('backBtn').addEventListener('click', () => {
     if (history.state && history.state.screen) history.back(); else showScreen('home', 'replace');
   });
 
   // ---------- YouTube player: play only the first N seconds ----------
   let player = null, playerReady = false, clip = null;
+  const clipsSeen = new Set();                      // the attempts whose clip has already been counted
   let pending = null;                               // 'clip' or 'full': waits for a fresh player to get ready
 
   // Chromium lists whatever a YouTube iframe has played in its media notification, lock screen and media hub, with the
@@ -766,6 +786,8 @@
     stopClip(false);
     const start = answer.start || 0;
     const len = secsUnlocked();
+    const attempt = rec.g.length + 1;
+    if (!clipsSeen.has(attempt)) { clipsSeen.add(attempt); track('clip_play', { day: dayNo, attempt }); }
     clip = { start, len, playing: false, playedAt: 0, lastCt: null, armed: false, fresh: false, wall0: 0, stalledAt: 0, nudgedAt: 0, launched: performance.now() };
     player.seekTo(start, true);
     player.playVideo();
@@ -888,6 +910,7 @@
         onError: (e) => {
           if (me !== player) return;
           pending = null;
+          track('player_error', { day: dayNo, code: e.data });
           stopClip(false);
           showNotice(`הסרטון של היום לא מתנגן כאן: ${YT_ERRORS[e.data] || 'שגיאה ' + e.data}. השיר: ${label(answer)}.`);
         },
@@ -921,6 +944,8 @@
     if (won || rec.g.length >= STAGES.length) { rec.done = true; rec.won = won; }
     stopClip(!rec.done);                            // at the end the same player goes on to play the whole song
     persist();
+    track('guess', { day: dayNo, attempt: rec.g.length, result: entry === 'skip' ? 'skip' : entry.ok ? 'correct' : 'wrong' });
+    if (rec.done) track('game_end', { day: dayNo, won, attempts: rec.g.length, late: !!rec.late });
     cancelSearch(); matches = [];
     $('q').value = ''; picked = null; $('guessBtn').disabled = true; closeList();
     render();
@@ -1165,13 +1190,14 @@
       b.className = ['cal-day', state, n === today && 'today', n === dayNo && 'current'].filter(Boolean).join(' ');
       if (n === today) b.setAttribute('aria-current', 'date');
       b.setAttribute('aria-label', `${DAY_FMT.format(new Date(Date.UTC(year, month, d)))}, ${open ? STATE_TEXT[state] : 'עוד לא נפתח'}`);
-      if (open) b.addEventListener('click', () => { location.href = n === today ? './' : `?day=${n}`; });
+      if (open) b.addEventListener('click', () => { track('history_pick', { day: n, state: state || 'new' }); location.href = n === today ? './' : `?day=${n}`; });
       grid.appendChild(b);
     }
   }
   const openCalendar = () => {
     shownMonth = Math.min(monthOf(dateOfDay(dayNo)), lastMonth);
     renderCalendar();
+    track('history_open', { day: dayNo });
     cal.showModal();
   };
   $('calBtn').addEventListener('click', openCalendar);
@@ -1196,14 +1222,14 @@
   const onShare = async () => {
     const text = shareText();
     if (NATIVE_SHARE) {
-      try { await navigator.share({ text }); return; }
+      try { await navigator.share({ text }); track('share', { day: dayNo, won: !!rec.won, how: 'native' }); return; }
       catch (e) { if (e && e.name === 'AbortError') return; /* sharing failed: copy instead */ }
     }
-    try { await navigator.clipboard.writeText(text); toast('התוצאה הועתקה. הדביקו אותה בצ׳אט'); }
+    try { await navigator.clipboard.writeText(text); toast('התוצאה הועתקה. הדביקו אותה בצ׳אט'); track('share', { day: dayNo, won: !!rec.won, how: 'copy' }); }
     catch (e) {
       const ta = document.createElement('textarea');
       ta.value = text; document.body.appendChild(ta); ta.select();
-      try { document.execCommand('copy'); toast('התוצאה הועתקה. הדביקו אותה בצ׳אט'); } catch (_) { toast('לא הצלחתי להעתיק'); }
+      try { document.execCommand('copy'); toast('התוצאה הועתקה. הדביקו אותה בצ׳אט'); track('share', { day: dayNo, won: !!rec.won, how: 'copy' }); } catch (_) { toast('לא הצלחתי להעתיק'); }
       ta.remove();
     }
   };
@@ -1267,11 +1293,12 @@
     else downloadIcs();
   }
   $('remindTime').addEventListener('input', updateGoogleLink);
-  $('remindOpen').addEventListener('click', openInCalendar);
+  $('remindOpen').addEventListener('click', () => { track('reminder', { how: IS_ANDROID ? 'android' : IS_IOS ? 'ios' : 'file' }); openInCalendar(); });
+  $('remindGoogle').addEventListener('click', () => track('reminder', { how: 'google' }));
   if (IS_ANDROID || IS_IOS) {                       // keep the file as a fallback if the phone does not open it
     $('remindOpen').innerHTML = 'פתחו ביומן<small>היומן שבטלפון</small>';
     $('remindFile').hidden = false;
-    $('remindFile').addEventListener('click', downloadIcs);
+    $('remindFile').addEventListener('click', () => { track('reminder', { how: 'file' }); downloadIcs(); });
   }
   updateGoogleLink();
 
