@@ -253,27 +253,24 @@
   .foot { margin-top: 32px; text-align: center; color: var(--muted); font-size: 13px; }
   .foot.credit { margin-top: 6px; }
 
-  /* screens: show only what belongs to the current one (home, game, summary) */
+  /* screens: show only what belongs to the current one (home or game); home also has two states, before and after the game */
   .app[data-screen="home"] > :not([data-s~="home"]),
-  .app[data-screen="game"] > :not([data-s~="game"]),
-  .app[data-screen="summary"] > :not([data-s~="summary"]) { display: none; }
+  .app[data-screen="game"] > :not([data-s~="game"]) { display: none; }
   .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
   .bar .sub { margin: 0; }
   .start { margin-top: 28px; text-align: center; }
   .status { margin: 0 0 14px; color: var(--muted); font-size: 15px; }
   .btn.cta { width: 100%; height: 60px; font-size: 18px; }
   .app[data-state="before"] [data-when="after"], .app[data-state="after"] [data-when="before"] { display: none; }   /* the home screen's two states */
-  .result.after { margin-top: 28px; }
-  .sec { margin: 28px 0 0; font-size: 15px; font-weight: 400; color: var(--muted); }
-  .sec + .attempts { margin-top: 10px; }
+  .guesses .attempts { margin: 0; }
   .foot .heart { width: 13px; height: 13px; vertical-align: -2px; fill: currentColor; }
 
   /* daily reminder: a calendar event that repeats every day, so no account or email address is needed */
-  .remind { margin-top: 20px; border: 1px solid var(--line); font-size: 15px; }
-  .remind summary { padding: 12px 14px; text-align: center; cursor: pointer; font-weight: 400; }
-  .remind summary svg { width: 18px; height: 18px; margin-inline-end: 6px; vertical-align: -4px; fill: none; stroke: currentColor; stroke-width: 1.5; }
-  .remind[open] summary { border-bottom: 1px solid var(--line); }
-  .remind .body { padding: 14px; }
+  .remind, .guesses { margin-top: 20px; border: 1px solid var(--line); font-size: 15px; }
+  .remind summary, .guesses summary { padding: 12px 14px; text-align: center; cursor: pointer; font-weight: 400; }
+  .remind summary svg, .guesses summary svg { width: 18px; height: 18px; margin-inline-end: 6px; vertical-align: -4px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+  .remind[open] summary, .guesses[open] summary { border-bottom: 1px solid var(--line); }
+  .remind .body, .guesses .body { padding: 14px; }
   .remind p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
   .remind label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
   .remind input[type="time"] {
@@ -352,8 +349,9 @@
 </head>
 <body>
 <main class="app" data-screen="home" data-state="before">
-  <!-- Three screens in one page: home, game and summary. Each direct child of .app lists the screens it belongs to in
-       data-s; the others are hidden by CSS. The YouTube player stays on every screen (it must not be display:none to play). -->
+  <!-- Two screens in one page: home and game. Home has two states, before the game (data-when="before") and after it
+       (data-when="after"). Each direct child of .app lists the screens it belongs to in data-s; the others are hidden by
+       CSS. The YouTube player stays on both screens (it must not be display:none to play). -->
   <header class="top" data-s="home">
     <div>
       <h1>תו השעה</h1>
@@ -379,18 +377,7 @@
     </button>
   </section>
 
-  <!-- home, after the game: how it went, when the next song comes, and the way on to the summary -->
-  <section class="result after" data-s="home" data-when="after" aria-label="התוצאה">
-    <h2 id="afterTitle"></h2>
-    <div class="squares" id="afterSquares" aria-hidden="true"></div>
-    <div class="result-actions">
-      <button class="btn primary" id="summaryBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>לסיכום</button>
-      <button class="btn ghost share" id="shareBtn2" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M5 13v7h14v-7"/></svg>שתפו תוצאה</button>
-    </div>
-    <p class="next" id="afterNext">השיר הבא בעוד <b data-countdown>--:--:--</b></p>
-  </section>
-
-  <div class="bar" data-s="game summary">
+  <div class="bar" data-s="game">
     <button class="link" id="backBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>מסך ראשי</button>
     <p class="sub" id="barLabel"></p>
   </div>
@@ -423,7 +410,8 @@
     </div>
   </section>
 
-  <section class="result" id="result" data-s="summary" hidden aria-live="polite">
+  <!-- home, after the game: how it went, the song, sharing and the countdown to the next one -->
+  <section class="result" id="result" data-s="home" data-when="after" hidden aria-live="polite">
     <h2 id="resultTitle"></h2>
     <p class="song-title" id="resultSong"></p>
     <p class="song-artist" id="resultArtist"></p>
@@ -435,13 +423,15 @@
     <p class="next" id="next">השיר הבא בעוד <b data-countdown>--:--:--</b></p>
   </section>
 
-  <div class="player-wrap" id="playerWrap" data-s="home game summary"></div>
+  <div class="player-wrap" id="playerWrap" data-s="home game"></div>
 
-  <h3 class="sec" data-s="summary">הניחושים שלכם</h3>
-  <ol class="attempts" id="attempts" data-s="summary" aria-label="הניחושים שלכם"></ol>
+  <details class="guesses" data-s="home" data-when="after">
+    <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg>הניחושים שלכם</summary>
+    <div class="body"><ol class="attempts" id="attempts" aria-label="הניחושים שלכם"></ol></div>
+  </details>
 
-  <p class="notice" id="notice" data-s="home game summary" role="alert" hidden></p>
-  <details class="remind" id="remind" data-s="summary" hidden>
+  <p class="notice" id="notice" data-s="home game" role="alert" hidden></p>
+  <details class="remind" id="remind" data-s="home" data-when="after" hidden>
     <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0112 0v5.5l1.5 2h-15zM10 21a2 2 0 004 0"/></svg>תזכורת יומית ביומן</summary>
     <div class="body">
       <p>נוסיף ליומן שלכם אירוע שחוזר כל יום, כדי שלא תפספסו את השיר החדש.</p>
@@ -636,18 +626,14 @@
   }
 
   // home: where the day stands, and the one button that goes on from there
-  // before the game it offers to start or go on; after it, it shows how the day went
+  // before the game it offers to start or go on; after it, the result card, the song and the rest are shown instead
   function renderHome() {
     const n = rec.g.length;
     app.dataset.state = rec.done ? 'after' : 'before';
-    if (rec.done) {
-      $('afterTitle').textContent = rec.won ? `ניחשתם בניסיון ${n}` : 'לא הצלחתם הפעם';
-      fillSquares($('afterSquares'));
-      tickCountdown();
-    } else {
-      $('homeStatus').textContent = n ? `ניסיון ${n + 1} מתוך ${STAGES.length}` : isToday ? 'השיר של היום מחכה לכם' : 'עוד לא שיחקתם בשיר הזה';
-      $('startText').textContent = n ? 'המשיכו' : 'שחקו';
-    }
+    $('playerWrap').classList.toggle('revealed', rec.done && screen === 'home');   // the video is shown once the day is over
+    if (rec.done) return;
+    $('homeStatus').textContent = n ? `ניסיון ${n + 1} מתוך ${STAGES.length}` : isToday ? 'השיר של היום מחכה לכם' : 'עוד לא שיחקתם בשיר הזה';
+    $('startText').textContent = n ? 'המשיכו' : 'שחקו';
   }
 
   function render() {
@@ -657,29 +643,25 @@
     if (rec.done) renderResult();
   }
 
-  // ---------- screens: home, game, summary ----------
+  // ---------- screens: home (before or after the game) and game ----------
   const app = document.querySelector('.app');
   let screen = 'home';
-  // how: 'push' adds a history entry (so Back goes to the home screen), 'replace' swaps the current one, 'pop' follows
-  // the browser's own Back / Forward
+  // how: 'push' adds a history entry (so Back goes to the home screen), 'pop' follows the browser's own Back / Forward,
+  // anything else leaves history alone
   function showScreen(name, how) {
-    if (name === 'game' && rec.done) name = 'summary';       // a finished day has no game left
-    if (name === 'summary' && !rec.done) name = 'home';
+    if (name === 'game' && rec.done) name = 'home';          // a finished day has no game left
     if (screen === 'game' && name !== 'game') stopClip();
-    if (screen === 'summary' && name !== 'summary') stopFull();
     screen = name;
     app.dataset.screen = name;
-    $('playerWrap').classList.toggle('revealed', name === 'summary');   // the video is only shown on the summary
+    $('playerWrap').classList.toggle('revealed', name === 'home' && rec.done);
     if (how === 'push') history.pushState({ screen: name }, '');
-    else if (how === 'replace') history.replaceState({ screen: name }, '');
     window.scrollTo(0, 0);
-    const focus = name === 'home' ? $('startBtn') : name === 'game' ? $('play') : $('resultTitle');
-    if (name === 'summary') focus.tabIndex = -1;
+    const focus = name === 'game' ? $('play') : rec.done ? $('resultTitle') : $('startBtn');
+    if (focus === $('resultTitle')) focus.tabIndex = -1;
     if (!focus.disabled) focus.focus({ preventScroll: true });
   }
   window.addEventListener('popstate', (e) => showScreen((e.state && e.state.screen) || 'home', 'pop'));
   $('startBtn').addEventListener('click', () => showScreen('game', 'push'));
-  $('summaryBtn').addEventListener('click', () => showScreen('summary', 'push'));
   $('backBtn').addEventListener('click', () => {
     if (history.state && history.state.screen) history.back(); else showScreen('home', 'replace');
   });
@@ -840,10 +822,6 @@
     if (!playerReady) { pending = 'full'; return; }
     player.seekTo(0, true); player.playVideo();
   }
-  function stopFull() {                             // leaving the summary: the song stops with it
-    if (pending === 'full') pending = null;
-    if (playerReady) { try { player.pauseVideo(); } catch (e) { /* not ready */ } }
-  }
 
   function loadYouTube() {
     if (location.protocol === 'file:') {
@@ -871,7 +849,8 @@
     render();
     if (rec.done) {
       announce(won ? 'נכון!' : 'לא הפעם');
-      showScreen('summary', 'replace');             // replaces the game entry, so Back from the summary is the home screen
+      showScreen('home');                           // the finished day shows its result on the home screen
+      if (history.state && history.state.screen === 'game') history.back();   // and the game entry is left behind
       playFull();
     } else {
       announce(entry === 'skip' ? 'דילגתם' : 'ניחוש שגוי');
@@ -1153,7 +1132,6 @@
     }
   };
   $('shareBtn').addEventListener('click', onShare);
-  $('shareBtn2').addEventListener('click', onShare);
 
   // ---------- daily reminder: a repeating calendar event ----------
   const REMIND_TITLE = 'תו השעה: השיר היומי';
@@ -1239,7 +1217,7 @@
   // ---------- boot ----------
   $('dayLabel').textContent = $('barLabel').textContent = previewMode ? `תצוגה מקדימה: שיר מספר ${dayNo}` : isToday ? `שיר מספר ${dayNo}` : `שיר מספר ${dayNo}, ${DAY_FMT.format(dateOfDay(dayNo))}`;
   $('todayLink').hidden = isToday;
-  $('next').hidden = $('afterNext').hidden = !isToday;                      // an earlier day has no countdown to the next song
+  $('next').hidden = !isToday;                      // an earlier day has no countdown to the next song
   // best effort: a generic title for the system media controls instead of the video's own
   // (the iframe is another origin, so whether the browser prefers this one cannot be checked from here)
   try { navigator.mediaSession.metadata = new MediaMetadata({ title: 'תו השעה', artist: 'השיר היומי' }); } catch (e) { /* unsupported */ }
