@@ -92,7 +92,7 @@
   .play {                                            /* a record, like the one on the home screen; the .disc inside is drawn with the home screen's styles */
     position: relative;
     width: var(--vsize); height: var(--vsize);
-    margin-bottom: 18px;                            /* room for the ring around it */
+    margin-bottom: 32px;                            /* room for the ring around it, and air before the timeline */
     padding: 0; border: 0; border-radius: 50%;
     background: none;
     color: #fff;
@@ -390,7 +390,7 @@
     h1 { font-size: 48px; }
     .lead { margin-top: 10px; font-size: 14px; }
     .stage { margin-top: clamp(14px, 4vh, 36px); gap: 12px; }
-    .play { margin-bottom: 14px; }
+    .play { margin-bottom: 28px; }
     .guess { margin-top: 14px; }
   }
   @media (prefers-reduced-motion: reduce) {
