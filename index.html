@@ -73,6 +73,8 @@
   h1 { margin: 0; font-size: 56px; font-weight: 400; letter-spacing: -0.02em; line-height: 1.25; }
   .sub { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
   .stats { display: flex; justify-content: center; gap: 8px; margin-top: 18px; }
+  .stats.below { margin-top: 28px; }                     /* after the game they sit under the video */
+  .app[data-state="after"] .sub.quiet { display: none; }   /* after today's game the day number is not repeated under the name */
   .stat {
     min-width: 60px;
     padding: 6px 10px;
@@ -135,30 +137,6 @@
   .tl-marks span:last-child { transform: translateX(-100%); }
   .tl-label { text-align: center; color: var(--muted); font-size: 14px; }
 
-  /* guess history: correct = solid, wrong = struck through, skipped = dashed */
-  .attempts { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 8px; }
-  .attempts:empty { display: none; }
-  .attempt {
-    display: flex; align-items: center; gap: 12px;
-    min-height: 48px; padding: 7px 14px 7px 12px;
-    border: 1px solid var(--line);
-    font-size: 15px;
-  }
-  .attempt .badge {
-    flex: none; min-width: 34px; height: 34px; padding: 0 6px;
-    display: grid; place-items: center;
-    background: var(--soft); color: var(--muted);
-    font-size: 13px; font-weight: 400; font-variant-numeric: tabular-nums;
-  }
-  .attempt .txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .attempt.bad .txt { color: var(--muted); text-decoration: line-through; }
-  .attempt.bad::after { content: "\2715"; font-weight: 400; }
-  .attempt.skip { border-style: dashed; border-color: var(--mid); }
-  .attempt.skip .txt { color: var(--muted); }
-  .attempt.win { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-  .attempt.win .badge { background: var(--paper); color: var(--ink); }
-  .attempt.win::after { content: "\2713"; font-weight: 400; color: var(--accent-l); }
-
   /* guess area */
   .guess { margin-top: 20px; }
   .guess[hidden] { display: none; }
@@ -203,13 +181,14 @@
 
   /* result: no frame; it lines up with the boxes below it, so it needs no side padding */
   .result {
-    margin-top: 20px; padding: 24px 0;
+    margin-top: 4px; padding: 12px 0 24px;
     text-align: center;
   }
   .result[hidden] { display: none; }
   .result h2 { margin: 0; font-size: 26px; font-weight: 300; }
-  .song-title { margin: 14px 0 0; font-size: 24px; font-weight: 400; }
-  .song-artist { margin: 0; color: var(--muted); }
+  /* the song, one line: the band, a colon, the title; it sits between the share button and the video */
+  .song-line { margin: 4px 0 0; text-align: center; font-size: 22px; font-weight: 400; line-height: 1.35; }
+  .song-line .by { color: var(--muted); }
   .squares { display: flex; justify-content: center; gap: 5px; margin: 18px 0; }
   .squares i {
     position: relative; flex: 1 1 0; max-width: 28px; aspect-ratio: 1;
@@ -307,15 +286,14 @@
   @keyframes rise { from { transform: translateY(14px) scale(.85); opacity: 0; } }
   @keyframes ring { 0% { transform: scale(1); opacity: .6; } 100% { transform: scale(1.4); opacity: 0; } }
   .app[data-state="before"] [data-when="after"], .app[data-state="after"] [data-when="before"] { display: none; }   /* the home screen's two states */
-  .guesses .attempts { margin: 0; }
   .foot .heart { width: 13px; height: 13px; vertical-align: -2px; fill: currentColor; }
 
   /* daily reminder: a calendar event that repeats every day, so no account or email address is needed */
-  .remind, .guesses { margin-top: 20px; border: 1px solid var(--line); font-size: 15px; }
-  .remind summary, .guesses summary { padding: 12px 14px; text-align: center; cursor: pointer; font-weight: 400; }
-  .remind summary svg, .guesses summary svg { width: 18px; height: 18px; margin-inline-end: 6px; vertical-align: -4px; fill: none; stroke: currentColor; stroke-width: 1.5; }
-  .remind[open] summary, .guesses[open] summary { border-bottom: 1px solid var(--line); }
-  .remind .body, .guesses .body { padding: 14px; }
+  .remind { margin-top: 20px; border: 1px solid var(--line); font-size: 15px; }
+  .remind summary { padding: 12px 14px; text-align: center; cursor: pointer; font-weight: 400; }
+  .remind summary svg { width: 18px; height: 18px; margin-inline-end: 6px; vertical-align: -4px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+  .remind[open] summary { border-bottom: 1px solid var(--line); }
+  .remind .body { padding: 14px; }
   .remind p { margin: 0 0 12px; color: var(--muted); font-size: 14px; text-align: center; }
   .remind label { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 12px; }
   .remind input[type="time"] {
@@ -384,9 +362,6 @@
     .stage { margin-top: clamp(14px, 4vh, 36px); gap: 12px; }
     .play { width: 96px; height: 96px; margin-bottom: 14px; }
     .play svg { width: 22px; height: 22px; margin: -11px 0 0 -11px; }
-    .attempts { margin-top: 14px; gap: 5px; }
-    .attempt { min-height: 38px; padding-block: 2px; }
-    .attempt .badge { min-width: 30px; height: 28px; }
     .guess { margin-top: 14px; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -435,9 +410,9 @@
     <h1>תָּו הַשָּׁעָה</h1>
     <p class="sub" id="dayLabel"></p>
     <p class="links"><a class="link" id="todayLink" href="./" hidden>חזרה להיום</a></p>
-    <div class="stats">
-      <div class="stat"><b id="statStreak">0</b><span>רצף</span></div>
-      <div class="stat"><b id="statWins">0</b><span>ניצחונות</span></div>
+    <div class="stats" data-when="before">
+      <div class="stat"><b data-stat="streak">0</b><span>רצף</span></div>
+      <div class="stat"><b data-stat="wins">0</b><span>ניצחונות</span></div>
     </div>
   </section>
 
@@ -487,21 +462,23 @@
   <!-- home, after the game: how it went, the song, sharing and the countdown to the next one -->
   <section class="result" id="result" data-s="home" data-when="after" hidden aria-live="polite">
     <h2 id="resultTitle"></h2>
-    <p class="song-title" id="resultSong"></p>
-    <p class="song-artist" id="resultArtist"></p>
     <div class="squares" id="resultSquares" aria-hidden="true"></div>
     <button class="btn ghost share" id="shareBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M5 13v7h14v-7"/></svg>שתפו תוצאה</button>
     <p class="next" id="next">השיר הבא בעוד <b data-countdown>--:--:--</b></p>
   </section>
+  <p class="song-line" id="songLine" data-s="home" data-when="after"><bdi class="by" id="resultArtist"></bdi>: <bdi id="resultSong"></bdi></p>
 
   <div class="player-wrap" id="playerWrap" data-s="home game"></div>
 
-  <details class="guesses" data-s="home" data-when="after">
-    <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg>הניחושים שלכם</summary>
-    <div class="body"><ol class="attempts" id="attempts" aria-label="הניחושים שלכם"></ol></div>
-  </details>
-
   <p class="notice" id="notice" data-s="home game" role="alert" hidden></p>
+  <div class="stats below" data-s="home" data-when="after">
+    <div class="stat"><b data-stat="streak">0</b><span>רצף</span></div>
+    <div class="stat"><b data-stat="wins">0</b><span>ניצחונות</span></div>
+  </div>
+  <!-- home, both states: the history of played days, at the bottom -->
+  <section class="more" data-s="home">
+    <button class="btn ghost" id="calBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 4v6h6M3.5 15a9 9 0 1 0 2.1-9.4L1.5 10M12 7v5l3 2"/></svg>שחקו בימים קודמים</button>
+  </section>
   <details class="remind" id="remind" data-s="home" data-when="after" hidden>
     <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0112 0v5.5l1.5 2h-15zM10 21a2 2 0 004 0"/></svg>תזכורת יומית ביומן</summary>
     <div class="body">
@@ -514,10 +491,6 @@
       <button class="alt" id="remindFile" type="button" hidden>לא נפתח? שמרו כקובץ</button>
     </div>
   </details>
-  <!-- home, both states: the history of played days, at the bottom -->
-  <section class="more" data-s="home">
-    <button class="btn ghost" id="calBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 4v6h6M3.5 15a9 9 0 1 0 2.1-9.4L1.5 10M12 7v5l3 2"/></svg>שחקו בימים קודמים</button>
-  </section>
   <p class="foot" data-s="home" data-when="before">השיר מתחלף בחצות</p>
   <p class="foot credit" data-s="home">המשחק נבנה ב<svg class="heart" viewBox="0 0 24 24" aria-label="אהבה" role="img"><path d="M12 21s-7.2-4.5-9.1-9.4C1.6 8.3 3.6 5 7 5c2 0 3.4 1 5 3 1.6-2 3-3 5-3 3.4 0 5.4 3.3 4.1 6.6C19.2 16.5 12 21 12 21z"/></svg> על ידי ליאור ומוקדש לנילס ותמי</p>
 </main>
@@ -660,23 +633,6 @@
     });
   }
 
-  function renderAttempts() {
-    const ol = $('attempts');
-    ol.textContent = '';
-    for (let i = 0; i < rec.g.length; i++) {         // in the order they were made
-      const li = document.createElement('li');
-      const badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = STAGES[i];
-      const txt = document.createElement('span'); txt.className = 'txt';
-      const g = rec.g[i];
-      let cls;
-      if (g === 'skip') { cls = 'skip'; txt.textContent = 'דילגתם'; }
-      else { cls = g.ok ? 'win' : 'bad'; txt.textContent = g.t; }
-      li.className = 'attempt ' + cls;
-      li.append(badge, txt);
-      ol.appendChild(li);
-    }
-  }
-
   const secsText = (s) => (s === 0.5 ? 'חצי שנייה' : s === 1 ? 'שנייה אחת' : `${s} שניות`);
   function renderControls() {
     const s = secsUnlocked();
@@ -690,8 +646,8 @@
     $('stage').hidden = rec.done;
     $('guess').hidden = rec.done;
     const st = computeStats();
-    $('statStreak').textContent = st.streak;
-    $('statWins').textContent = st.wins;
+    document.querySelectorAll('[data-stat="streak"]').forEach((el) => { el.textContent = st.streak; });   // there is one under the name before the game and one under the video after it
+    document.querySelectorAll('[data-stat="wins"]').forEach((el) => { el.textContent = st.wins; });
   }
 
   function squaresFor(g) {
@@ -733,7 +689,6 @@
 
   function render() {
     renderHome();
-    renderAttempts();
     renderControls();
     if (rec.done) renderResult();
   }
@@ -1422,6 +1377,7 @@
   // ---------- boot ----------
   $('dayLabel').textContent = previewMode ? `תצוגה מקדימה: שיר מספר ${dayNo}` : isToday ? `שיר מספר ${dayNo}` : `שיר מספר ${dayNo}, ${DAY_FMT.format(dateOfDay(dayNo))}`;
   $('todayLink').hidden = isToday;
+  $('dayLabel').classList.toggle('quiet', isToday && !previewMode);   // after the game the label is only kept for another day, so it says which one
   $('next').hidden = !isToday;                      // an earlier day has no countdown to the next song
   // best effort: a generic title for the system media controls instead of the video's own
   // (the iframe is another origin, so whether the browser prefers this one cannot be checked from here)
