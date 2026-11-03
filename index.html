@@ -221,7 +221,6 @@
   }
   .squares i.bad::after { transform: rotate(-45deg); }
   .result .btn { width: 100%; }
-  .result-actions { display: grid; gap: 10px; margin-top: 10px; }
   a.btn { text-decoration: none; color: var(--ink); }
   .btn svg { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; }
   .result .btn.share { border-color: var(--ink); }
@@ -469,9 +468,6 @@
     <p class="song-artist" id="resultArtist"></p>
     <div class="squares" id="resultSquares" aria-hidden="true"></div>
     <button class="btn ghost share" id="shareBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M5 13v7h14v-7"/></svg>שתפו תוצאה</button>
-    <div class="result-actions">
-      <button class="btn ghost" id="calBtn2" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>שחקו בימים קודמים</button>
-    </div>
     <p class="next" id="next">השיר הבא בעוד <b data-countdown>--:--:--</b></p>
   </section>
 
@@ -1154,7 +1150,6 @@
     cal.showModal();
   };
   $('calBtn').addEventListener('click', openCalendar);
-  $('calBtn2').addEventListener('click', openCalendar);
   $('calPrev').addEventListener('click', () => { shownMonth--; renderCalendar(); });
   $('calNext').addEventListener('click', () => { shownMonth++; renderCalendar(); });
   $('calClose').addEventListener('click', () => cal.close());
