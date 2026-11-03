@@ -41,6 +41,7 @@
     --accent-l: #c4c9f6;
   }
   * { box-sizing: border-box; }
+  body { overflow-x: clip; }
   html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
@@ -259,13 +260,13 @@
 
   /* home hero: a fan of flat record sleeves, and a vinyl record that is the play button. Everything moves with
      transform and opacity only; with reduced motion the animations are off and the fan and the record stand still. */
-  .hero { --s: clamp(84px, 26vw, 112px); position: relative; height: calc(var(--s) * 1.2); margin-top: 10px; overflow-x: clip; }   /* a sleeve coming in from the side must not widen the page */
+  .hero { --s: clamp(84px, 26vw, 112px); position: relative; height: calc(var(--s) * 1.2); margin: 10px calc(50% - 50vw) 0; overflow-x: clip; }   /* as wide as the screen, so a sleeve leaves and comes in at its edges */
   .sleeve {
     position: absolute; left: 50%; top: 0; width: var(--s); height: var(--s); margin-left: calc(var(--s) / -2);
     background: var(--soft-2); box-shadow: 0 8px 20px rgba(30, 33, 51, .16), 0 0 0 1px rgba(30, 33, 51, .06);
     z-index: var(--z, 1);
     transform: translate(calc(var(--s) * var(--x)), var(--y)) rotate(var(--r));
-    transition: transform .9s cubic-bezier(.45, .05, .2, 1), opacity .5s ease;   /* a change of seat glides; leaving and coming in fade */
+    transition: transform .9s cubic-bezier(.45, .05, .2, 1);   /* a change of seat glides */
     animation: deal .8s cubic-bezier(.2, .8, .2, 1) calc(var(--i) * 90ms) backwards;
   }
   .sleeve svg { display: block; width: 100%; height: 100%; }
@@ -273,7 +274,7 @@
   .sleeve img.on { opacity: 1; }
   .sleeve .a { fill: var(--accent); } .sleeve .l { fill: var(--accent-l); } .sleeve .i { fill: var(--ink); }
   .sleeve .p { fill: var(--paper); } .sleeve .s { fill: var(--soft-2); }
-  @keyframes deal { from { transform: translate(0, 26px) rotate(0deg) scale(.7); opacity: 0; } }
+  @keyframes deal { from { transform: translate(0, 26px) rotate(0deg) scale(.7); } }
   .vinyl {
     position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 10px;
     margin: 0 auto; padding: 0; background: none; border: 0; color: var(--ink); cursor: pointer;
@@ -331,7 +332,8 @@
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   /* header links and the calendar */
-  .info .history { height: 44px; margin-top: 14px; padding: 0 20px; font-size: 15px; }
+  .more { margin-top: 28px; }
+  .more .btn { width: 100%; }
   .links:has(> [hidden]:only-child) { display: none; }   /* nothing to show: no empty row */
   .links { margin: 10px 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 16px; font-size: 14px; }
   .link {
@@ -392,20 +394,20 @@
        (data-when="after"). Each direct child of .app lists the screens it belongs to in data-s; the others are hidden by
        CSS. The YouTube player stays on both screens (it must not be display:none to play). -->
   <!-- home, both states: the sleeves, then the name, the day, the calendar link and the stats -->
-  <!-- decoration only: five flat sleeves in a fan, dealt in on load, then taking turns at the front -->
+  <!-- decoration only: flat sleeves in a fan, dealt in on load; one leaves on the left and a new one comes in on the right, in turns -->
   <div class="hero" data-s="home" aria-hidden="true">
     <div class="sleeve" data-slot="0" style="--i:0;--x:-1.15;--y:18px;--r:-14deg"><svg viewBox="0 0 100 100"></svg></div>
     <div class="sleeve" data-slot="4" style="--i:4;--x:1.15;--y:18px;--r:14deg"><svg viewBox="0 0 100 100"></svg></div>
     <div class="sleeve" data-slot="1" style="--i:1;--x:-0.58;--y:6px;--r:-7deg"><svg viewBox="0 0 100 100"></svg></div>
     <div class="sleeve" data-slot="3" style="--i:3;--x:0.58;--y:6px;--r:7deg"><svg viewBox="0 0 100 100"></svg></div>
     <div class="sleeve" data-slot="2" style="--i:2;--x:0;--y:0px;--r:0deg"><svg viewBox="0 0 100 100"></svg></div>
+    <div class="sleeve" data-slot="5" style="--i:5;--x:3;--y:28px;--r:20deg"><svg viewBox="0 0 100 100"></svg></div>
   </div>
 
   <!-- home, both states: the name, the day, the calendar and the stats, right under the sleeves -->
   <section class="info" data-s="home" aria-label="על המשחק">
     <h1>תו השעה</h1>
     <p class="sub" id="dayLabel"></p>
-    <button class="btn ghost history" id="calBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 4v6h6M3.5 15a9 9 0 1 0 2.1-9.4L1.5 10M12 7v5l3 2"/></svg>היסטוריית משחקים</button>
     <p class="links"><a class="link" id="todayLink" href="./" hidden>חזרה להיום</a></p>
     <div class="stats">
       <div class="stat"><b id="statStreak">0</b><span>רצף</span></div>
@@ -489,6 +491,10 @@
       <button class="alt" id="remindFile" type="button" hidden>לא נפתח? שמרו כקובץ</button>
     </div>
   </details>
+  <!-- home, both states: the history of played days, at the bottom -->
+  <section class="more" data-s="home">
+    <button class="btn ghost" id="calBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 4v6h6M3.5 15a9 9 0 1 0 2.1-9.4L1.5 10M12 7v5l3 2"/></svg>היסטוריית משחקים</button>
+  </section>
   <p class="foot" data-s="home" data-when="before">השיר מתחלף בחצות</p>
   <p class="foot credit" data-s="home">המשחק נבנה ב<svg class="heart" viewBox="0 0 24 24" aria-label="אהבה" role="img"><path d="M12 21s-7.2-4.5-9.1-9.4C1.6 8.3 3.6 5 7 5c2 0 3.4 1 5 3 1.6-2 3-3 5-3 3.4 0 5.4 3.3 4.1 6.6C19.2 16.5 12 21 12 21z"/></svg> על ידי ליאור ומוקדש לנילס ותמי</p>
 </main>
@@ -1310,9 +1316,10 @@
   }
 
   // ---------- the sleeves: one leaves, a new one comes in ----------
-  // Five seats in a fan. Every few seconds each sleeve moves one seat along; the one at the far left slides out and fades,
-  // and a new one (the next drawn sleeve, or the next cover) comes in from the far right into the free seat. The glide is a
-  // CSS transition on transform and opacity.
+  // Five seats in a fan and a sixth sleeve waiting just outside the screen on the right. Every few seconds each sleeve moves
+  // one seat along: the one at the far left slides off the left edge, and at the same time the waiting one slides in from the
+  // right edge into the free seat. Nothing fades. Once the one that left is out of sight it is given a new face (the next
+  // drawn sleeve, or the next cover) and waits on the right for its turn. The glide is a CSS transition on transform.
   const ART = [
     '<rect width="100" height="100" class="l"/><circle cx="50" cy="50" r="42" class="a"/><circle cx="50" cy="50" r="30" class="l"/><circle cx="50" cy="50" r="18" class="a"/><circle cx="50" cy="50" r="6" class="l"/>',
     '<rect width="100" height="100" class="s"/><rect x="14" y="46" width="9" height="54" class="i"/><rect x="28" y="28" width="9" height="72" class="i"/><rect x="42" y="58" width="9" height="42" class="i"/><rect x="56" y="16" width="9" height="84" class="a"/><rect x="70" y="40" width="9" height="60" class="i"/><rect x="84" y="64" width="9" height="36" class="i"/>',
@@ -1324,15 +1331,17 @@
     '<rect width="100" height="100" class="s"/><path d="M0 50a50 50 0 0 1 100 0z" class="a"/><path d="M0 50a50 50 0 0 0 100 0z" class="i"/><circle cx="50" cy="50" r="11" class="p"/>',
   ];
   const FAN = [{ x: -1.15, y: 18, r: -14 }, { x: -0.58, y: 6, r: -7 }, { x: 0, y: 0, r: 0 }, { x: 0.58, y: 6, r: 7 }, { x: 1.15, y: 18, r: 14 }];
-  const OUT = { x: -1.7, y: 28, r: -20 }, IN = { x: 1.7, y: 28, r: 20 };
   const sleeveEls = [...document.querySelectorAll('.sleeve')];
   const seatZ = (slot) => 6 - Math.abs(slot - 2);   // the middle sleeve is on top
-  let nextArt = 5;
+  // far enough out to be off the screen, in sleeve widths from the middle: half the screen, plus the sleeve and its tilt
+  const offX = () => (window.innerWidth / 2) / sleeveEls[0].offsetWidth + 0.8;
+  let nextArt = 6;
   function pose(el, p, z) {
     el.style.setProperty('--x', p.x); el.style.setProperty('--y', p.y + 'px'); el.style.setProperty('--r', p.r + 'deg'); el.style.setProperty('--z', z);
   }
   function seat(el, slot) { el.dataset.slot = slot; pose(el, FAN[slot], seatZ(slot)); }
-  function freshArt(el) {                           // what the sleeve coming in shows
+  const park = (el) => { el.dataset.slot = 5; pose(el, { x: offX(), y: 28, r: 20 }, 4); };   // waiting off the right edge
+  function freshArt(el) {                           // the face of a sleeve that is about to wait for its turn
     el.querySelector('svg').innerHTML = ART[nextArt++ % ART.length];
     const im = el.querySelector('img');
     if (im && coverPool.length) im.src = coverPool[nextCover++ % coverPool.length];
@@ -1341,17 +1350,23 @@
     if (screen !== 'home' || document.hidden) return;
     sleeveEls.forEach((el) => {
       const slot = Number(el.dataset.slot);
-      if (slot !== 0) { seat(el, slot - 1); return; }
-      el.dataset.slot = 'out'; pose(el, OUT, 0); el.style.opacity = '0';   // leaves to the far left
-      setTimeout(() => {                            // and comes back as a new one at the far right
-        freshArt(el);
-        el.style.transition = 'none'; pose(el, IN, 4); el.style.opacity = '0';
-        void el.offsetWidth;                        // let that stand for a frame, then glide in
-        el.style.transition = ''; seat(el, 4); el.style.opacity = '1';
-      }, 520);
+      if (slot === 0) {                             // leaves off the left edge
+        el.dataset.slot = 'out'; pose(el, { x: -offX(), y: 28, r: -20 }, 0);
+        setTimeout(() => {                          // out of sight: a new face, and back to wait on the right
+          freshArt(el);
+          el.style.transition = 'none'; park(el);
+          void el.offsetWidth;
+          el.style.transition = '';
+        }, 1000);
+      } else seat(el, slot - 1);                    // the waiting one (5) comes in to seat 4, the others move along
     });
   }
-  sleeveEls.forEach((el) => { const slot = Number(el.dataset.slot); el.querySelector('svg').innerHTML = ART[slot]; seat(el, slot); });
+  sleeveEls.forEach((el) => {
+    const slot = Number(el.dataset.slot);
+    el.querySelector('svg').innerHTML = ART[slot];
+    if (slot === 5) { el.style.animation = 'none'; park(el); } else seat(el, slot);
+  });
+  window.addEventListener('resize', () => sleeveEls.forEach((el) => { if (el.dataset.slot === '5') park(el); }));
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(turnSleeves, 3400);
 
   // ---------- boot ----------
