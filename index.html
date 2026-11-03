@@ -98,7 +98,7 @@
     color: #fff;
     cursor: pointer;
     display: block;
-    transition: transform .12s ease;
+    transition: transform .12s ease, width .2s ease, height .2s ease;
   }
   @media (hover: hover) { .play:hover:not(:disabled) { transform: scale(1.05); } }
   .play:active:not(:disabled) { transform: scale(0.96); }
@@ -170,6 +170,18 @@
   .list li[aria-selected="true"], .list li:hover { background: var(--soft); }
   .list li.status { color: var(--muted); font-size: 14px; cursor: default; }
   .list li.status:hover { background: none; }
+  /* typing mode: while the guess field has focus, the record shrinks to a small one beside the timeline and the back button
+     steps aside, so the suggestions and the buttons fit above the keyboard and need no scrolling. The suggestions then
+     sit in the page, under the field, instead of floating over what is below it. */
+  .app.typing .bar { display: none; }
+  .app.typing .stage { margin-top: 14px; flex-direction: row; align-items: center; gap: 20px; width: 100%; }
+  .app.typing .play { --vsize: 56px; margin: 0; flex: none; }
+  .app.typing .play svg { width: 18px; height: 18px; }
+  .app.typing .play.invite::after { display: none; }   /* no ring while typing: it would run off the edge */
+  .app.typing .timeline-wrap { flex: 1; min-width: 0; }
+  .app.typing .tl-label { display: none; }
+  .app.typing .guess { margin-top: 14px; }
+  .app.typing .list { position: static; margin-top: 6px; max-height: 220px; }
   .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -472,7 +484,7 @@
     </div>
     <div class="actions">
       <button class="btn primary" id="guessBtn" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>נחשו</button>
-      <button class="btn skip" id="skipBtn" type="button"><span id="skipText">לא הצלחתי, תן לי עוד חצי שנייה</span></button>
+      <button class="btn skip" id="skipBtn" type="button"><span id="skipText">לא הצלחתי, תנו לי עוד חצי שנייה</span></button>
     </div>
   </section>
 
@@ -659,7 +671,7 @@
     $('tlLabel').textContent = `${secsText(s)} מתחילת השיר, ניסיון ${Math.min(rec.g.length + 1, STAGES.length)} מתוך ${STAGES.length}`;
     const i = rec.g.length;
     const last = i >= STAGES.length - 1;
-    $('skipText').textContent = last ? 'לא הצלחתי, גלה לי את השיר' : `לא הצלחתי, תן לי עוד ${secsText(STAGES[i + 1] - STAGES[i])}`;
+    $('skipText').textContent = last ? 'לא הצלחתי, גלו לי את השיר' : `לא הצלחתי, תנו לי עוד ${secsText(STAGES[i + 1] - STAGES[i])}`;
     renderInvite();
     $('stage').hidden = rec.done;
     $('guess').hidden = rec.done;
@@ -720,6 +732,7 @@
     if (screen === 'game' && name !== 'game') stopClip();
     screen = name;
     app.dataset.screen = name;
+    app.classList.remove('typing');
     $('playerWrap').classList.toggle('revealed', name === 'home' && rec.done);
     if (how === 'push') history.pushState({ screen: name }, '');
     window.scrollTo(0, 0);
@@ -927,6 +940,7 @@
     if (rec.done) track('game_end', { day: dayNo, won, attempts: rec.g.length, late: !!rec.late });
     cancelSearch(); matches = [];
     $('q').value = ''; picked = null; $('guessBtn').disabled = true; closeList();
+    if (document.activeElement === input) input.blur();   // the keyboard goes, the record is big again and invites a press
     render();
     if (rec.done) {
       announce(won ? 'נכון!' : 'לא הפעם');
@@ -1124,6 +1138,16 @@
   }
   input.addEventListener('input', updateList);
   input.addEventListener('blur', () => setTimeout(closeList, 120));
+  // typing mode (see .app.typing): on while the field has focus. It goes a moment after the focus does, so a tap on a button
+  // is not lost when the layout changes between the press and the release.
+  let typingTimer = 0;
+  function setTyping(on) {
+    clearTimeout(typingTimer);
+    if (on) { app.classList.add('typing'); requestAnimationFrame(() => window.scrollTo(0, 0)); return; }
+    typingTimer = setTimeout(() => { if (document.activeElement !== input) app.classList.remove('typing'); }, 250);
+  }
+  input.addEventListener('focus', () => setTyping(true));
+  input.addEventListener('blur', () => setTyping(false));
   input.addEventListener('keydown', (e) => {
     const open = !list.hidden;
     if (e.key === 'ArrowDown' && matches.length) { e.preventDefault(); active = (active + 1) % matches.length; renderList(); }
