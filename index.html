@@ -92,15 +92,15 @@
   .play {                                            /* a record, like the one on the home screen; the .disc inside is drawn with the home screen's styles */
     position: relative;
     width: var(--vsize); height: var(--vsize);
-    margin-bottom: 18px;                            /* room for the ring around it */
+    margin-bottom: 32px;                            /* room for the ring around it, and air before the timeline */
     padding: 0; border: 0; border-radius: 50%;
     background: none;
     color: #fff;
     cursor: pointer;
     display: block;
-    transition: transform .12s ease;
+    transition: transform .12s ease, width .2s ease, height .2s ease;
   }
-  .play:hover:not(:disabled) { transform: scale(1.05); }
+  @media (hover: hover) { .play:hover:not(:disabled) { transform: scale(1.05); } }
   .play:active:not(:disabled) { transform: scale(0.96); }
   .play:disabled { cursor: progress; opacity: .35; }
   .play svg { position: absolute; left: 50%; top: 50%; width: calc(var(--vsize) * .23); height: calc(var(--vsize) * .23); transform: translate(-50%, -50%); fill: currentColor; }
@@ -113,6 +113,10 @@
     content: ""; position: absolute; inset: -8px; border-radius: 50%;
     border: 2px solid var(--accent); opacity: 0;
     animation: pulse 1.2s ease-out infinite;
+  }
+  .play.invite[data-state="idle"]::after {          /* press play: the ring of the home screen's record, for a clip not yet played by hand */
+    content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid var(--accent); opacity: 0; pointer-events: none;
+    animation: ring 2.6s ease-out infinite;
   }
   .play[data-state="loading"]::after {
     content: ""; position: absolute; inset: -8px; border-radius: 50%;
@@ -166,6 +170,18 @@
   .list li[aria-selected="true"], .list li:hover { background: var(--soft); }
   .list li.status { color: var(--muted); font-size: 14px; cursor: default; }
   .list li.status:hover { background: none; }
+  /* typing mode: while the guess field has focus, the record shrinks to a small one beside the timeline and the back button
+     steps aside, so the suggestions and the buttons fit above the keyboard and need no scrolling. The suggestions then
+     sit in the page, under the field, instead of floating over what is below it. */
+  .app.typing .bar { display: none; }
+  .app.typing .stage { margin-top: 14px; flex-direction: row; align-items: center; gap: 20px; width: 100%; }
+  .app.typing .play { --vsize: 56px; margin: 0; flex: none; }
+  .app.typing .play svg { width: 18px; height: 18px; }
+  .app.typing .play.invite::after { display: none; }   /* no ring while typing: it would run off the edge */
+  .app.typing .timeline-wrap { flex: 1; min-width: 0; }
+  .app.typing .tl-label { display: none; }
+  .app.typing .guess { margin-top: 14px; }
+  .app.typing .list { position: static; margin-top: 6px; max-height: 220px; }
   .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -177,8 +193,13 @@
   .btn:disabled { opacity: .3; cursor: not-allowed; }
   .btn.primary { background: transparent; border-color: var(--ink); color: var(--ink); }
   .btn.ghost { background: transparent; border-color: var(--mid); color: var(--ink); }
-  .btn.ghost:hover:not(:disabled) { border-color: var(--ink); }
-  .btn.danger { background: transparent; border-color: var(--ink); }
+  @media (hover: hover) { .btn.ghost:hover:not(:disabled) { border-color: var(--ink); } }
+  /* "skip" is a plain line of text under the guess button: the guess is the main action, and until the clip has been played
+     (see needsPlay) the line is lighter still, so the record is what to press */
+  .btn.skip { height: 46px; border-color: transparent; background: transparent; color: var(--ink); font-size: 15px; font-weight: 300; }
+  .btn.skip.quiet { color: var(--muted); }
+  @media (hover: hover) { .btn.skip:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; } }
+  .guess .actions { grid-template-columns: 1fr; gap: 2px; }   /* the guess button across the width, the skip line under it */
 
   /* result: no frame; it lines up with the boxes below it, so it needs no side padding */
   .result {
@@ -248,7 +269,7 @@
   .app[data-screen="game"] > :not([data-s~="game"]) { display: none; }
   .bar { display: flex; align-items: center; }
   .back { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; background: transparent; border: 1px solid var(--mid); color: var(--ink); cursor: pointer; }
-  .back:hover { border-color: var(--ink); }
+  @media (hover: hover) { .back:hover { border-color: var(--ink); } }
   .back svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; }
   .start { margin-top: 40px; text-align: center; }   /* the ring around the record grows into this */
   .status { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
@@ -289,7 +310,7 @@
   }
   .disc::after { content: ""; position: absolute; inset: 27%; border-radius: 50%; background: var(--accent); }
   .vinyl .tri { position: absolute; left: 50%; top: 50%; width: calc(var(--vsize) * .23); height: calc(var(--vsize) * .23); transform: translate(-50%, -50%); fill: #fff; }
-  .vinyl:hover .disc::before { animation-duration: 2.4s; }
+  @media (hover: hover) { .vinyl:hover .disc::before { animation-duration: 2.4s; } }
   .vinyl:focus-visible { outline: none; }
   .vinyl:focus-visible .vwrap { outline: 3px solid var(--ink); outline-offset: 6px; border-radius: 50%; }
   #startText { font-size: 22px; font-weight: 300; letter-spacing: .01em; }
@@ -369,7 +390,7 @@
     h1 { font-size: 48px; }
     .lead { margin-top: 10px; font-size: 14px; }
     .stage { margin-top: clamp(14px, 4vh, 36px); gap: 12px; }
-    .play { margin-bottom: 14px; }
+    .play { margin-bottom: 28px; }
     .guess { margin-top: 14px; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -463,7 +484,7 @@
     </div>
     <div class="actions">
       <button class="btn primary" id="guessBtn" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>נחשו</button>
-      <button class="btn ghost" id="skipBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 6l-6 6 6 6M19 6l-6 6 6 6"/></svg><span id="skipText">עוד חצי שנייה</span></button>
+      <button class="btn skip" id="skipBtn" type="button"><span id="skipText">לא הצלחתי, תנו לי עוד חצי שנייה</span></button>
     </div>
   </section>
 
@@ -650,9 +671,8 @@
     $('tlLabel').textContent = `${secsText(s)} מתחילת השיר, ניסיון ${Math.min(rec.g.length + 1, STAGES.length)} מתוך ${STAGES.length}`;
     const i = rec.g.length;
     const last = i >= STAGES.length - 1;
-    const skip = $('skipBtn');
-    $('skipText').textContent = last ? 'ויתור' : `עוד ${secsText(STAGES[i + 1] - STAGES[i])}`;
-    skip.classList.toggle('danger', last);
+    $('skipText').textContent = last ? 'לא הצלחתי, גלו לי את השיר' : `לא הצלחתי, תנו לי עוד ${secsText(STAGES[i + 1] - STAGES[i])}`;
+    renderInvite();
     $('stage').hidden = rec.done;
     $('guess').hidden = rec.done;
     const st = computeStats();
@@ -712,6 +732,7 @@
     if (screen === 'game' && name !== 'game') stopClip();
     screen = name;
     app.dataset.screen = name;
+    app.classList.remove('typing');
     $('playerWrap').classList.toggle('revealed', name === 'home' && rec.done);
     if (how === 'push') history.pushState({ screen: name }, '');
     window.scrollTo(0, 0);
@@ -728,6 +749,13 @@
   // ---------- YouTube player: play only the first N seconds ----------
   let player = null, playerReady = false, clip = null;
   const clipsSeen = new Set();                      // the attempts whose clip has already been counted
+  // True at the start and after every skip or wrong guess, until the player presses play: the record invites and "skip"
+  // steps back, so a second tap on it is less likely than a tap on play.
+  let needsPlay = true;
+  function renderInvite() {
+    $('play').classList.toggle('invite', needsPlay);
+    $('skipBtn').classList.toggle('quiet', needsPlay);
+  }
   let pending = null;                               // 'clip' or 'full': waits for a fresh player to get ready
 
   // Chromium lists whatever a YouTube iframe has played in its media notification, lock screen and media hub, with the
@@ -903,6 +931,7 @@
     if (rec.done) return;
     if (!rec.g.length && !isToday) rec.late = true;   // started after its own date
     rec.g.push(entry);
+    needsPlay = true;                               // the next clip is longer: play it first
     const won = entry !== 'skip' && entry.ok;
     if (won || rec.g.length >= STAGES.length) { rec.done = true; rec.won = won; }
     stopClip(!rec.done);                            // at the end the same player goes on to play the whole song
@@ -911,6 +940,7 @@
     if (rec.done) track('game_end', { day: dayNo, won, attempts: rec.g.length, late: !!rec.late });
     cancelSearch(); matches = [];
     $('q').value = ''; picked = null; $('guessBtn').disabled = true; closeList();
+    if (document.activeElement === input) input.blur();   // the keyboard goes, the record is big again and invites a press
     render();
     if (rec.done) {
       announce(won ? 'נכון!' : 'לא הפעם');
@@ -1108,6 +1138,16 @@
   }
   input.addEventListener('input', updateList);
   input.addEventListener('blur', () => setTimeout(closeList, 120));
+  // typing mode (see .app.typing): on while the field has focus. It goes a moment after the focus does, so a tap on a button
+  // is not lost when the layout changes between the press and the release.
+  let typingTimer = 0;
+  function setTyping(on) {
+    clearTimeout(typingTimer);
+    if (on) { app.classList.add('typing'); requestAnimationFrame(() => window.scrollTo(0, 0)); return; }
+    typingTimer = setTimeout(() => { if (document.activeElement !== input) app.classList.remove('typing'); }, 250);
+  }
+  input.addEventListener('focus', () => setTyping(true));
+  input.addEventListener('blur', () => setTyping(false));
   input.addEventListener('keydown', (e) => {
     const open = !list.hidden;
     if (e.key === 'ArrowDown' && matches.length) { e.preventDefault(); active = (active + 1) % matches.length; renderList(); }
@@ -1121,7 +1161,11 @@
   });
   $('guessBtn').addEventListener('click', guessFromInput);
   $('skipBtn').addEventListener('click', () => submit('skip'));
-  $('play').addEventListener('click', () => { if (clip) stopClip(); else startClip(); });
+  $('play').addEventListener('click', () => {
+    if (clip) { stopClip(); return; }
+    needsPlay = false; renderInvite();
+    startClip();
+  });
 
   // ---------- calendar: every day since the first one can be played ----------
   const DAY_MS = 86400000;
