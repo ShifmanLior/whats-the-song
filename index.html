@@ -333,6 +333,27 @@
   .remind .actions .btn small { color: var(--muted); font-size: 12px; font-weight: 300; }
   .remind .alt { display: block; width: 100%; margin-top: 10px; padding: 6px; background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
   .remind .alt[hidden] { display: none; }
+
+  /* feedback: a dialog with a message and an email address that is optional */
+  .fb h2 { margin: 0 0 6px; font-size: 22px; font-weight: 300; text-align: center; }
+  .fb h2:focus { outline: none; }
+  .fb .lead { margin: 0 0 14px; color: var(--muted); font-size: 14px; text-align: center; }
+  .fb textarea, .fb input[type="email"] {
+    display: block; width: 100%; padding: 12px 14px; border: 1px solid var(--mid); border-radius: 0;
+    background: var(--paper); color: var(--ink); font: inherit; font-size: 16px; font-weight: 300;
+  }
+  .fb textarea { height: 120px; resize: none; }
+  .fb textarea:focus, .fb input[type="email"]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .fb label { display: block; margin: 14px 0 6px; font-size: 14px; font-weight: 400; }
+  .fb label small { color: var(--muted); font-size: 13px; font-weight: 300; }
+  .fb .btn { margin-top: 12px; }
+  .fb .btn.send { background: transparent; border-color: var(--ink); }
+  .fb .btn.send:disabled { border-color: var(--mid); }
+  .fb .note { min-height: 20px; margin: 10px 0 0; color: var(--muted); font-size: 13px; text-align: center; }
+  .fb .note.bad { color: var(--ink); font-weight: 400; }
+  .fb .thanks { padding: 18px 0 4px; text-align: center; }
+  .fb .thanks p { margin: 0 0 6px; font-size: 20px; font-weight: 300; }
+  .fb [hidden] { display: none; }
   .remind #remindClose { margin-top: 16px; }
 
   .toast {
@@ -508,6 +529,7 @@
   <section class="more" data-s="home" data-when="after">
     <button class="btn ghost" id="calBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 4v6h6M3.5 15a9 9 0 1 0 2.1-9.4L1.5 10M12 7v5l3 2"/></svg>שחקו בימים קודמים</button>
     <button class="btn ghost" id="remindBtn" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0112 0v5.5l1.5 2h-15zM10 21a2 2 0 004 0"/></svg>תזכורת יומית ביומן</button>
+    <button class="btn ghost" id="feedbackBtn" type="button" aria-haspopup="dialog" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>כתבו לנו פידבק</button>
   </section>
   <p class="foot" data-s="home" data-when="before">השיר מתחלף בחצות</p>
   <p class="foot credit" data-s="home">המשחק נבנה ב<svg class="heart" viewBox="0 0 24 24" aria-label="אהבה" role="img"><path d="M12 21s-7.2-4.5-9.1-9.4C1.6 8.3 3.6 5 7 5c2 0 3.4 1 5 3 1.6-2 3-3 5-3 3.4 0 5.4 3.3 4.1 6.6C19.2 16.5 12 21 12 21z"/></svg> על ידי ליאור ומוקדש לנילס ותמי</p>
@@ -537,6 +559,27 @@
     <button class="alt" id="remindFile" type="button" hidden>לא נפתח? שמרו כקובץ</button>
     <button class="btn ghost" id="remindClose" type="button">סגירה</button>
   </div>
+</dialog>
+<dialog class="cal fb" id="feedback" aria-label="פידבק">
+  <form class="cal-body" id="feedbackForm" novalidate>
+    <div id="fbFields">
+      <h2 tabindex="-1" autofocus>פידבק</h2>
+      <p class="lead">מה עובד, מה לא, מה חסר? נשמח לקרוא.</p>
+      <label for="fbText" class="sr-only">ההודעה שלכם</label>
+      <textarea id="fbText" maxlength="1000" placeholder="כתבו כאן" required></textarea>
+      <label for="fbEmail">אימייל <small>(לא חובה, רק אם תרצו שנחזור אליכם)</small></label>
+      <input id="fbEmail" type="email" dir="ltr" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="name@example.com">
+      <input type="checkbox" id="fbBot" class="sr-only" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <p class="note" id="fbNote" role="status"></p>
+      <button class="btn send" id="fbSend" type="submit" disabled>שליחה</button>
+      <button class="btn ghost" id="fbClose" type="button">סגירה</button>
+    </div>
+    <div class="thanks" id="fbThanks" hidden>
+      <p>תודה!</p>
+      <p class="lead">ההודעה נשלחה.</p>
+      <button class="btn ghost" id="fbDone" type="button">סגירה</button>
+    </div>
+  </form>
 </dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="sr-only" id="live" aria-live="polite"></div>
@@ -600,6 +643,8 @@
   //   history_open  { day }                       the calendar of played days
   //   history_pick  { day, state }                a day chosen from it (state: new | going | won | lost)
   //   reminder      { how }                       google | android | ios | file
+  //   feedback_open { day }                       the feedback dialog was opened
+  //   feedback_send { day, email }                a message was sent (email: whether an address was given); the text and the address themselves are never tracked
   //   player_error  { day, code }                 YouTube could not play the day's video
   function track(name, data) {
     if (previewMode) return;
@@ -1312,6 +1357,50 @@
     $('remindFile').addEventListener('click', () => { track('reminder', { how: 'file' }); downloadIcs(); });
   }
   updateGoogleLink();
+
+  // ---------- feedback: a message, and an email address if the player wants an answer ----------
+  // The page has no server, so the message goes to Web3Forms (web3forms.com), which mails it to the owner. To switch this on:
+  // enter the owner's address on web3forms.com, which mails an access key; put it in FEEDBACK_KEY. The key is meant to be public.
+  // Until then the button stays hidden. Sent with the message: the text, the address if given, the day and the kind of device.
+  const FEEDBACK_KEY = '';
+  const FEEDBACK_URL = 'https://api.web3forms.com/submit';
+  const fb = $('feedback');
+  if (FEEDBACK_KEY) $('feedbackBtn').hidden = false;
+  const fbReset = () => { $('fbFields').hidden = false; $('fbThanks').hidden = true; $('fbNote').textContent = ''; $('fbNote').className = 'note'; fbCheck(); };
+  const fbCheck = () => { $('fbSend').disabled = $('fbText').value.trim().length < 3; };
+  $('feedbackBtn').addEventListener('click', () => { track('feedback_open', { day: dayNo }); fbReset(); fb.showModal(); });
+  $('fbText').addEventListener('input', () => { fbCheck(); $('fbNote').textContent = ''; });
+  [$('fbClose'), $('fbDone')].forEach((b) => b.addEventListener('click', () => fb.close()));
+  fb.addEventListener('click', (e) => { if (e.target === fb) fb.close(); });   // a tap on the dimmed area
+  $('feedbackForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = $('fbText').value.trim(), email = $('fbEmail').value.trim(), note = $('fbNote');
+    if (text.length < 3 || $('fbSend').disabled) return;
+    if (email && !$('fbEmail').validity.valid) { note.textContent = 'כתובת האימייל לא נראית תקינה'; note.className = 'note bad'; $('fbEmail').focus(); return; }
+    $('fbSend').disabled = true; $('fbSend').textContent = 'שולחים…'; note.textContent = ''; note.className = 'note';
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 12000);
+    try {
+      const data = new FormData();
+      data.append('access_key', FEEDBACK_KEY);
+      data.append('subject', `תו השעה: פידבק (יום ${dayNo})`);
+      data.append('from_name', 'תו השעה');
+      data.append('message', text);
+      if (email) data.append('email', email);
+      data.append('day', String(dayNo));
+      data.append('device', IS_ANDROID ? 'android' : IS_IOS ? 'ios' : 'computer');
+      if ($('fbBot').checked) data.append('botcheck', 'on');
+      const r = await fetch(FEEDBACK_URL, { method: 'POST', body: data, headers: { Accept: 'application/json' }, signal: ctl.signal });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || j.success === false) throw new Error('feedback ' + r.status);
+      track('feedback_send', { day: dayNo, email: !!email });
+      $('fbText').value = ''; $('fbEmail').value = '';
+      $('fbFields').hidden = true; $('fbThanks').hidden = false; $('fbDone').focus();
+    } catch (err) {
+      note.textContent = 'לא הצלחנו לשלוח. נסו שוב בעוד רגע'; note.className = 'note bad';
+    } finally {
+      clearTimeout(timer); $('fbSend').textContent = 'שליחה'; fbCheck();
+    }
+  });
 
   function tickCountdown() {
     if (!rec.done || !isToday) return;               // an earlier day has no countdown
