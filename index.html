@@ -259,13 +259,13 @@
 
   /* home hero: a fan of flat record sleeves, and a vinyl record that is the play button. Everything moves with
      transform and opacity only; with reduced motion the animations are off and the fan and the record stand still. */
-  .hero { --s: clamp(84px, 26vw, 112px); position: relative; height: calc(var(--s) * 1.2); margin-top: 10px; }
+  .hero { --s: clamp(84px, 26vw, 112px); position: relative; height: calc(var(--s) * 1.2); margin-top: 10px; overflow-x: clip; }   /* a sleeve coming in from the side must not widen the page */
   .sleeve {
     position: absolute; left: 50%; top: 0; width: var(--s); height: var(--s); margin-left: calc(var(--s) / -2);
     background: var(--soft-2); box-shadow: 0 8px 20px rgba(30, 33, 51, .16), 0 0 0 1px rgba(30, 33, 51, .06);
     z-index: var(--z, 1);
     transform: translate(calc(var(--s) * var(--x)), var(--y)) rotate(var(--r));
-    transition: transform .9s cubic-bezier(.45, .05, .2, 1);   /* a change of seat glides */
+    transition: transform .9s cubic-bezier(.45, .05, .2, 1), opacity .5s ease;   /* a change of seat glides; leaving and coming in fade */
     animation: deal .8s cubic-bezier(.2, .8, .2, 1) calc(var(--i) * 90ms) backwards;
   }
   .sleeve svg { display: block; width: 100%; height: 100%; }
@@ -394,11 +394,11 @@
   <!-- home, both states: the sleeves, then the name, the day, the calendar link and the stats -->
   <!-- decoration only: five flat sleeves in a fan, dealt in on load, then taking turns at the front -->
   <div class="hero" data-s="home" aria-hidden="true">
-    <div class="sleeve" data-slot="0" style="--i:0;--x:-1.15;--y:18px;--r:-14deg"><svg viewBox="0 0 100 100"><rect width="100" height="100" class="l"/><circle cx="50" cy="50" r="42" class="a"/><circle cx="50" cy="50" r="30" class="l"/><circle cx="50" cy="50" r="18" class="a"/><circle cx="50" cy="50" r="6" class="l"/></svg></div>
-    <div class="sleeve" data-slot="4" style="--i:4;--x:1.15;--y:18px;--r:14deg"><svg viewBox="0 0 100 100"><rect width="100" height="100" class="i"/><path d="M12 100a38 38 0 0 1 76 0z" class="l"/><circle cx="74" cy="26" r="9" class="a"/></svg></div>
-    <div class="sleeve" data-slot="1" style="--i:1;--x:-0.58;--y:6px;--r:-7deg"><svg viewBox="0 0 100 100"><rect width="100" height="100" class="s"/><rect x="14" y="46" width="9" height="54" class="i"/><rect x="28" y="28" width="9" height="72" class="i"/><rect x="42" y="58" width="9" height="42" class="i"/><rect x="56" y="16" width="9" height="84" class="a"/><rect x="70" y="40" width="9" height="60" class="i"/><rect x="84" y="64" width="9" height="36" class="i"/></svg></div>
-    <div class="sleeve" data-slot="3" style="--i:3;--x:0.58;--y:6px;--r:7deg"><svg viewBox="0 0 100 100"><rect width="100" height="100" class="a"/><path d="M0 100L100 0v100z" class="i"/><circle cx="30" cy="30" r="11" class="p"/></svg></div>
-    <div class="sleeve" data-slot="2" style="--i:2;--x:0;--y:0px;--r:0deg"><svg viewBox="0 0 100 100"><rect width="100" height="100" class="p"/><circle cx="100" cy="0" r="92" class="l"/><circle cx="100" cy="0" r="70" class="a"/><circle cx="100" cy="0" r="48" class="l"/><circle cx="100" cy="0" r="26" class="i"/></svg></div>
+    <div class="sleeve" data-slot="0" style="--i:0;--x:-1.15;--y:18px;--r:-14deg"><svg viewBox="0 0 100 100"></svg></div>
+    <div class="sleeve" data-slot="4" style="--i:4;--x:1.15;--y:18px;--r:14deg"><svg viewBox="0 0 100 100"></svg></div>
+    <div class="sleeve" data-slot="1" style="--i:1;--x:-0.58;--y:6px;--r:-7deg"><svg viewBox="0 0 100 100"></svg></div>
+    <div class="sleeve" data-slot="3" style="--i:3;--x:0.58;--y:6px;--r:7deg"><svg viewBox="0 0 100 100"></svg></div>
+    <div class="sleeve" data-slot="2" style="--i:2;--x:0;--y:0px;--r:0deg"><svg viewBox="0 0 100 100"></svg></div>
   </div>
 
   <!-- home, both states: the name, the day, the calendar and the stats, right under the sleeves -->
@@ -1280,59 +1280,78 @@
     return hit.artworkUrl100.replace(/\/\d+x\d+bb\./, '/300x300bb.');
   }
   const preload = (url) => new Promise((resolve) => { const im = new Image(); im.onload = () => resolve(im); im.onerror = () => resolve(null); im.src = url; });
+  let coverPool = [], nextCover = 0;                // every loaded cover; the first five fill the fan, the rest come in later
   async function loadCovers() {
     const sleeves = [...document.querySelectorAll('.sleeve')], n = sleeves.length;
-    let candidates = null, cached = false;
+    let urls = null, cached = false;
     try {
       const c = JSON.parse(localStorage.getItem(COVERS_KEY));
-      if (c && Date.now() - c.t < 7 * 86400000 && c.urls.length === n) { candidates = c.urls; cached = true; }
+      if (c && Date.now() - c.t < 7 * 86400000 && c.urls.length >= n) { urls = c.urls; cached = true; }
     } catch (e) { /* nothing saved */ }
     const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 5000);
     try {
-      if (!candidates) {
+      if (!urls) {
         const picked = COVER_ALBUMS.slice().sort(() => Math.random() - 0.5);
-        candidates = (await Promise.all(picked.map((a) => findCover(a, ctl.signal).catch((e) => { dbg('cover: ' + e.message); return null; })))).filter(Boolean);
-        if (candidates.length < n) return;
+        urls = (await Promise.all(picked.map((a) => findCover(a, ctl.signal).catch((e) => { dbg('cover: ' + e.message); return null; })))).filter(Boolean);
+        if (urls.length < n) return;
       }
-      const used = candidates.slice(0, n);
-      const imgs = await Promise.all(used.map(preload));
-      let next = n;
-      for (let i = 0; i < n; i++) {                 // an image that will not load is replaced by one of the spare covers
-        while (!imgs[i] && next < candidates.length) { used[i] = candidates[next++]; imgs[i] = await preload(used[i]); }
-      }
-      if (imgs.some((im) => !im)) {                 // not enough covers load: keep the drawn sleeves
+      // all of them are loaded first, so that a cover coming in later is already there
+      const loaded = (await Promise.all(urls.map(async (u) => ({ u, im: await preload(u) })))).filter((x) => x.im);
+      if (loaded.length < n) {                      // not enough covers load: keep the drawn sleeves
         if (cached) { try { localStorage.removeItem(COVERS_KEY); } catch (e) { /* ignore */ } }
         return;
       }
-      if (!cached || used.some((u, i) => u !== candidates[i])) { try { localStorage.setItem(COVERS_KEY, JSON.stringify({ t: Date.now(), urls: used })); } catch (e) { /* ignore */ } }
-      sleeves.forEach((sl, i) => { imgs[i].alt = ''; sl.appendChild(imgs[i]); });
+      if (!cached || loaded.length !== urls.length) { try { localStorage.setItem(COVERS_KEY, JSON.stringify({ t: Date.now(), urls: loaded.map((x) => x.u) })); } catch (e) { /* ignore */ } }
+      coverPool = loaded.map((x) => x.u); nextCover = n;
+      sleeves.forEach((sl, i) => { loaded[i].im.alt = ''; sl.appendChild(loaded[i].im); });
       requestAnimationFrame(() => requestAnimationFrame(() => sleeves.forEach((sl) => sl.lastElementChild.classList.add('on'))));
     } catch (e) { dbg('covers: ' + e.message); }   // offline or blocked: the drawn sleeves stay
     finally { clearTimeout(timer); }
   }
 
-  // ---------- the sleeves take turns at the front ----------
-  // Five seats in a fan. Every few seconds each sleeve moves one seat along and the one at the far end goes round behind
-  // the others to the other end, so each gets its turn in the middle. The glide is a CSS transition on transform.
+  // ---------- the sleeves: one leaves, a new one comes in ----------
+  // Five seats in a fan. Every few seconds each sleeve moves one seat along; the one at the far left slides out and fades,
+  // and a new one (the next drawn sleeve, or the next cover) comes in from the far right into the free seat. The glide is a
+  // CSS transition on transform and opacity.
+  const ART = [
+    '<rect width="100" height="100" class="l"/><circle cx="50" cy="50" r="42" class="a"/><circle cx="50" cy="50" r="30" class="l"/><circle cx="50" cy="50" r="18" class="a"/><circle cx="50" cy="50" r="6" class="l"/>',
+    '<rect width="100" height="100" class="s"/><rect x="14" y="46" width="9" height="54" class="i"/><rect x="28" y="28" width="9" height="72" class="i"/><rect x="42" y="58" width="9" height="42" class="i"/><rect x="56" y="16" width="9" height="84" class="a"/><rect x="70" y="40" width="9" height="60" class="i"/><rect x="84" y="64" width="9" height="36" class="i"/>',
+    '<rect width="100" height="100" class="p"/><circle cx="100" cy="0" r="92" class="l"/><circle cx="100" cy="0" r="70" class="a"/><circle cx="100" cy="0" r="48" class="l"/><circle cx="100" cy="0" r="26" class="i"/>',
+    '<rect width="100" height="100" class="a"/><path d="M0 100L100 0v100z" class="i"/><circle cx="30" cy="30" r="11" class="p"/>',
+    '<rect width="100" height="100" class="i"/><path d="M12 100a38 38 0 0 1 76 0z" class="l"/><circle cx="74" cy="26" r="9" class="a"/>',
+    '<rect width="100" height="100" class="i"/><circle cx="20" cy="20" r="7" class="a"/><circle cx="50" cy="20" r="7" class="l"/><circle cx="80" cy="20" r="7" class="a"/><circle cx="20" cy="50" r="7" class="l"/><circle cx="50" cy="50" r="7" class="p"/><circle cx="80" cy="50" r="7" class="l"/><circle cx="20" cy="80" r="7" class="a"/><circle cx="50" cy="80" r="7" class="l"/><circle cx="80" cy="80" r="7" class="a"/>',
+    '<rect width="100" height="100" class="l"/><path d="M0 58Q25 28 50 58T100 58V100H0z" class="a"/><path d="M0 78Q25 50 50 78T100 78V100H0z" class="i"/>',
+    '<rect width="100" height="100" class="s"/><path d="M0 50a50 50 0 0 1 100 0z" class="a"/><path d="M0 50a50 50 0 0 0 100 0z" class="i"/><circle cx="50" cy="50" r="11" class="p"/>',
+  ];
   const FAN = [{ x: -1.15, y: 18, r: -14 }, { x: -0.58, y: 6, r: -7 }, { x: 0, y: 0, r: 0 }, { x: 0.58, y: 6, r: 7 }, { x: 1.15, y: 18, r: 14 }];
+  const OUT = { x: -1.7, y: 28, r: -20 }, IN = { x: 1.7, y: 28, r: 20 };
   const sleeveEls = [...document.querySelectorAll('.sleeve')];
   const seatZ = (slot) => 6 - Math.abs(slot - 2);   // the middle sleeve is on top
-  function seat(el, slot, z) {
-    const f = FAN[slot];
-    el.dataset.slot = slot;
-    el.style.setProperty('--x', f.x); el.style.setProperty('--y', f.y + 'px'); el.style.setProperty('--r', f.r + 'deg');
-    el.style.setProperty('--z', z === undefined ? seatZ(slot) : z);
+  let nextArt = 5;
+  function pose(el, p, z) {
+    el.style.setProperty('--x', p.x); el.style.setProperty('--y', p.y + 'px'); el.style.setProperty('--r', p.r + 'deg'); el.style.setProperty('--z', z);
+  }
+  function seat(el, slot) { el.dataset.slot = slot; pose(el, FAN[slot], seatZ(slot)); }
+  function freshArt(el) {                           // what the sleeve coming in shows
+    el.querySelector('svg').innerHTML = ART[nextArt++ % ART.length];
+    const im = el.querySelector('img');
+    if (im && coverPool.length) im.src = coverPool[nextCover++ % coverPool.length];
   }
   function turnSleeves() {
     if (screen !== 'home' || document.hidden) return;
     sleeveEls.forEach((el) => {
-      const slot = Number(el.dataset.slot), next = (slot + FAN.length - 1) % FAN.length;
-      const around = slot === 0;                    // from the far left, round the back, to the far right
-      seat(el, next, around ? 0 : undefined);
-      if (around) setTimeout(() => el.style.setProperty('--z', seatZ(next)), 950);
+      const slot = Number(el.dataset.slot);
+      if (slot !== 0) { seat(el, slot - 1); return; }
+      el.dataset.slot = 'out'; pose(el, OUT, 0); el.style.opacity = '0';   // leaves to the far left
+      setTimeout(() => {                            // and comes back as a new one at the far right
+        freshArt(el);
+        el.style.transition = 'none'; pose(el, IN, 4); el.style.opacity = '0';
+        void el.offsetWidth;                        // let that stand for a frame, then glide in
+        el.style.transition = ''; seat(el, 4); el.style.opacity = '1';
+      }, 520);
     });
   }
-  sleeveEls.forEach((el) => seat(el, Number(el.dataset.slot)));
+  sleeveEls.forEach((el) => { const slot = Number(el.dataset.slot); el.querySelector('svg').innerHTML = ART[slot]; seat(el, slot); });
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(turnSleeves, 3400);
 
   // ---------- boot ----------
