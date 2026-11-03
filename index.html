@@ -334,7 +334,16 @@
   .remind .alt { display: block; width: 100%; margin-top: 10px; padding: 6px; background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
   .remind .alt[hidden] { display: none; }
 
-  /* feedback: a dialog with a message and an email address that is optional */
+  /* feedback: a quiet line of text above the credit opens a dialog with a message and an email address that is optional */
+  .fbrow { margin: 24px 0 0; text-align: center; }
+  .fbrow[hidden] { display: none; }
+  .fblink {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 6px;
+    background: none; border: 0; color: var(--muted); font: inherit; font-size: 14px; cursor: pointer;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .fblink svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; }
+  @media (hover: hover) { .fblink:hover { color: var(--ink); } }
   .fb h2 { margin: 0 0 6px; font-size: 22px; font-weight: 300; text-align: center; }
   .fb h2:focus { outline: none; }
   .fb .lead { margin: 0 0 14px; color: var(--muted); font-size: 14px; text-align: center; }
@@ -529,8 +538,8 @@
   <section class="more" data-s="home" data-when="after">
     <button class="btn ghost" id="calBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 4v6h6M3.5 15a9 9 0 1 0 2.1-9.4L1.5 10M12 7v5l3 2"/></svg>שחקו בימים קודמים</button>
     <button class="btn ghost" id="remindBtn" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0112 0v5.5l1.5 2h-15zM10 21a2 2 0 004 0"/></svg>תזכורת יומית ביומן</button>
-    <button class="btn ghost" id="feedbackBtn" type="button" aria-haspopup="dialog" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>כתבו לנו פידבק</button>
   </section>
+  <p class="fbrow" id="feedbackRow" data-s="home" data-when="after" hidden><button class="fblink" id="feedbackBtn" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>יש הצעה או בעיה? כתבו לנו</button></p>
   <p class="foot" data-s="home" data-when="before">השיר מתחלף בחצות</p>
   <p class="foot credit" data-s="home">המשחק נבנה ב<svg class="heart" viewBox="0 0 24 24" aria-label="אהבה" role="img"><path d="M12 21s-7.2-4.5-9.1-9.4C1.6 8.3 3.6 5 7 5c2 0 3.4 1 5 3 1.6-2 3-3 5-3 3.4 0 5.4 3.3 4.1 6.6C19.2 16.5 12 21 12 21z"/></svg> על ידי ליאור ומוקדש לנילס ותמי</p>
 </main>
@@ -644,7 +653,7 @@
   //   history_pick  { day, state }                a day chosen from it (state: new | going | won | lost)
   //   reminder      { how }                       google | android | ios | file
   //   feedback_open { day }                       the feedback dialog was opened
-  //   feedback_send { day, email }                a message was sent (email: whether an address was given); the text and the address themselves are never tracked
+  //   feedback_send { day, email }                a message was posted (email: whether an address was given); the text and the address themselves are never tracked
   //   player_error  { day, code }                 YouTube could not play the day's video
   function track(name, data) {
     if (previewMode) return;
@@ -1359,13 +1368,18 @@
   updateGoogleLink();
 
   // ---------- feedback: a message, and an email address if the player wants an answer ----------
-  // The page has no server, so the message goes to Web3Forms (web3forms.com), which mails it to the owner. To switch this on:
-  // enter the owner's address on web3forms.com, which mails an access key; put it in FEEDBACK_KEY. The key is meant to be public.
-  // Until then the button stays hidden. Sent with the message: the text, the address if given, the day and the kind of device.
-  const FEEDBACK_KEY = '';
-  const FEEDBACK_URL = 'https://api.web3forms.com/submit';
+  // The page has no server, so the message is posted to a Google Form, whose answers the owner reads in Google Sheets or by mail.
+  // To switch this on: make a form with these questions (the first one a paragraph, none of them required except the first):
+  // the message, the email address, the day, the device. Open "Get pre-filled link", fill them in, copy the link: its address
+  // holds the form's id (between /d/e/ and /viewform) and an "entry.123456789" name for each question. Fill in the two
+  // constants below. Until FEEDBACK_FORM and the message's entry are set, the line of text that opens the dialog stays hidden.
+  // The browser may not read Google's answer (it sends no CORS headers), so a wrong id or entry looks like success to the
+  // player: after changing them, send a test message and look for it in the form's answers.
+  const FEEDBACK_FORM = '';
+  const FEEDBACK_FIELDS = { message: '', email: '', day: '', device: '' };
+  const FEEDBACK_URL = `https://docs.google.com/forms/d/e/${FEEDBACK_FORM}/formResponse`;
   const fb = $('feedback');
-  if (FEEDBACK_KEY) $('feedbackBtn').hidden = false;
+  if (FEEDBACK_FORM && FEEDBACK_FIELDS.message) $('feedbackRow').hidden = false;
   const fbReset = () => { $('fbFields').hidden = false; $('fbThanks').hidden = true; $('fbNote').textContent = ''; $('fbNote').className = 'note'; fbCheck(); };
   const fbCheck = () => { $('fbSend').disabled = $('fbText').value.trim().length < 3; };
   $('feedbackBtn').addEventListener('click', () => { track('feedback_open', { day: dayNo }); fbReset(); fb.showModal(); });
@@ -1380,18 +1394,15 @@
     $('fbSend').disabled = true; $('fbSend').textContent = 'שולחים…'; note.textContent = ''; note.className = 'note';
     const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 12000);
     try {
-      const data = new FormData();
-      data.append('access_key', FEEDBACK_KEY);
-      data.append('subject', `תו השעה: פידבק (יום ${dayNo})`);
-      data.append('from_name', 'תו השעה');
-      data.append('message', text);
-      if (email) data.append('email', email);
-      data.append('day', String(dayNo));
-      data.append('device', IS_ANDROID ? 'android' : IS_IOS ? 'ios' : 'computer');
-      if ($('fbBot').checked) data.append('botcheck', 'on');
-      const r = await fetch(FEEDBACK_URL, { method: 'POST', body: data, headers: { Accept: 'application/json' }, signal: ctl.signal });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok || j.success === false) throw new Error('feedback ' + r.status);
+      const data = new URLSearchParams();
+      const put = (name, value) => { if (FEEDBACK_FIELDS[name] && value) data.append(FEEDBACK_FIELDS[name], value); };
+      put('message', text);
+      put('email', email);
+      put('day', String(dayNo));
+      put('device', IS_ANDROID ? 'android' : IS_IOS ? 'ios' : 'computer');
+      // a bot that ticked the hidden box gets its thanks and nothing is sent; the answer cannot be read (no-cors), so only a
+      // network failure shows as an error
+      if (!$('fbBot').checked) await fetch(FEEDBACK_URL, { method: 'POST', mode: 'no-cors', body: data, signal: ctl.signal });
       track('feedback_send', { day: dayNo, email: !!email });
       $('fbText').value = ''; $('fbEmail').value = '';
       $('fbFields').hidden = true; $('fbThanks').hidden = false; $('fbDone').focus();
