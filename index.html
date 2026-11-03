@@ -43,6 +43,7 @@
     --accent: #d82828;                              /* the accent changes every day (see ACCENTS in the head); this is the fallback */
     --accent-l: #f3bfbf;
     --shade: 23, 18, 13;                            /* the colour of shadows, as r, g, b */
+    --vsize: clamp(128px, 38vw, 152px);             /* the play record, on the home screen and the game screen */
   }
   * { box-sizing: border-box; }
   body { overflow-x: clip; }
@@ -72,7 +73,9 @@
   .info { margin-top: 6px; text-align: center; }
   h1 { margin: 0; font-size: 56px; font-weight: 400; letter-spacing: -0.02em; line-height: 1.25; }
   .sub { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
-  .stats { display: flex; justify-content: center; gap: 8px; margin-top: 18px; }
+  .stats { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
+  .stats.below { margin-top: 32px; }                     /* after the game they sit under the video */
+  .app[data-state="after"] .sub.quiet { display: none; }   /* after today's game the day number is not repeated under the name */
   .stat {
     min-width: 60px;
     padding: 6px 10px;
@@ -88,7 +91,7 @@
   .stage[hidden] { display: none; }
   .play {                                            /* a record, like the one on the home screen; the .disc inside is drawn with the home screen's styles */
     position: relative;
-    width: 112px; height: 112px;
+    width: var(--vsize); height: var(--vsize);
     margin-bottom: 18px;                            /* room for the ring around it */
     padding: 0; border: 0; border-radius: 50%;
     background: none;
@@ -100,7 +103,7 @@
   .play:hover:not(:disabled) { transform: scale(1.05); }
   .play:active:not(:disabled) { transform: scale(0.96); }
   .play:disabled { cursor: progress; opacity: .35; }
-  .play svg { position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; margin: -13px 0 0 -13px; fill: currentColor; }
+  .play svg { position: absolute; left: 50%; top: 50%; width: calc(var(--vsize) * .23); height: calc(var(--vsize) * .23); transform: translate(-50%, -50%); fill: currentColor; }
   .play .disc::before { animation-play-state: paused; }                       /* the record turns only while it plays */
   .play[data-state="playing"] .disc::before { animation-play-state: running; }
   .play .i-pause { display: none; }
@@ -134,30 +137,6 @@
   .tl-marks span { position: absolute; transform: translateX(-50%); }
   .tl-marks span:last-child { transform: translateX(-100%); }
   .tl-label { text-align: center; color: var(--muted); font-size: 14px; }
-
-  /* guess history: correct = solid, wrong = struck through, skipped = dashed */
-  .attempts { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 8px; }
-  .attempts:empty { display: none; }
-  .attempt {
-    display: flex; align-items: center; gap: 12px;
-    min-height: 48px; padding: 7px 14px 7px 12px;
-    border: 1px solid var(--line);
-    font-size: 15px;
-  }
-  .attempt .badge {
-    flex: none; min-width: 34px; height: 34px; padding: 0 6px;
-    display: grid; place-items: center;
-    background: var(--soft); color: var(--muted);
-    font-size: 13px; font-weight: 400; font-variant-numeric: tabular-nums;
-  }
-  .attempt .txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .attempt.bad .txt { color: var(--muted); text-decoration: line-through; }
-  .attempt.bad::after { content: "\2715"; font-weight: 400; }
-  .attempt.skip { border-style: dashed; border-color: var(--mid); }
-  .attempt.skip .txt { color: var(--muted); }
-  .attempt.win { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-  .attempt.win .badge { background: var(--paper); color: var(--ink); }
-  .attempt.win::after { content: "\2713"; font-weight: 400; color: var(--accent-l); }
 
   /* guess area */
   .guess { margin-top: 20px; }
@@ -203,32 +182,42 @@
 
   /* result: no frame; it lines up with the boxes below it, so it needs no side padding */
   .result {
-    margin-top: 20px; padding: 24px 0;
+    margin-top: 4px; padding: 12px 0 0;
     text-align: center;
   }
   .result[hidden] { display: none; }
   .result h2 { margin: 0; font-size: 26px; font-weight: 300; }
-  .song-title { margin: 14px 0 0; font-size: 24px; font-weight: 400; }
-  .song-artist { margin: 0; color: var(--muted); }
-  .squares { display: flex; justify-content: center; gap: 5px; margin: 18px 0; }
+  /* the song, one line: the band, a colon, the title; it sits between the share button and the video */
+  .song-line { margin: 28px 0 0; text-align: center; font-size: 22px; font-weight: 400; line-height: 1.35; }
+  .song-line .by { color: var(--muted); }
+  /* the score: one tile per attempt. A tick on the accent is the right answer, a cross on ink a wrong one, a plain grey
+     tile a skip, and a hollow slot an attempt that was not needed. They pop in one after the other. */
+  .squares { display: flex; justify-content: center; gap: 6px; margin: 16px 0; }
   .squares i {
-    position: relative; flex: 1 1 0; max-width: 28px; aspect-ratio: 1;
-    border: 1px solid var(--ink); opacity: .25;
+    position: relative; flex: 1 1 0; max-width: 30px; aspect-ratio: 1;
+    box-shadow: inset 0 0 0 1px var(--line);
+    animation: tile .4s cubic-bezier(.2, .8, .2, 1) calc(var(--n, 0) * 55ms) backwards;
   }
-  .squares i.win { background: var(--accent); border-color: var(--accent); opacity: 1; }
-  .squares i.skip { background: var(--ink); opacity: .3; }
-  .squares i.bad { border-width: 2px; opacity: 1; }
+  .squares i.skip { background: rgba(var(--shade), .16); box-shadow: none; }
+  .squares i.win, .squares i.bad { box-shadow: 0 2px 6px rgba(var(--shade), .18); }
+  .squares i.win { background: var(--accent); }
+  .squares i.bad { background: var(--ink); }
+  .squares i.win::after {
+    content: ""; position: absolute; left: 50%; top: 46%; width: 28%; height: 52%;
+    border: solid var(--paper); border-width: 0 2.5px 2.5px 0; transform: translate(-50%, -50%) rotate(45deg);
+  }
   .squares i.bad::before, .squares i.bad::after {
-    content: ""; position: absolute; left: 50%; top: 50%; width: 14px; height: 2px;
-    margin: -1px 0 0 -7px; background: var(--ink); transform: rotate(45deg);
+    content: ""; position: absolute; left: 50%; top: 50%; width: 52%; height: 2.5px;
+    margin: -1.25px 0 0 -26%; background: var(--paper); transform: rotate(45deg);
   }
   .squares i.bad::after { transform: rotate(-45deg); }
+  @keyframes tile { from { transform: scale(.4); opacity: 0; } }
   .result .btn { width: 100%; }
   a.btn { text-decoration: none; color: var(--ink); }
   .btn svg { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; }
   .result .btn.share { border-color: var(--ink); }
   .btn[hidden] { display: none; }
-  .next { margin: 16px 0 0; color: var(--muted); font-size: 14px; }
+  .next { margin: 12px 0 0; color: var(--muted); font-size: 14px; }
   .next b { font-variant-numeric: tabular-nums; }
 
   /* YouTube player: kept off-screen while guessing, shown at the end */
@@ -261,7 +250,7 @@
   .back { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; background: transparent; border: 1px solid var(--mid); color: var(--ink); cursor: pointer; }
   .back:hover { border-color: var(--ink); }
   .back svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; }
-  .start { margin-top: 26px; text-align: center; }
+  .start { margin-top: 40px; text-align: center; }   /* the ring around the record grows into this */
   .status { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
 
   /* home hero: a fan of flat record sleeves, and a vinyl record that is the play button. Everything moves with
@@ -285,7 +274,7 @@
     position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 28px;   /* room for the ring that pulses around the record */
     margin: 0 auto; padding: 0; background: none; border: 0; color: var(--ink); cursor: pointer;
   }
-  .vwrap { position: relative; display: block; width: 112px; height: 112px; transition: transform .15s ease; animation: rise .7s cubic-bezier(.2, .8, .2, 1) .5s both; }
+  .vwrap { position: relative; display: block; width: var(--vsize); height: var(--vsize); transition: transform .15s ease; animation: rise .7s cubic-bezier(.2, .8, .2, 1) .5s both; }
   .vinyl:active .vwrap { transform: scale(.96); }
   .vwrap::after {
     content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--accent); opacity: 0; pointer-events: none;
@@ -299,7 +288,7 @@
     animation: spin 7s linear infinite;
   }
   .disc::after { content: ""; position: absolute; inset: 27%; border-radius: 50%; background: var(--accent); }
-  .vinyl .tri { position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; margin: -13px 0 0 -13px; fill: #fff; }
+  .vinyl .tri { position: absolute; left: 50%; top: 50%; width: calc(var(--vsize) * .23); height: calc(var(--vsize) * .23); transform: translate(-50%, -50%); fill: #fff; }
   .vinyl:hover .disc::before { animation-duration: 2.4s; }
   .vinyl:focus-visible { outline: none; }
   .vinyl:focus-visible .vwrap { outline: 3px solid var(--ink); outline-offset: 6px; border-radius: 50%; }
@@ -307,25 +296,23 @@
   @keyframes rise { from { transform: translateY(14px) scale(.85); opacity: 0; } }
   @keyframes ring { 0% { transform: scale(1); opacity: .6; } 100% { transform: scale(1.4); opacity: 0; } }
   .app[data-state="before"] [data-when="after"], .app[data-state="after"] [data-when="before"] { display: none; }   /* the home screen's two states */
-  .guesses .attempts { margin: 0; }
   .foot .heart { width: 13px; height: 13px; vertical-align: -2px; fill: currentColor; }
 
   /* daily reminder: a calendar event that repeats every day, so no account or email address is needed */
-  .remind, .guesses { margin-top: 20px; border: 1px solid var(--line); font-size: 15px; }
-  .remind summary, .guesses summary { padding: 12px 14px; text-align: center; cursor: pointer; font-weight: 400; }
-  .remind summary svg, .guesses summary svg { width: 18px; height: 18px; margin-inline-end: 6px; vertical-align: -4px; fill: none; stroke: currentColor; stroke-width: 1.5; }
-  .remind[open] summary, .guesses[open] summary { border-bottom: 1px solid var(--line); }
-  .remind .body, .guesses .body { padding: 14px; }
+  .remind .cal-head { justify-content: center; }
+  .remind h2:focus { outline: none; }
+  .remind { font-size: 15px; }
   .remind p { margin: 0 0 12px; color: var(--muted); font-size: 14px; text-align: center; }
   .remind label { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 12px; }
   .remind input[type="time"] {
     height: 42px; padding: 0 10px; border: 1px solid var(--mid); border-radius: 0;
     background: transparent; color: var(--ink); font: inherit; font-weight: 400;
   }
-  .remind .btn { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 56px; font-size: 15px; text-align: center; text-decoration: none; line-height: 1.25; }
-  .remind .btn small { color: var(--muted); font-size: 12px; font-weight: 300; }
+  .remind .actions .btn { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 56px; font-size: 15px; text-align: center; text-decoration: none; line-height: 1.25; }
+  .remind .actions .btn small { color: var(--muted); font-size: 12px; font-weight: 300; }
   .remind .alt { display: block; width: 100%; margin-top: 10px; padding: 6px; background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
   .remind .alt[hidden] { display: none; }
+  .remind #remindClose { margin-top: 16px; }
 
   .toast {
     position: fixed; inset-inline: 0; bottom: 24px; margin: 0 auto; width: max-content; max-width: calc(100% - 32px);
@@ -338,7 +325,7 @@
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   /* header links and the calendar */
-  .more { margin-top: 28px; }
+  .more { margin-top: 32px; display: grid; gap: 12px; }
   .more .btn { width: 100%; }
   .links:has(> [hidden]:only-child) { display: none; }   /* nothing to show: no empty row */
   .links { margin: 10px 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 16px; font-size: 14px; }
@@ -382,11 +369,7 @@
     h1 { font-size: 48px; }
     .lead { margin-top: 10px; font-size: 14px; }
     .stage { margin-top: clamp(14px, 4vh, 36px); gap: 12px; }
-    .play { width: 96px; height: 96px; margin-bottom: 14px; }
-    .play svg { width: 22px; height: 22px; margin: -11px 0 0 -11px; }
-    .attempts { margin-top: 14px; gap: 5px; }
-    .attempt { min-height: 38px; padding-block: 2px; }
-    .attempt .badge { min-width: 30px; height: 28px; }
+    .play { margin-bottom: 14px; }
     .guess { margin-top: 14px; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -435,9 +418,9 @@
     <h1>תָּו הַשָּׁעָה</h1>
     <p class="sub" id="dayLabel"></p>
     <p class="links"><a class="link" id="todayLink" href="./" hidden>חזרה להיום</a></p>
-    <div class="stats">
-      <div class="stat"><b id="statStreak">0</b><span>רצף</span></div>
-      <div class="stat"><b id="statWins">0</b><span>ניצחונות</span></div>
+    <div class="stats" data-when="before">
+      <div class="stat"><b data-stat="streak">0</b><span>רצף</span></div>
+      <div class="stat"><b data-stat="wins">0</b><span>ניצחונות</span></div>
     </div>
   </section>
 
@@ -487,36 +470,23 @@
   <!-- home, after the game: how it went, the song, sharing and the countdown to the next one -->
   <section class="result" id="result" data-s="home" data-when="after" hidden aria-live="polite">
     <h2 id="resultTitle"></h2>
-    <p class="song-title" id="resultSong"></p>
-    <p class="song-artist" id="resultArtist"></p>
     <div class="squares" id="resultSquares" aria-hidden="true"></div>
     <button class="btn ghost share" id="shareBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M5 13v7h14v-7"/></svg>שתפו תוצאה</button>
     <p class="next" id="next">השיר הבא בעוד <b data-countdown>--:--:--</b></p>
   </section>
+  <p class="song-line" id="songLine" data-s="home" data-when="after"><bdi class="by" id="resultArtist"></bdi>: <bdi id="resultSong"></bdi></p>
 
   <div class="player-wrap" id="playerWrap" data-s="home game"></div>
 
-  <details class="guesses" data-s="home" data-when="after">
-    <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg>הניחושים שלכם</summary>
-    <div class="body"><ol class="attempts" id="attempts" aria-label="הניחושים שלכם"></ol></div>
-  </details>
-
   <p class="notice" id="notice" data-s="home game" role="alert" hidden></p>
-  <details class="remind" id="remind" data-s="home" data-when="after" hidden>
-    <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0112 0v5.5l1.5 2h-15zM10 21a2 2 0 004 0"/></svg>תזכורת יומית ביומן</summary>
-    <div class="body">
-      <p>נוסיף ליומן שלכם אירוע שחוזר כל יום, כדי שלא תפספסו את השיר החדש.</p>
-      <label>באיזו שעה?<input type="time" id="remindTime" value="09:00"></label>
-      <div class="actions">
-        <a class="btn ghost" id="remindGoogle" href="#" target="_blank" rel="noopener">יומן Google<small>האפליקציה או האתר</small></a>
-        <button class="btn ghost" id="remindOpen" type="button">קובץ ליומן<small>Outlook · Apple</small></button>
-      </div>
-      <button class="alt" id="remindFile" type="button" hidden>לא נפתח? שמרו כקובץ</button>
-    </div>
-  </details>
-  <!-- home, both states: the history of played days, at the bottom -->
-  <section class="more" data-s="home">
+  <div class="stats below" data-s="home" data-when="after">
+    <div class="stat"><b data-stat="streak">0</b><span>רצף</span></div>
+    <div class="stat"><b data-stat="wins">0</b><span>ניצחונות</span></div>
+  </div>
+  <!-- home, after the game: the history of played days and the daily reminder, at the bottom (the reminder opens over the page) -->
+  <section class="more" data-s="home" data-when="after">
     <button class="btn ghost" id="calBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 4v6h6M3.5 15a9 9 0 1 0 2.1-9.4L1.5 10M12 7v5l3 2"/></svg>שחקו בימים קודמים</button>
+    <button class="btn ghost" id="remindBtn" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0112 0v5.5l1.5 2h-15zM10 21a2 2 0 004 0"/></svg>תזכורת יומית ביומן</button>
   </section>
   <p class="foot" data-s="home" data-when="before">השיר מתחלף בחצות</p>
   <p class="foot credit" data-s="home">המשחק נבנה ב<svg class="heart" viewBox="0 0 24 24" aria-label="אהבה" role="img"><path d="M12 21s-7.2-4.5-9.1-9.4C1.6 8.3 3.6 5 7 5c2 0 3.4 1 5 3 1.6-2 3-3 5-3 3.4 0 5.4 3.3 4.1 6.6C19.2 16.5 12 21 12 21z"/></svg> על ידי ליאור ומוקדש לנילס ותמי</p>
@@ -532,6 +502,19 @@
     <div class="cal-grid" id="calGrid"></div>
     <p class="cal-key" aria-hidden="true"><span><i class="cal-day won">1</i>ניחשתם</span><span><i class="cal-day lost">1</i>לא הצלחתם</span><span><i class="cal-day going">1</i>התחלתם</span></p>
     <button class="btn ghost" id="calClose" type="button">סגירה</button>
+  </div>
+</dialog>
+<dialog class="cal remind" id="remind" aria-label="תזכורת יומית ביומן">
+  <div class="cal-body">
+    <div class="cal-head"><h2 tabindex="-1" autofocus>תזכורת יומית ביומן</h2></div>
+    <p>נוסיף ליומן שלכם אירוע שחוזר כל יום, כדי שלא תפספסו את השיר החדש.</p>
+    <label>באיזו שעה?<input type="time" id="remindTime" value="09:00"></label>
+    <div class="actions">
+      <a class="btn ghost" id="remindGoogle" href="#" target="_blank" rel="noopener">יומן Google<small>האפליקציה או האתר</small></a>
+      <button class="btn ghost" id="remindOpen" type="button">קובץ ליומן<small>Outlook · Apple</small></button>
+    </div>
+    <button class="alt" id="remindFile" type="button" hidden>לא נפתח? שמרו כקובץ</button>
+    <button class="btn ghost" id="remindClose" type="button">סגירה</button>
   </div>
 </dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -660,23 +643,6 @@
     });
   }
 
-  function renderAttempts() {
-    const ol = $('attempts');
-    ol.textContent = '';
-    for (let i = 0; i < rec.g.length; i++) {         // in the order they were made
-      const li = document.createElement('li');
-      const badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = STAGES[i];
-      const txt = document.createElement('span'); txt.className = 'txt';
-      const g = rec.g[i];
-      let cls;
-      if (g === 'skip') { cls = 'skip'; txt.textContent = 'דילגתם'; }
-      else { cls = g.ok ? 'win' : 'bad'; txt.textContent = g.t; }
-      li.className = 'attempt ' + cls;
-      li.append(badge, txt);
-      ol.appendChild(li);
-    }
-  }
-
   const secsText = (s) => (s === 0.5 ? 'חצי שנייה' : s === 1 ? 'שנייה אחת' : `${s} שניות`);
   function renderControls() {
     const s = secsUnlocked();
@@ -690,8 +656,8 @@
     $('stage').hidden = rec.done;
     $('guess').hidden = rec.done;
     const st = computeStats();
-    $('statStreak').textContent = st.streak;
-    $('statWins').textContent = st.wins;
+    document.querySelectorAll('[data-stat="streak"]').forEach((el) => { el.textContent = st.streak; });   // there is one under the name before the game and one under the video after it
+    document.querySelectorAll('[data-stat="wins"]').forEach((el) => { el.textContent = st.wins; });
   }
 
   function squaresFor(g) {
@@ -704,7 +670,7 @@
 
   function fillSquares(el) {
     el.textContent = '';
-    squaresFor(rec.g).forEach((c) => { const i = document.createElement('i'); if (c) i.className = c; el.appendChild(i); });
+    squaresFor(rec.g).forEach((c, n) => { const i = document.createElement('i'); if (c) i.className = c; i.style.setProperty('--n', n); el.appendChild(i); });
   }
 
   function renderResult() {
@@ -716,7 +682,6 @@
     $('resultSong').textContent = answer.title;
     $('resultArtist').textContent = answer.artist;
     fillSquares($('resultSquares'));
-    $('remind').hidden = false;                     // the reminder is offered once the game is over
     tickCountdown();
   }
 
@@ -733,7 +698,6 @@
 
   function render() {
     renderHome();
-    renderAttempts();
     renderControls();
     if (rec.done) renderResult();
   }
@@ -1203,6 +1167,10 @@
   $('calPrev').addEventListener('click', () => { shownMonth--; renderCalendar(); });
   $('calNext').addEventListener('click', () => { shownMonth++; renderCalendar(); });
   $('calClose').addEventListener('click', () => cal.close());
+  const remindDlg = $('remind');
+  $('remindBtn').addEventListener('click', () => { updateGoogleLink(); remindDlg.showModal(); });
+  $('remindClose').addEventListener('click', () => remindDlg.close());
+  remindDlg.addEventListener('click', (e) => { if (e.target === remindDlg) remindDlg.close(); });   // a tap on the dimmed area
   cal.addEventListener('click', (e) => { if (e.target === cal) cal.close(); });   // a tap on the dimmed area
 
   // ---------- share + countdown ----------
@@ -1422,6 +1390,7 @@
   // ---------- boot ----------
   $('dayLabel').textContent = previewMode ? `תצוגה מקדימה: שיר מספר ${dayNo}` : isToday ? `שיר מספר ${dayNo}` : `שיר מספר ${dayNo}, ${DAY_FMT.format(dateOfDay(dayNo))}`;
   $('todayLink').hidden = isToday;
+  $('dayLabel').classList.toggle('quiet', isToday && !previewMode);   // after the game the label is only kept for another day, so it says which one
   $('next').hidden = !isToday;                      // an earlier day has no countdown to the next song
   // best effort: a generic title for the system media controls instead of the video's own
   // (the iframe is another origin, so whether the browser prefers this one cannot be checked from here)
