@@ -1028,15 +1028,15 @@
   cal.addEventListener('click', (e) => { if (e.target === cal) cal.close(); });   // a tap on the dimmed area
 
   // ---------- share + countdown ----------
-  const MARK = { win: '■', bad: '✕', skip: '–', '': '□' };   // plain symbols, not emoji
+  // the page itself uses icons only, but the shared message is plain text, so it keeps emoji
+  const EMOJI = { win: '🟩', bad: '🟥', skip: '⬛', '': '⬜' };
   // The first line says whose result this is and how it went, so a pasted message does not read as just a link to play
   // (the chat's link preview card sits right below it). The song itself is never named.
   function shareText() {
     const head = rec.won
-      ? `ניחשתי את תו השעה #${dayNo} בניסיון ${rec.g.length} מתוך ${STAGES.length}`
-      : `לא הצלחתי לנחש את תו השעה #${dayNo}`;
-    // the marks line starts with a right-to-left mark so the first attempt is on the right, as on the page
-    return `${head}\n\u200f${squaresFor(rec.g).map((c) => MARK[c]).join(' ')}\n\nנסו גם אתם: ${SHARE_URL}`;
+      ? `ניחשתי את תו השעה #${dayNo} בניסיון ${rec.g.length} מתוך ${STAGES.length} 🎯`
+      : `לא הצלחתי לנחש את תו השעה #${dayNo} 😅`;
+    return `${head}\n🔊${squaresFor(rec.g).map((c) => EMOJI[c]).join('')}\n\nנסו גם אתם: ${SHARE_URL}`;
   }
   // phones get the system share sheet (WhatsApp is one tap away); desktop copies, as before
   const NATIVE_SHARE = !!navigator.share && window.matchMedia('(pointer: coarse)').matches;
