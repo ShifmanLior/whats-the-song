@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#fbf6ee">
 <title>תו השעה</title>
 <meta name="description" content="שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה.">
 <meta property="og:type" content="website">
@@ -13,32 +13,35 @@
 <meta property="og:description" content="שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה.">
 <meta property="og:url" content="https://whats-the-song.vercel.app/">
 <meta property="og:locale" content="he_IL">
-<meta property="og:image" content="https://whats-the-song.vercel.app/og.png?v=4">
+<meta property="og:image" content="https://whats-the-song.vercel.app/og.png?v=5">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="תו השעה: מניפת עטיפות תקליטים ותקליט עם כפתור נגינה, שיר חדש בכל יום">
+<meta property="og:image:alt" content="תו השעה: מניפת עטיפות אלבומים מאוירות ותקליט עם כפתור נגינה, שיר חדש בכל יום">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@200;300;400;600&display=swap" rel="stylesheet">
 <style>
 
-  /* Quiet and flat: white, cool blue-grays, hairlines, light type, square corners. Indigo is only an accent, in a few
-     small places: progress, rings, correct answers, links and focus. State is still shown with fill, outline and icons
-     as well as colour. Light only, no dark mode.
-     Contrast on white: --ink 15.9:1, --muted 6.8:1, --mid 3.2:1 (borders), --accent 5.8:1. --accent is used for fills,
-     rings and lines; --accent-l is the light tint for marks on a dark (--ink) row. */
+  /* Quiet and flat: warm cream paper, near-black ink, warm grays, hairlines, light type, square corners. The colours come
+     from the album covers in covers/: their cream and black, and their red-orange as the one accent, used only in small
+     places (progress, rings, the record's label, correct answers, link underlines, focus). State is still shown with
+     fill, outline and icons as well as colour. Light only, no dark mode.
+     Contrast on the paper: --ink 17.3:1, --muted 7.1:1, --mid 3.7:1 (borders), --accent 4.1:1 (white on it 4.4:1).
+     --accent is for fills, rings and lines, not for text; --accent-l (mustard) is the light tint for marks on a dark
+     (--ink) row and for the drawn sleeves. The line and soft tints are --mid mixed into the paper. */
   :root {
     color-scheme: light;
-    --paper: #ffffff;
-    --ink: #1e2133;
-    --muted: #555a74;
-    --line: #e5e6ec;
-    --soft: #f6f6f8;
-    --soft-2: #ebecf0;
-    --mid: #8a8fa8;
-    --accent: #5058d0;
-    --accent-l: #c4c9f6;
+    --paper: #fbf6ee;
+    --ink: #17120d;
+    --muted: #5c5246;
+    --line: #e2dbd1;
+    --soft: #f2ece4;
+    --soft-2: #e9e3d9;
+    --mid: #8a7d6c;
+    --accent: #d9431c;
+    --accent-l: #f2b705;
+    --shade: 23, 18, 13;                            /* the colour of shadows, as r, g, b */
   }
   * { box-sizing: border-box; }
   body { overflow-x: clip; }
@@ -172,7 +175,7 @@
     margin: 0; padding: 0; list-style: none;
     background: var(--paper);
     border: 1px solid var(--line);
-    box-shadow: 0 10px 28px rgba(46, 42, 48, .12);
+    box-shadow: 0 10px 28px rgba(var(--shade), .12);
     max-height: 320px; overflow-y: auto;
   }
   .list[hidden] { display: none; }
@@ -266,7 +269,7 @@
   .hero { --s: clamp(84px, 26vw, 112px); position: relative; height: calc(var(--s) * 1.2); margin: 10px calc(50% - 50vw) 0; overflow-x: clip; }   /* as wide as the screen, so a sleeve leaves and comes in at its edges */
   .sleeve {
     position: absolute; left: 50%; top: 0; width: var(--s); height: var(--s); margin-left: calc(var(--s) / -2);
-    background: var(--soft-2); box-shadow: 0 8px 20px rgba(30, 33, 51, .16), 0 0 0 1px rgba(30, 33, 51, .06);
+    background: var(--soft-2); box-shadow: 0 8px 20px rgba(var(--shade), .16), 0 0 0 1px rgba(var(--shade), .06);
     z-index: var(--z, 1);
     transform: translate(calc(var(--s) * var(--x)), var(--y)) rotate(var(--r));
     transition: transform .9s cubic-bezier(.45, .05, .2, 1);   /* a change of seat glides */
@@ -288,7 +291,7 @@
     content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--accent); opacity: 0; pointer-events: none;
     animation: ring 2.6s ease-out 1.6s infinite;
   }
-  .disc { position: absolute; inset: 0; border-radius: 50%; background: var(--ink); overflow: hidden; box-shadow: 0 0 0 4px var(--paper), 0 10px 26px rgba(30, 33, 51, .28); }
+  .disc { position: absolute; inset: 0; border-radius: 50%; background: var(--ink); overflow: hidden; box-shadow: 0 0 0 4px var(--paper), 0 10px 26px rgba(var(--shade), .28); }
   .disc::before {
     content: ""; position: absolute; inset: 0; border-radius: 50%;
     background: repeating-radial-gradient(circle, rgba(255, 255, 255, .08) 0 1px, transparent 1px 4px),
@@ -347,7 +350,7 @@
   .link[hidden] { display: none; }
   .link svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; }
   dialog.cal { width: min(92vw, 380px); padding: 0; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); }
-  dialog.cal::backdrop { background: rgba(46, 42, 48, .45); }
+  dialog.cal::backdrop { background: rgba(var(--shade), .45); }
   .cal-body { padding: 20px 18px 18px; }
   .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .cal-head h2 { margin: 0; font-size: 22px; font-weight: 300; }
@@ -1266,61 +1269,31 @@
   });
 
   // ---------- album covers on the home screen ----------
-  // Fifty flat illustrations of well-known album covers (25 Israeli, 25 international) are kept in covers/, a square
-  // crop of each, 320px WebP, about 4KB each. They fill the fan and come in one by one as the sleeves take turns. The
-  // list gives the artist of each, and any cover by today's artist is left out, so a cover never hints at the answer.
-  // Nothing is fetched from anyone else. If the images do not load, the drawn sleeves stay.
+  // Twenty illustrated album covers (twelve international, eight Israeli), without text, are kept in covers/ as 320px
+  // WebP, about 7KB each. They fill the fan and come in one by one as the sleeves take turns. The list gives the artist
+  // of each, and any cover by today's artist is left out, so a cover never hints at the answer. Nothing is fetched from
+  // anyone else. If the images do not load, the drawn sleeves stay.
   const COVERS = [
-    ['01_HE_snail', 'אריק איינשטיין'],
-    ['02_HE_face', 'אריק איינשטיין'],
-    ['03_HE_grass', 'אריק איינשטיין'],
-    ['04_HE_wedding', 'שלום חנוך'],
-    ['05_HE_clock', 'שלום חנוך'],
-    ['06_HE_profile', 'שלום חנוך'],
-    ['07_HE_honeycomb', 'כוורת'],
-    ['08_HE_pita', 'כוורת'],
-    ['09_HE_ear', 'כוורת'],
-    ['10_HE_train', 'משינה'],
-    ['11_HE_skull', 'משינה'],
-    ['12_HE_road', 'אהוד בנאי והפליטים'],
-    ['13_HE_moon', 'מאיר אריאל'],
-    ['14_HE_leaf', 'מאיר אריאל'],
-    ['15_HE_sun', 'שלמה ארצי'],
-    ['16_HE_heart', 'יהודית רביץ'],
-    ['17_HE_portrait', 'ריטה'],
-    ['18_HE_mountains', 'גידי גוב'],
-    ['19_HE_cracks', 'ברי סחרוף'],
-    ['20_HE_hand', 'ברי סחרוף'],
-    ['21_HE_cloud', 'אביב גפן'],
-    ['22_HE_mouth', 'החברים של נטאשה'],
-    ['23_HE_door', 'היהודים'],
-    ['24_HE_weave', 'הפרויקט של עידן רייכל'],
-    ['25_HE_fish', 'הדג נחש'],
-    ['26_EN_prism', 'Pink Floyd'],
-    ['27_EN_flame', 'Pink Floyd'],
-    ['28_EN_crosswalk', 'The Beatles'],
-    ['29_EN_flowers', 'The Beatles'],
-    ['30_EN_faces', 'The Beatles'],
-    ['31_EN_swimmer', 'Nirvana'],
-    ['32_EN_angel', 'Nirvana'],
-    ['33_EN_dancers', 'Fleetwood Mac'],
-    ['34_EN_suit', 'Michael Jackson'],
-    ['35_EN_rain', 'Prince'],
-    ['36_EN_bolt', 'David Bowie'],
-    ['37_EN_highway', 'Radiohead'],
-    ['38_EN_ice', 'Radiohead'],
-    ['39_EN_crest', 'Queen'],
-    ['40_EN_stairs', 'Led Zeppelin'],
-    ['41_EN_helmets', 'Daft Punk'],
-    ['42_EN_beehive', 'Amy Winehouse'],
-    ['43_EN_numeral', 'Adele'],
-    ['44_EN_polaroid', 'Taylor Swift'],
-    ['45_EN_butterfly', 'Kendrick Lamar'],
-    ['46_EN_guitar', 'The Clash'],
-    ['47_EN_wave', 'Arctic Monkeys'],
-    ['48_EN_circles', 'The Strokes'],
-    ['49_EN_sunset', 'Bob Marley & The Wailers'],
-    ['50_EN_globe', 'Coldplay'],
+    ['01', 'Pink Floyd'],
+    ['02', 'Nirvana'],
+    ['03', 'The Beatles'],
+    ['04', 'Fleetwood Mac'],
+    ['05', 'Bob Dylan'],
+    ['06', 'Michael Jackson'],
+    ['07', 'U2'],
+    ['08', 'Radiohead'],
+    ['09', 'The Doors'],
+    ['10', 'Queen'],
+    ['11', 'שלמה ארצי'],
+    ['12', 'אהוד בנאי'],
+    ['13', 'כוורת'],
+    ['14', 'דודו טסה'],
+    ['15', 'עברי לידר'],
+    ['16', 'אריק איינשטיין'],
+    ['17', 'ריטה'],
+    ['18', 'ברי סחרוף'],
+    ['19', 'משינה'],
+    ['20', 'אסף אמדורסקי'],
   ];
   try { localStorage.removeItem('whats-the-song.covers.v1'); } catch (e) { /* an older version kept addresses here */ }
   const preload = (url) => new Promise((resolve) => { const im = new Image(); im.onload = () => resolve(im); im.onerror = () => resolve(null); im.src = url; });
