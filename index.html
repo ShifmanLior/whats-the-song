@@ -252,6 +252,20 @@
   .notice code { direction: ltr; unicode-bidi: embed; background: var(--soft-2); padding: 1px 6px; }
   .foot { margin-top: 32px; text-align: center; color: var(--muted); font-size: 13px; }
   .foot.credit { margin-top: 6px; }
+
+  /* screens: show only what belongs to the current one (home, game, summary) */
+  .app[data-screen="home"] > :not([data-s~="home"]),
+  .app[data-screen="game"] > :not([data-s~="game"]),
+  .app[data-screen="summary"] > :not([data-s~="summary"]) { display: none; }
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+  .bar .sub { margin: 0; }
+  .start { margin-top: 28px; text-align: center; }
+  .status { margin: 0 0 14px; color: var(--muted); font-size: 15px; }
+  .btn.cta { width: 100%; height: 60px; font-size: 18px; }
+  .btn.cta .i-done, .btn.cta.is-done .i-play { display: none; }
+  .btn.cta.is-done .i-done { display: block; }
+  .sec { margin: 28px 0 0; font-size: 15px; font-weight: 400; color: var(--muted); }
+  .sec + .attempts { margin-top: 10px; }
   .foot .heart { width: 13px; height: 13px; vertical-align: -2px; fill: currentColor; }
 
   /* daily reminder: a calendar event that repeats every day, so no account or email address is needed */
@@ -337,8 +351,10 @@
 </style>
 </head>
 <body>
-<main class="app">
-  <header class="top">
+<main class="app" data-screen="home">
+  <!-- Three screens in one page: home, game and summary. Each direct child of .app lists the screens it belongs to in
+       data-s; the others are hidden by CSS. The YouTube player stays on every screen (it must not be display:none to play). -->
+  <header class="top" data-s="home">
     <div>
       <h1>תו השעה</h1>
       <p class="sub" id="dayLabel"></p>
@@ -352,9 +368,23 @@
       <div class="stat"><b id="statWins">0</b><span>ניצחונות</span></div>
     </div>
   </header>
-  <p class="lead">שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה, עד 5 שניות.</p>
+  <p class="lead" data-s="home">שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה, עד 5 שניות.</p>
 
-  <section class="stage" id="stage" aria-label="נגן">
+  <section class="start" data-s="home" aria-label="התחלה">
+    <p class="status" id="homeStatus"></p>
+    <button class="btn primary cta" id="startBtn" type="button">
+      <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z"/></svg>
+      <svg class="i-done" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      <span id="startText">שחקו</span>
+    </button>
+  </section>
+
+  <div class="bar" data-s="game summary">
+    <button class="link" id="backBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>מסך ראשי</button>
+    <p class="sub" id="barLabel"></p>
+  </div>
+
+  <section class="stage" id="stage" data-s="game" aria-label="נגן">
     <button class="play" id="play" type="button" aria-label="נגן את הקטע" data-state="loading" disabled>
       <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z"/></svg>
       <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>
@@ -369,7 +399,7 @@
     <div class="tl-label" id="tlLabel"></div>
   </section>
 
-  <section class="guess" id="guess" aria-label="ניחוש">
+  <section class="guess" id="guess" data-s="game" aria-label="ניחוש">
     <div class="combo">
       <label class="sr-only" for="q">חפשו שיר או אמן</label>
       <input id="q" type="text" role="combobox" aria-expanded="false" aria-controls="list" aria-autocomplete="list"
@@ -382,7 +412,7 @@
     </div>
   </section>
 
-  <section class="result" id="result" hidden aria-live="polite">
+  <section class="result" id="result" data-s="summary" hidden aria-live="polite">
     <h2 id="resultTitle"></h2>
     <p class="song-title" id="resultSong"></p>
     <p class="song-artist" id="resultArtist"></p>
@@ -394,12 +424,13 @@
     <p class="next" id="next">השיר הבא בעוד <b id="countdown">--:--:--</b></p>
   </section>
 
-  <div class="player-wrap" id="playerWrap"></div>
+  <div class="player-wrap" id="playerWrap" data-s="home game summary"></div>
 
-  <ol class="attempts" id="attempts" aria-label="הניחושים שלכם"></ol>
+  <h3 class="sec" data-s="summary">הניחושים שלכם</h3>
+  <ol class="attempts" id="attempts" data-s="summary" aria-label="הניחושים שלכם"></ol>
 
-  <p class="notice" id="notice" role="alert" hidden></p>
-  <details class="remind" id="remind" hidden>
+  <p class="notice" id="notice" data-s="home game summary" role="alert" hidden></p>
+  <details class="remind" id="remind" data-s="summary" hidden>
     <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0112 0v5.5l1.5 2h-15zM10 21a2 2 0 004 0"/></svg>תזכורת יומית ביומן</summary>
     <div class="body">
       <p>נוסיף ליומן שלכם אירוע שחוזר כל יום, כדי שלא תפספסו את השיר החדש.</p>
@@ -411,8 +442,8 @@
       <button class="alt" id="remindFile" type="button" hidden>לא נפתח? שמרו כקובץ</button>
     </div>
   </details>
-  <p class="foot">השיר מתחלף בחצות</p>
-  <p class="foot credit">המשחק נבנה ב<svg class="heart" viewBox="0 0 24 24" aria-label="אהבה" role="img"><path d="M12 21s-7.2-4.5-9.1-9.4C1.6 8.3 3.6 5 7 5c2 0 3.4 1 5 3 1.6-2 3-3 5-3 3.4 0 5.4 3.3 4.1 6.6C19.2 16.5 12 21 12 21z"/></svg> על ידי ליאור ומוקדש לנילס ותמי</p>
+  <p class="foot" data-s="home">השיר מתחלף בחצות</p>
+  <p class="foot credit" data-s="home">המשחק נבנה ב<svg class="heart" viewBox="0 0 24 24" aria-label="אהבה" role="img"><path d="M12 21s-7.2-4.5-9.1-9.4C1.6 8.3 3.6 5 7 5c2 0 3.4 1 5 3 1.6-2 3-3 5-3 3.4 0 5.4 3.3 4.1 6.6C19.2 16.5 12 21 12 21z"/></svg> על ידי ליאור ומוקדש לנילס ותמי</p>
 </main>
 <dialog class="cal" id="cal" aria-label="לוח שנה">
   <div class="cal-body">
@@ -536,7 +567,7 @@
   function renderAttempts() {
     const ol = $('attempts');
     ol.textContent = '';
-    for (let i = rec.g.length - 1; i >= 0; i--) {   // newest first, under the guess box
+    for (let i = 0; i < rec.g.length; i++) {         // in the order they were made
       const li = document.createElement('li');
       const badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = STAGES[i];
       const txt = document.createElement('span'); txt.className = 'txt';
@@ -585,16 +616,54 @@
     $('resultArtist').textContent = answer.artist;
     const sq = $('resultSquares'); sq.textContent = '';
     squaresFor(rec.g).forEach((c) => { const i = document.createElement('i'); if (c) i.className = c; sq.appendChild(i); });
-    $('playerWrap').classList.add('revealed');
     $('remind').hidden = false;                     // the reminder is offered once the game is over
     tickCountdown();
   }
 
+  // home: where the day stands, and the one button that goes on from there
+  function renderHome() {
+    const n = rec.g.length;
+    let text, cta;
+    if (rec.done) { text = rec.won ? `ניחשתם בניסיון ${n}` : 'לא הצלחתם הפעם'; cta = 'לסיכום'; }
+    else if (n) { text = `ניסיון ${n + 1} מתוך ${STAGES.length}`; cta = 'המשיכו'; }
+    else { text = isToday ? 'השיר של היום מחכה לכם' : 'עוד לא שיחקתם בשיר הזה'; cta = 'שחקו'; }
+    $('homeStatus').textContent = text;
+    $('startText').textContent = cta;
+    $('startBtn').classList.toggle('is-done', rec.done);
+  }
+
   function render() {
+    renderHome();
     renderAttempts();
     renderControls();
     if (rec.done) renderResult();
   }
+
+  // ---------- screens: home, game, summary ----------
+  const app = document.querySelector('.app');
+  let screen = 'home';
+  // how: 'push' adds a history entry (so Back goes to the home screen), 'replace' swaps the current one, 'pop' follows
+  // the browser's own Back / Forward
+  function showScreen(name, how) {
+    if (name === 'game' && rec.done) name = 'summary';       // a finished day has no game left
+    if (name === 'summary' && !rec.done) name = 'home';
+    if (screen === 'game' && name !== 'game') stopClip();
+    if (screen === 'summary' && name !== 'summary') stopFull();
+    screen = name;
+    app.dataset.screen = name;
+    $('playerWrap').classList.toggle('revealed', name === 'summary');   // the video is only shown on the summary
+    if (how === 'push') history.pushState({ screen: name }, '');
+    else if (how === 'replace') history.replaceState({ screen: name }, '');
+    window.scrollTo(0, 0);
+    const focus = name === 'home' ? $('startBtn') : name === 'game' ? $('play') : $('resultTitle');
+    if (name === 'summary') focus.tabIndex = -1;
+    if (!focus.disabled) focus.focus({ preventScroll: true });
+  }
+  window.addEventListener('popstate', (e) => showScreen((e.state && e.state.screen) || 'home', 'pop'));
+  $('startBtn').addEventListener('click', () => showScreen(rec.done ? 'summary' : 'game', 'push'));
+  $('backBtn').addEventListener('click', () => {
+    if (history.state && history.state.screen) history.back(); else showScreen('home', 'replace');
+  });
 
   // ---------- YouTube player: play only the first N seconds ----------
   let player = null, playerReady = false, clip = null;
@@ -752,6 +821,10 @@
     if (!playerReady) { pending = 'full'; return; }
     player.seekTo(0, true); player.playVideo();
   }
+  function stopFull() {                             // leaving the summary: the song stops with it
+    if (pending === 'full') pending = null;
+    if (playerReady) { try { player.pauseVideo(); } catch (e) { /* not ready */ } }
+  }
 
   function loadYouTube() {
     if (location.protocol === 'file:') {
@@ -779,6 +852,7 @@
     render();
     if (rec.done) {
       announce(won ? 'נכון!' : 'לא הפעם');
+      showScreen('summary', 'replace');             // replaces the game entry, so Back from the summary is the home screen
       playFull();
     } else {
       announce(entry === 'skip' ? 'דילגתם' : 'ניחוש שגוי');
@@ -1141,7 +1215,7 @@
   });
 
   // ---------- boot ----------
-  $('dayLabel').textContent = previewMode ? `תצוגה מקדימה: שיר מספר ${dayNo}` : isToday ? `שיר מספר ${dayNo}` : `שיר מספר ${dayNo}, ${DAY_FMT.format(dateOfDay(dayNo))}`;
+  $('dayLabel').textContent = $('barLabel').textContent = previewMode ? `תצוגה מקדימה: שיר מספר ${dayNo}` : isToday ? `שיר מספר ${dayNo}` : `שיר מספר ${dayNo}, ${DAY_FMT.format(dateOfDay(dayNo))}`;
   $('todayLink').hidden = isToday;
   $('next').hidden = !isToday;                      // an earlier day has no countdown to the next song
   // best effort: a generic title for the system media controls instead of the video's own
@@ -1156,7 +1230,7 @@
   }
   buildTimeline();
   render();
-  if (rec.done) $('playerWrap').classList.add('revealed');
+  history.replaceState({ screen: 'home' }, '');
   loadYouTube();
 })();
 </script>
