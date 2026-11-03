@@ -100,7 +100,7 @@
     display: block;
     transition: transform .12s ease;
   }
-  .play:hover:not(:disabled) { transform: scale(1.05); }
+  @media (hover: hover) { .play:hover:not(:disabled) { transform: scale(1.05); } }
   .play:active:not(:disabled) { transform: scale(0.96); }
   .play:disabled { cursor: progress; opacity: .35; }
   .play svg { position: absolute; left: 50%; top: 50%; width: calc(var(--vsize) * .23); height: calc(var(--vsize) * .23); transform: translate(-50%, -50%); fill: currentColor; }
@@ -113,6 +113,10 @@
     content: ""; position: absolute; inset: -8px; border-radius: 50%;
     border: 2px solid var(--accent); opacity: 0;
     animation: pulse 1.2s ease-out infinite;
+  }
+  .play.invite[data-state="idle"]::after {          /* press play: the ring of the home screen's record, for a clip not yet played by hand */
+    content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid var(--accent); opacity: 0; pointer-events: none;
+    animation: ring 2.6s ease-out infinite;
   }
   .play[data-state="loading"]::after {
     content: ""; position: absolute; inset: -8px; border-radius: 50%;
@@ -177,8 +181,10 @@
   .btn:disabled { opacity: .3; cursor: not-allowed; }
   .btn.primary { background: transparent; border-color: var(--ink); color: var(--ink); }
   .btn.ghost { background: transparent; border-color: var(--mid); color: var(--ink); }
-  .btn.ghost:hover:not(:disabled) { border-color: var(--ink); }
+  @media (hover: hover) { .btn.ghost:hover:not(:disabled) { border-color: var(--ink); } }
   .btn.danger { background: transparent; border-color: var(--ink); }
+  .btn.ghost.quiet { border-color: transparent; color: var(--muted); font-weight: 300; }   /* same size and place, no frame: it is there, but the record is what to press */
+  @media (hover: hover) { .btn.ghost.quiet:hover:not(:disabled) { border-color: var(--mid); } }
 
   /* result: no frame; it lines up with the boxes below it, so it needs no side padding */
   .result {
@@ -248,7 +254,7 @@
   .app[data-screen="game"] > :not([data-s~="game"]) { display: none; }
   .bar { display: flex; align-items: center; }
   .back { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; background: transparent; border: 1px solid var(--mid); color: var(--ink); cursor: pointer; }
-  .back:hover { border-color: var(--ink); }
+  @media (hover: hover) { .back:hover { border-color: var(--ink); } }
   .back svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; }
   .start { margin-top: 40px; text-align: center; }   /* the ring around the record grows into this */
   .status { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
@@ -289,7 +295,7 @@
   }
   .disc::after { content: ""; position: absolute; inset: 27%; border-radius: 50%; background: var(--accent); }
   .vinyl .tri { position: absolute; left: 50%; top: 50%; width: calc(var(--vsize) * .23); height: calc(var(--vsize) * .23); transform: translate(-50%, -50%); fill: #fff; }
-  .vinyl:hover .disc::before { animation-duration: 2.4s; }
+  @media (hover: hover) { .vinyl:hover .disc::before { animation-duration: 2.4s; } }
   .vinyl:focus-visible { outline: none; }
   .vinyl:focus-visible .vwrap { outline: 3px solid var(--ink); outline-offset: 6px; border-radius: 50%; }
   #startText { font-size: 22px; font-weight: 300; letter-spacing: .01em; }
@@ -653,6 +659,7 @@
     const skip = $('skipBtn');
     $('skipText').textContent = last ? 'ויתור' : `עוד ${secsText(STAGES[i + 1] - STAGES[i])}`;
     skip.classList.toggle('danger', last);
+    renderInvite();
     $('stage').hidden = rec.done;
     $('guess').hidden = rec.done;
     const st = computeStats();
@@ -728,6 +735,13 @@
   // ---------- YouTube player: play only the first N seconds ----------
   let player = null, playerReady = false, clip = null;
   const clipsSeen = new Set();                      // the attempts whose clip has already been counted
+  // True at the start and after every skip or wrong guess, until the player presses play: the record invites and "skip"
+  // steps back, so a second tap on it is less likely than a tap on play.
+  let needsPlay = true;
+  function renderInvite() {
+    $('play').classList.toggle('invite', needsPlay);
+    $('skipBtn').classList.toggle('quiet', needsPlay);
+  }
   let pending = null;                               // 'clip' or 'full': waits for a fresh player to get ready
 
   // Chromium lists whatever a YouTube iframe has played in its media notification, lock screen and media hub, with the
@@ -903,6 +917,7 @@
     if (rec.done) return;
     if (!rec.g.length && !isToday) rec.late = true;   // started after its own date
     rec.g.push(entry);
+    needsPlay = true;                               // the next clip is longer: play it first
     const won = entry !== 'skip' && entry.ok;
     if (won || rec.g.length >= STAGES.length) { rec.done = true; rec.won = won; }
     stopClip(!rec.done);                            // at the end the same player goes on to play the whole song
@@ -1121,7 +1136,11 @@
   });
   $('guessBtn').addEventListener('click', guessFromInput);
   $('skipBtn').addEventListener('click', () => submit('skip'));
-  $('play').addEventListener('click', () => { if (clip) stopClip(); else startClip(); });
+  $('play').addEventListener('click', () => {
+    if (clip) { stopClip(); return; }
+    needsPlay = false; renderInvite();
+    startClip();
+  });
 
   // ---------- calendar: every day since the first one can be played ----------
   const DAY_MS = 86400000;
