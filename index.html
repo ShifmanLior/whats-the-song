@@ -1265,66 +1265,83 @@
     if (!document.hidden && !previewMode && dayNumberOf(new Date()) !== today) location.reload();
   });
 
-  // ---------- real album covers on the home screen ----------
-  // When five covers have loaded from the iTunes Search API they fade in over the drawn sleeves; otherwise (no network,
-  // blocked, an image that will not load) the drawn sleeves stay. The albums are fixed and famous, none is by an artist
-  // in songs.js, and one by today's artist would be skipped, so a cover can never hint at the answer. The picked image
-  // addresses are kept for a week, so the API is asked about once a week per visitor.
-  const COVER_ALBUMS = [
-    ['Pink Floyd', 'The Dark Side of the Moon'], ['Fleetwood Mac', 'Rumours'], ['Miles Davis', 'Kind of Blue'],
-    ['Radiohead', 'OK Computer'], ['David Bowie', 'Aladdin Sane'], ['Amy Winehouse', 'Back to Black'],
-    ['Prince', 'Purple Rain'], ['Joy Division', 'Unknown Pleasures'],
+  // ---------- album covers on the home screen ----------
+  // Fifty flat illustrations of well-known album covers (25 Israeli, 25 international) are kept in covers/, a square
+  // crop of each, 320px WebP, about 4KB each. They fill the fan and come in one by one as the sleeves take turns. The
+  // list gives the artist of each, and any cover by today's artist is left out, so a cover never hints at the answer.
+  // Nothing is fetched from anyone else. If the images do not load, the drawn sleeves stay.
+  const COVERS = [
+    ['01_HE_snail', 'אריק איינשטיין'],
+    ['02_HE_face', 'אריק איינשטיין'],
+    ['03_HE_grass', 'אריק איינשטיין'],
+    ['04_HE_wedding', 'שלום חנוך'],
+    ['05_HE_clock', 'שלום חנוך'],
+    ['06_HE_profile', 'שלום חנוך'],
+    ['07_HE_honeycomb', 'כוורת'],
+    ['08_HE_pita', 'כוורת'],
+    ['09_HE_ear', 'כוורת'],
+    ['10_HE_train', 'משינה'],
+    ['11_HE_skull', 'משינה'],
+    ['12_HE_road', 'אהוד בנאי והפליטים'],
+    ['13_HE_moon', 'מאיר אריאל'],
+    ['14_HE_leaf', 'מאיר אריאל'],
+    ['15_HE_sun', 'שלמה ארצי'],
+    ['16_HE_heart', 'יהודית רביץ'],
+    ['17_HE_portrait', 'ריטה'],
+    ['18_HE_mountains', 'גידי גוב'],
+    ['19_HE_cracks', 'ברי סחרוף'],
+    ['20_HE_hand', 'ברי סחרוף'],
+    ['21_HE_cloud', 'אביב גפן'],
+    ['22_HE_mouth', 'החברים של נטאשה'],
+    ['23_HE_door', 'היהודים'],
+    ['24_HE_weave', 'הפרויקט של עידן רייכל'],
+    ['25_HE_fish', 'הדג נחש'],
+    ['26_EN_prism', 'Pink Floyd'],
+    ['27_EN_flame', 'Pink Floyd'],
+    ['28_EN_crosswalk', 'The Beatles'],
+    ['29_EN_flowers', 'The Beatles'],
+    ['30_EN_faces', 'The Beatles'],
+    ['31_EN_swimmer', 'Nirvana'],
+    ['32_EN_angel', 'Nirvana'],
+    ['33_EN_dancers', 'Fleetwood Mac'],
+    ['34_EN_suit', 'Michael Jackson'],
+    ['35_EN_rain', 'Prince'],
+    ['36_EN_bolt', 'David Bowie'],
+    ['37_EN_highway', 'Radiohead'],
+    ['38_EN_ice', 'Radiohead'],
+    ['39_EN_crest', 'Queen'],
+    ['40_EN_stairs', 'Led Zeppelin'],
+    ['41_EN_helmets', 'Daft Punk'],
+    ['42_EN_beehive', 'Amy Winehouse'],
+    ['43_EN_numeral', 'Adele'],
+    ['44_EN_polaroid', 'Taylor Swift'],
+    ['45_EN_butterfly', 'Kendrick Lamar'],
+    ['46_EN_guitar', 'The Clash'],
+    ['47_EN_wave', 'Arctic Monkeys'],
+    ['48_EN_circles', 'The Strokes'],
+    ['49_EN_sunset', 'Bob Marley & The Wailers'],
+    ['50_EN_globe', 'Coldplay'],
   ];
-  const COVERS_KEY = 'whats-the-song.covers.v1';
-  async function findCover([artist, album], signal) {
-    const t0 = performance.now(), ms = () => Math.round(performance.now() - t0) + 'ms';
-    let r;
-    try {
-      r = await fetch('https://itunes.apple.com/search?media=music&entity=album&limit=5&country=US&term=' + encodeURIComponent(`${artist} ${album}`), { signal });
-    } catch (e) { dbg(`cover ${artist}: request failed (${e.name}: ${e.message}) after ${ms()}`); return null; }   // blocked, offline, or given up on
-    if (!r.ok) { dbg(`cover ${artist}: HTTP ${r.status}`); return null; }
-    let results;
-    try { results = (await r.json()).results || []; } catch (e) { dbg(`cover ${artist}: the answer was not JSON (${e.message})`); return null; }
-    const hit = results.find((x) => x.artworkUrl100 && x.artistName && x.collectionName
-      && norm(x.artistName).includes(norm(artist)) && norm(x.collectionName).includes(norm(album)));
-    if (!hit) { dbg(`cover ${artist}: no match among ${results.length} results${results[0] ? `, first is "${results[0].artistName} - ${results[0].collectionName}"` : ''}`); return null; }
-    if (artistIn(norm(hit.artistName))) { dbg(`cover ${artist}: skipped, it is today's artist`); return null; }   // never today's artist
-    dbg(`cover ${artist}: found in ${ms()}`);
-    return hit.artworkUrl100.replace(/\/\d+x\d+bb\./, '/300x300bb.');
-  }
+  try { localStorage.removeItem('whats-the-song.covers.v1'); } catch (e) { /* an older version kept addresses here */ }
   const preload = (url) => new Promise((resolve) => { const im = new Image(); im.onload = () => resolve(im); im.onerror = () => resolve(null); im.src = url; });
-  let coverPool = [], nextCover = 0;                // every loaded cover; the first five fill the fan, the rest come in later
+  let coverPool = [], nextCover = 0;                // the covers that may be shown today, shuffled; the first ones fill the fan
   async function loadCovers() {
     const sleeves = [...document.querySelectorAll('.sleeve')], n = sleeves.length;
-    let urls = null, cached = false;
-    try {
-      const c = JSON.parse(localStorage.getItem(COVERS_KEY));
-      if (c && Date.now() - c.t < 7 * 86400000 && c.urls.length >= n) { urls = c.urls; cached = true; }
-    } catch (e) { /* nothing saved */ }
-    const ctl = new AbortController(), timer = setTimeout(() => { dbg('covers: 5 seconds are up, giving up on the rest'); ctl.abort(); }, 5000);
-    dbg(cached ? 'covers: using the addresses saved from last time' : `covers: asking Apple about ${COVER_ALBUMS.length} albums`);
-    try {
-      if (!urls) {
-        const picked = COVER_ALBUMS.slice().sort(() => Math.random() - 0.5);
-        urls = (await Promise.all(picked.map((a) => findCover(a, ctl.signal).catch((e) => { dbg('cover: ' + e.message); return null; })))).filter(Boolean);
-        dbg(`covers: found ${urls.length} of ${COVER_ALBUMS.length}, ${n} are needed`);
-        if (urls.length < n) return;
-      }
-      // all of them are loaded first, so that a cover coming in later is already there
-      const loaded = (await Promise.all(urls.map(async (u) => ({ u, im: await preload(u) })))).filter((x) => x.im);
-      if (loaded.length < urls.length) dbg(`covers: ${urls.length - loaded.length} image(s) would not load`);
-      if (loaded.length < n) {                      // not enough covers load: keep the drawn sleeves
-        dbg(`covers: only ${loaded.length} images loaded, ${n} are needed: keeping the drawn sleeves`);
-        if (cached) { try { localStorage.removeItem(COVERS_KEY); } catch (e) { /* ignore */ } }
-        return;
-      }
-      if (!cached || loaded.length !== urls.length) { try { localStorage.setItem(COVERS_KEY, JSON.stringify({ t: Date.now(), urls: loaded.map((x) => x.u) })); } catch (e) { /* ignore */ } }
-      coverPool = loaded.map((x) => x.u); nextCover = n;
-      dbg(`covers: showing real covers (${loaded.length} loaded)`);
-      sleeves.forEach((sl, i) => { loaded[i].im.alt = ''; sl.appendChild(loaded[i].im); });
-      requestAnimationFrame(() => requestAnimationFrame(() => sleeves.forEach((sl) => sl.lastElementChild.classList.add('on'))));
-    } catch (e) { dbg('covers: ' + e.message); }   // offline or blocked: the drawn sleeves stay
-    finally { clearTimeout(timer); }
+    const usable = COVERS.filter(([, artist]) => !artistIn(norm(artist)));
+    const pool = usable.map(([file]) => `covers/${file}.webp`).sort(() => Math.random() - 0.5);
+    dbg(`covers: ${pool.length} of ${COVERS.length} may be shown today; left out: ${COVERS.filter(([, artist]) => artistIn(norm(artist))).map(([file, artist]) => file.slice(0, 2) + ' ' + artist).join(', ') || 'none'}`);
+    if (pool.length < n) return;
+    const used = pool.slice(0, n), failed = new Set();
+    const imgs = await Promise.all(used.map(preload));
+    let next = n;
+    for (let i = 0; i < n; i++) {                   // an image that will not load is replaced by the next one in the pool
+      while (!imgs[i] && next < pool.length) { dbg(`covers: ${used[i]} would not load`); failed.add(used[i]); used[i] = pool[next++]; imgs[i] = await preload(used[i]); }
+    }
+    if (imgs.some((im) => !im)) { dbg('covers: the images would not load, keeping the drawn sleeves'); return; }
+    coverPool = pool.filter((u) => !failed.has(u)); nextCover = n;   // the first n of it are the ones on show
+    sleeves.forEach((sl, i) => { imgs[i].alt = ''; sl.appendChild(imgs[i]); });
+    dbg(`covers: showing covers (${pool.length} in the pool)`);
+    requestAnimationFrame(() => requestAnimationFrame(() => sleeves.forEach((sl) => sl.lastElementChild.classList.add('on'))));
   }
 
   // ---------- the sleeves: one leaves, a new one comes in ----------
