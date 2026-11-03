@@ -255,8 +255,10 @@
   /* screens: show only what belongs to the current one (home or game); home also has two states, before and after the game */
   .app[data-screen="home"] > :not([data-s~="home"]),
   .app[data-screen="game"] > :not([data-s~="game"]) { display: none; }
-  .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  .bar .sub { margin: 0; }
+  .bar { display: flex; align-items: center; }
+  .back { width: 44px; height: 44px; display: grid; place-items: center; padding: 0; background: transparent; border: 1px solid var(--mid); color: var(--ink); cursor: pointer; }
+  .back:hover { border-color: var(--ink); }
+  .back svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; }
   .start { margin-top: 26px; text-align: center; }
   .status { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
 
@@ -428,8 +430,7 @@
   <p class="lead" data-s="home" data-when="before">שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה, עד 5 שניות.</p>
 
   <div class="bar" data-s="game">
-    <button class="link" id="backBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>מסך ראשי</button>
-    <p class="sub" id="barLabel"></p>
+    <button class="back" id="backBtn" type="button" aria-label="חזרה למסך הראשי"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
   </div>
 
   <section class="stage" id="stage" data-s="game" aria-label="נגן">
@@ -1373,7 +1374,7 @@
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(turnSleeves, 3400);
 
   // ---------- boot ----------
-  $('dayLabel').textContent = $('barLabel').textContent = previewMode ? `תצוגה מקדימה: שיר מספר ${dayNo}` : isToday ? `שיר מספר ${dayNo}` : `שיר מספר ${dayNo}, ${DAY_FMT.format(dateOfDay(dayNo))}`;
+  $('dayLabel').textContent = previewMode ? `תצוגה מקדימה: שיר מספר ${dayNo}` : isToday ? `שיר מספר ${dayNo}` : `שיר מספר ${dayNo}, ${DAY_FMT.format(dateOfDay(dayNo))}`;
   $('todayLink').hidden = isToday;
   $('next').hidden = !isToday;                      // an earlier day has no countdown to the next song
   // best effort: a generic title for the system media controls instead of the video's own
