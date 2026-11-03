@@ -464,15 +464,11 @@
     <div class="sleeve" data-slot="5" style="--i:5;--x:3;--y:28px;--r:20deg"><svg viewBox="0 0 100 100"></svg></div>
   </div>
 
-  <!-- home, both states: the name, the day, the calendar and the stats, right under the sleeves -->
+  <!-- home, both states: the name and the day, right under the sleeves (the streak and wins show only after the game, under the video) -->
   <section class="info" data-s="home" aria-label="על המשחק">
     <h1>תָּו הַשָּׁעָה</h1>
     <p class="sub" id="dayLabel"></p>
     <p class="links"><a class="link" id="todayLink" href="./" hidden>חזרה להיום</a></p>
-    <div class="stats" data-when="before">
-      <div class="stat"><b data-stat="streak">0</b><span>רצף</span></div>
-      <div class="stat"><b data-stat="wins">0</b><span>ניצחונות</span></div>
-    </div>
   </section>
 
   <!-- home, before the game: the way in. The play button is a record; it is the control, the sleeves are decoration -->
@@ -730,7 +726,7 @@
     $('stage').hidden = rec.done;
     $('guess').hidden = rec.done;
     const st = computeStats();
-    document.querySelectorAll('[data-stat="streak"]').forEach((el) => { el.textContent = st.streak; });   // there is one under the name before the game and one under the video after it
+    document.querySelectorAll('[data-stat="streak"]').forEach((el) => { el.textContent = st.streak; });   // they show once the game is over, under the video
     document.querySelectorAll('[data-stat="wins"]').forEach((el) => { el.textContent = st.wins; });
   }
 
