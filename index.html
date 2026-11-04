@@ -809,11 +809,16 @@
   }
   let pending = null;                               // 'clip' or 'full': waits for a fresh player to get ready
 
-  // Chromium lists whatever a YouTube iframe has played in its media notification, lock screen and media hub, with the
-  // video's title, channel and a frame of it, which gives the answer away. So after every clip the iframe is thrown
-  // away and a fresh one that has never played takes its place. Safari keeps one iframe: its autoplay rules are
-  // stricter and a new iframe per clip could not be tested there.
-  const RETIRE_PLAYERS = !!navigator.userAgentData;     // only Chromium has this
+  // Chromium and iOS list whatever a YouTube iframe has played in their media notification, lock screen and control centre,
+  // with the video's title, channel and a frame of it, which gives the answer away (an iPhone's lock screen showed "Ed Sheeran -
+  // Shape Of You" in the middle of the game). So after every clip the media has to go. Three ways, chosen with ?hide=
+  //   retire  the iframe is thrown away and a fresh one that has never played takes its place. This is Chromium's default
+  //           (tested there). On an iPhone a new iframe per clip may be refused its autoplay, which could not be tried.
+  //   stop    the same iframe is told to stop, which empties its media. Untested on an iPhone.
+  //   off     nothing; the default everywhere but Chromium until retire or stop has been tried on an iPhone.
+  const HIDE_MODE = ['retire', 'stop', 'off'].includes(params.get('hide')) ? params.get('hide') : (navigator.userAgentData ? 'retire' : 'off');
+  const RETIRE_PLAYERS = HIDE_MODE === 'retire';
+  dbg('hide mode: ' + HIDE_MODE);
 
   function setPlayState(state) {
     const b = $('play');
@@ -915,13 +920,15 @@
       clearInterval(c.timer); clip = null;
       try { old.pauseVideo(); } catch (e) { /* not ready */ }
       const swap = retire && RETIRE_PLAYERS;
+      const empty = retire && HIDE_MODE === 'stop';      // the same iframe, told to stop once the pause has reached it
       if (swap) buildPlayer();
       // the old iframe goes only after the pause has reached it, or the clip would end early;
       // ?debug logs how far the media really advanced, to tune STOP_LEAD
-      if (swap || (DEBUG && c.armed)) {
+      if (swap || empty || (DEBUG && c.armed)) {
         setTimeout(() => {
           if (DEBUG && c.armed) dbg(`clip ${c.len}s: media advanced ${(old.getCurrentTime() - c.start).toFixed(2)}s`);
           if (swap) { try { old.destroy(); } catch (e) { /* already gone */ } }
+          else if (empty && !clip && player === old) { try { old.stopVideo(); dbg('player stopped'); } catch (e) { /* not ready */ } }   // not if the next clip has begun
         }, 700);
       }
     }
