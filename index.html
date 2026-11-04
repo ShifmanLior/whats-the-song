@@ -799,6 +799,8 @@
 
   // ---------- YouTube player: play only the first N seconds ----------
   let player = null, playerReady = false, clip = null;
+  let playedOnce = false;                           // the current player has played a clip, so its media is on the phone's lock screen
+  const retiring = new Set();                       // players that are about to be destroyed, 700ms after their clip
   const clipsSeen = new Set();                      // the attempts whose clip has already been counted
   // True at the start and after every skip or wrong guess, until the player presses play: the record invites and "skip"
   // steps back, so a second tap on it is less likely than a tap on play.
@@ -838,6 +840,7 @@
     clip = { start, len, playing: false, playedAt: 0, lastCt: null, armed: false, fresh: false, wall0: 0, stalledAt: 0, nudgedAt: 0, launched: performance.now() };
     player.seekTo(start, true);
     player.playVideo();
+    playedOnce = true;
     setPlayState('loading');
     $('play').disabled = false;
     clip.timer = setInterval(tick, 16);
@@ -921,13 +924,13 @@
       try { old.pauseVideo(); } catch (e) { /* not ready */ }
       const swap = retire && RETIRE_PLAYERS;
       const empty = retire && HIDE_MODE === 'stop';      // the same iframe, told to stop once the pause has reached it
-      if (swap) buildPlayer();
+      if (swap) { buildPlayer(); retiring.add(old); }
       // the old iframe goes only after the pause has reached it, or the clip would end early;
       // ?debug logs how far the media really advanced, to tune STOP_LEAD
       if (swap || empty || (DEBUG && c.armed)) {
         setTimeout(() => {
           if (DEBUG && c.armed) dbg(`clip ${c.len}s: media advanced ${(old.getCurrentTime() - c.start).toFixed(2)}s`);
-          if (swap) { try { old.destroy(); } catch (e) { /* already gone */ } }
+          if (swap) { try { old.destroy(); } catch (e) { /* already gone */ } retiring.delete(old); }
           else if (empty && !clip && player === old) { try { old.stopVideo(); dbg('player stopped'); } catch (e) { /* not ready */ } }   // not if the next clip has begun
         }, 700);
       }
@@ -943,7 +946,7 @@
     $('playerWrap').appendChild(holder);
     const vars = { playsinline: 1, rel: 0, modestbranding: 1, controls: 1, disablekb: 1, start: answer.start || 0 };
     if (/^https?:$/.test(location.protocol)) vars.origin = location.origin;
-    playerReady = false;
+    playerReady = false; playedOnce = false;
     const me = player = new YT.Player(holder, {
       width: '100%', height: '100%', videoId: answer.id, playerVars: vars,
       events: {
@@ -1451,9 +1454,28 @@
     if (ms === 0 && !previewMode) location.reload();
   }
   setInterval(tickCountdown, 1000);
+  // The page leaves the screen (the browser or app is closed or switched away from, the screen locks) in the middle of a game:
+  // the clip stops at once and, with ?hide=retire or stop, whatever the player played is taken off the lock screen, where
+  // YouTube's title and picture would give the answer away. A finished game is left alone: its answer is no secret.
+  function hidePage() {
+    if (rec.done) return;
+    if (clip) stopClip(false);                      // pause and reset the buttons; the swap below replaces the delayed one
+    pending = null;
+    retiring.forEach((p) => { try { p.destroy(); } catch (e) { /* already gone */ } });   // a clip that ended a moment ago: do not wait for the 700ms
+    retiring.clear();
+    if (HIDE_MODE === 'off' || !player || !playedOnce) return;
+    const old = player;
+    try { old.pauseVideo(); } catch (e) { /* not ready */ }
+    if (HIDE_MODE === 'stop') { try { old.stopVideo(); } catch (e) { /* not ready */ } playedOnce = false; }
+    else { try { old.destroy(); } catch (e) { /* already gone */ } player = null; playerReady = false; playedOnce = false; }
+    dbg('page hidden: media removed (' + HIDE_MODE + ')');
+  }
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && !previewMode && dayNumberOf(new Date()) !== today) location.reload();
+    if (document.hidden) { hidePage(); return; }
+    if (!player && window.YT && YT.Player && !rec.done) buildPlayer();   // the player was thrown away when the page left
+    if (!previewMode && dayNumberOf(new Date()) !== today) location.reload();
   });
+  window.addEventListener('pagehide', hidePage);
 
   // ---------- album covers on the home screen ----------
   // Twenty illustrated album covers (twelve international, eight Israeli), without text, are kept in covers/ as 320px
