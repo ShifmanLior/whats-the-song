@@ -612,6 +612,7 @@
   // position instead (see tick); START_LAG is only a small allowance on top for the audio output buffer.
   // ?lag=<ms> overrides it (?lag=0 to compare). ?debug shows timings on screen.
   const IS_ANDROID = /Android/i.test(navigator.userAgent);
+  const IS_IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);   // iPadOS says Mac
   const START_LAG = params.has('lag') ? Math.max(0, parseFloat(params.get('lag')) || 0) / 1000
     : IS_ANDROID ? 0.1 : 0;
   const MEDIA_WAIT = 1200;                          // ms to wait after PLAYING for the media position to move before using the event time
@@ -815,10 +816,13 @@
   // with the video's title, channel and a frame of it, which gives the answer away (an iPhone's lock screen showed "Ed Sheeran -
   // Shape Of You" in the middle of the game). So after every clip the media has to go. Three ways, chosen with ?hide=
   //   retire  the iframe is thrown away and a fresh one that has never played takes its place. This is Chromium's default
-  //           (tested there). On an iPhone a new iframe per clip may be refused its autoplay, which could not be tried.
-  //   stop    the same iframe is told to stop, which empties its media. Untested on an iPhone.
-  //   off     nothing; the default everywhere but Chromium until retire or stop has been tried on an iPhone.
-  const HIDE_MODE = ['retire', 'stop', 'off'].includes(params.get('hide')) ? params.get('hide') : (navigator.userAgentData ? 'retire' : 'off');
+  //           (tested there); it also worked on an iPhone.
+  //   stop    the same iframe is told to stop, which empties its media. The default on iPhone and iPad: tried on an iPhone,
+  //           the lock screen card was left empty (no title, no picture) and play worked again on return. retire did as
+  //           well there; stop keeps one iframe, so there is no new player to load after every clip.
+  //   off     nothing; the default elsewhere (desktop Safari, Firefox), where neither has been tried.
+  const HIDE_MODE = ['retire', 'stop', 'off'].includes(params.get('hide')) ? params.get('hide')
+    : navigator.userAgentData ? 'retire' : IS_IOS ? 'stop' : 'off';
   const RETIRE_PLAYERS = HIDE_MODE === 'retire';
   dbg('hide mode: ' + HIDE_MODE);
 
@@ -1382,7 +1386,6 @@
   }
   // iPhone: Safari answers a calendar document opened in the page with its "Add to Calendar" sheet, no file saved.
   // Anywhere else (desktop) there is no calendar app to open, so the button saves the file.
-  const IS_IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);   // iPadOS says Mac
   function openInCalendar() {
     const [a, b] = reminderSlot();
     if (IS_ANDROID) location.href = androidCalendarUrl(a, b);
