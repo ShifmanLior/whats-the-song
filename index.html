@@ -590,7 +590,15 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="sr-only" id="live" aria-live="polite"></div>
 
-<script src="songs.js"></script>
+<script>
+  // The song list gets a new address every day (songs.js?d=YYYY-MM-DD, the local date), so no browser or in-app browser
+  // cache can hand a new day the list of an earlier one (after a song is swapped, for instance). Written into the page so
+  // it still loads, and runs, before the main script.
+  (function () {
+    var n = new Date(), p = function (x) { return (x < 10 ? '0' : '') + x; };
+    document.write('<script src="songs.js?d=' + n.getFullYear() + '-' + p(n.getMonth() + 1) + '-' + p(n.getDate()) + '"><\/script>');
+  })();
+</script>
 <script>
 (() => {
   'use strict';
@@ -1473,12 +1481,17 @@
     else { try { old.destroy(); } catch (e) { /* already gone */ } player = null; playerReady = false; playedOnce = false; }
     dbg('page hidden: media removed (' + HIDE_MODE + ')');
   }
+  // A page from an earlier day reloads, so it gets the new day's song: when it comes back on screen, when the browser
+  // restores it from its back-forward cache, and once a minute while it stays open, finished game or not.
+  const newDay = () => !previewMode && dayNumberOf(new Date()) !== today;
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { hidePage(); return; }
     if (!player && window.YT && YT.Player && !rec.done) buildPlayer();   // the player was thrown away when the page left
-    if (!previewMode && dayNumberOf(new Date()) !== today) location.reload();
+    if (newDay()) location.reload();
   });
   window.addEventListener('pagehide', hidePage);
+  window.addEventListener('pageshow', (e) => { if (e.persisted && newDay()) location.reload(); });
+  setInterval(() => { if (!document.hidden && newDay()) location.reload(); }, 60000);
 
   // ---------- album covers on the home screen ----------
   // Twenty illustrated album covers (twelve international, eight Israeli), without text, are kept in covers/ as 320px
