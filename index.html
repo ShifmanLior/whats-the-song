@@ -838,31 +838,6 @@
   const RETIRE_PLAYERS = HIDE_MODE === 'retire';
   dbg('hide mode: ' + HIDE_MODE);
 
-  // Trial, ?wake: in Safari on iPhone the first half second or so of every clip is not heard, even when the paused media
-  // is played again; Chrome there plays it. A likely cause is that Safari lets the phone's audio output sleep between
-  // sounds and wakes it only once the clip has begun. ?wake keeps it awake during the game with an inaudible Web Audio
-  // tone (-80 dB at 30 Hz), started from the player's own tap.
-  const WAKE = params.has('wake');
-  let wakeCtx = null;
-  function wakeAudio() {
-    if (!WAKE || rec.done) return;
-    try {
-      if (!wakeCtx) {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        wakeCtx = new AC();
-        const osc = wakeCtx.createOscillator(), gain = wakeCtx.createGain();
-        osc.frequency.value = 30; gain.gain.value = 0.0001;
-        osc.connect(gain); gain.connect(wakeCtx.destination); osc.start();
-      }
-      if (wakeCtx.state !== 'running') wakeCtx.resume().then(() => dbg('wake: ' + wakeCtx.state), () => dbg('wake: resume refused'));
-      else dbg('wake: running');
-    } catch (e) { dbg('wake: ' + e); }
-  }
-  function sleepAudio(close) {
-    if (!wakeCtx) return;
-    try { if (close) { wakeCtx.close(); wakeCtx = null; } else wakeCtx.suspend(); } catch (e) { /* already closed */ }
-  }
-
   function setPlayState(state) {
     const b = $('play');
     b.dataset.state = state;
@@ -872,7 +847,6 @@
 
   function startClip() {
     if (rec.done) return;
-    wakeAudio();
     if (!playerReady) { pending = 'clip'; setPlayState('loading'); return; }   // a fresh player is still loading
     stopClip(false);
     const start = answer.start || 0;
@@ -1040,7 +1014,7 @@
     stopClip(!rec.done);                            // at the end the same player goes on to play the whole song
     persist();
     track('guess', { day: dayNo, attempt: rec.g.length, result: entry === 'skip' ? 'skip' : entry.ok ? 'correct' : 'wrong' });
-    if (rec.done) { track('game_end', { day: dayNo, won, attempts: rec.g.length, late: !!rec.late }); sleepAudio(true); }
+    if (rec.done) track('game_end', { day: dayNo, won, attempts: rec.g.length, late: !!rec.late });
     cancelSearch(); matches = [];
     $('q').value = ''; picked = null; $('guessBtn').disabled = true; closeList();
     if (document.activeElement === input) input.blur();   // the keyboard goes, the record is big again and invites a press
@@ -1501,7 +1475,6 @@
   // YouTube's title and picture would give the answer away. A finished game is left alone: its answer is no secret.
   function hidePage() {
     if (rec.done) return;
-    sleepAudio(false);
     if (clip) stopClip(false);                      // pause and reset the buttons; the swap below replaces the delayed one
     pending = null;
     retiring.forEach((p) => { try { p.destroy(); } catch (e) { /* already gone */ } });   // a clip that ended a moment ago: do not wait for the 700ms
