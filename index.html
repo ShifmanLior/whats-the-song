@@ -618,11 +618,16 @@
   // On Android, sound starts a while after YouTube reports PLAYING (audio output warm-up), by a different amount each
   // time, so a clock started by that event cut short clips before they were heard. The clip clock now follows the media
   // position instead (see tick); START_LAG is only a small allowance on top for the audio output buffer.
+  // Safari on iPhone and iPad is worse: the media position moves from the start, but the first half second or so
+  // (0.45 to 0.7s measured in a recording) is not heard, on every clip, a paused clip played again included. Chrome there
+  // plays it. Keeping the audio output awake with Web Audio did not help; 0.7s more on the clock did (tried on an iPhone:
+  // half a second of music in the first attempt), though what is heard then starts a little after the song's first moment.
   // ?lag=<ms> overrides it (?lag=0 to compare). ?debug shows timings on screen.
   const IS_ANDROID = /Android/i.test(navigator.userAgent);
   const IS_IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);   // iPadOS says Mac
+  const IS_IOS_SAFARI = IS_IOS && !/CriOS|FxiOS|EdgiOS|OPiOS/.test(navigator.userAgent);   // Chrome, Firefox, Edge, Opera say so
   const START_LAG = params.has('lag') ? Math.max(0, parseFloat(params.get('lag')) || 0) / 1000
-    : IS_ANDROID ? 0.1 : 0;
+    : IS_ANDROID ? 0.1 : IS_IOS_SAFARI ? 0.7 : 0;
   const MEDIA_WAIT = 1200;                          // ms to wait after PLAYING for the media position to move before using the event time
   const DEBUG = params.has('debug');
   let dbgEl = null;
@@ -825,14 +830,13 @@
   // Shape Of You" in the middle of the game). So the media has to go. Four ways, chosen with ?hide=
   //   retire  after every clip the iframe is thrown away and a fresh one that has never played takes its place. This is
   //           Chromium's default (tested there); it also worked on an iPhone.
-  //   onhide  the paused media stays between clips and is stopped only when the page leaves the screen (hidePage below).
-  //           The default on iPhone and iPad. After a stop iOS has to load the video and start its sound again, and it
-  //           swallows the first half second or so of the next clip: with stop after every clip, players heard nothing in
-  //           the first attempts. Kept, the media plays again at once and from its first moment. Locking the phone or
-  //           leaving the page still empties the lock screen card.
-  //   stop    the same iframe is told to stop after every clip and when the page leaves the screen, which empties its
-  //           media. Tried on an iPhone: the lock screen card was left empty (no title, no picture) and play worked again
-  //           on return, but every clip began cold, as above.
+  //   onhide  the paused media stays between clips, and the iframe is thrown away only when the page leaves the screen or
+  //           loses focus (Notification Centre or Control Centre pulled down over it); a fresh one is built on return.
+  //           The default on iPhone and iPad. A player whose media was stopped or is new has to load the video and start
+  //           its sound again, and iOS swallows the first half second or so of the clip: with stop after every clip,
+  //           players heard nothing in the first attempts. Kept, the media plays again at once and from its first moment.
+  //   stop    the same iframe is told to stop after every clip and when the page leaves the screen. Every clip began cold,
+  //           as above, and a player's Notification Centre still showed the song's title over a stopped card (0:00).
   //   off     nothing; the default elsewhere (desktop Safari, Firefox), where none of these has been tried.
   const HIDE_MODE = ['retire', 'onhide', 'stop', 'off'].includes(params.get('hide')) ? params.get('hide')
     : navigator.userAgentData ? 'retire' : IS_IOS ? 'onhide' : 'off';
@@ -1470,7 +1474,8 @@
     if (ms === 0 && !previewMode) location.reload();
   }
   setInterval(tickCountdown, 1000);
-  // The page leaves the screen (the browser or app is closed or switched away from, the screen locks) in the middle of a game:
+  // The page leaves the screen (the browser or app is closed or switched away from, the screen locks), or on iPhone loses
+  // focus to Notification Centre or Control Centre, in the middle of a game:
   // the clip stops at once and, unless ?hide=off, whatever the player played is taken off the lock screen, where
   // YouTube's title and picture would give the answer away. A finished game is left alone: its answer is no secret.
   function hidePage() {
@@ -1482,7 +1487,7 @@
     if (HIDE_MODE === 'off' || !player || !playedOnce) return;
     const old = player;
     try { old.pauseVideo(); } catch (e) { /* not ready */ }
-    if (HIDE_MODE === 'stop' || HIDE_MODE === 'onhide') { try { old.stopVideo(); } catch (e) { /* not ready */ } playedOnce = false; }
+    if (HIDE_MODE === 'stop') { try { old.stopVideo(); } catch (e) { /* not ready */ } playedOnce = false; }
     else { try { old.destroy(); } catch (e) { /* already gone */ } player = null; playerReady = false; playedOnce = false; }
     dbg('page hidden: media removed (' + HIDE_MODE + ')');
   }
@@ -1495,6 +1500,17 @@
     if (newDay()) location.reload();
   });
   window.addEventListener('pagehide', hidePage);
+  // On iPhone the page stays on screen under a pulled-down Notification Centre or Control Centre, which list the paused
+  // media; the window loses focus then. Focus that moved into the player's own iframe is not that.
+  if (HIDE_MODE === 'onhide') {
+    window.addEventListener('blur', () => {
+      if (document.activeElement && document.activeElement.tagName === 'IFRAME') return;
+      dbg('window blur'); hidePage();
+    });
+    window.addEventListener('focus', () => {
+      if (!document.hidden && !player && window.YT && YT.Player && !rec.done) buildPlayer();
+    });
+  }
   window.addEventListener('pageshow', (e) => { if (e.persisted && newDay()) location.reload(); });
   setInterval(() => { if (!document.hidden && newDay()) location.reload(); }, 60000);
 
