@@ -822,15 +822,20 @@
 
   // Chromium and iOS list whatever a YouTube iframe has played in their media notification, lock screen and control centre,
   // with the video's title, channel and a frame of it, which gives the answer away (an iPhone's lock screen showed "Ed Sheeran -
-  // Shape Of You" in the middle of the game). So after every clip the media has to go. Three ways, chosen with ?hide=
-  //   retire  the iframe is thrown away and a fresh one that has never played takes its place. This is Chromium's default
-  //           (tested there); it also worked on an iPhone.
-  //   stop    the same iframe is told to stop, which empties its media. The default on iPhone and iPad: tried on an iPhone,
-  //           the lock screen card was left empty (no title, no picture) and play worked again on return. retire did as
-  //           well there; stop keeps one iframe, so there is no new player to load after every clip.
-  //   off     nothing; the default elsewhere (desktop Safari, Firefox), where neither has been tried.
-  const HIDE_MODE = ['retire', 'stop', 'off'].includes(params.get('hide')) ? params.get('hide')
-    : navigator.userAgentData ? 'retire' : IS_IOS ? 'stop' : 'off';
+  // Shape Of You" in the middle of the game). So the media has to go. Four ways, chosen with ?hide=
+  //   retire  after every clip the iframe is thrown away and a fresh one that has never played takes its place. This is
+  //           Chromium's default (tested there); it also worked on an iPhone.
+  //   onhide  the paused media stays between clips and is stopped only when the page leaves the screen (hidePage below).
+  //           The default on iPhone and iPad. After a stop iOS has to load the video and start its sound again, and it
+  //           swallows the first half second or so of the next clip: with stop after every clip, players heard nothing in
+  //           the first attempts. Kept, the media plays again at once and from its first moment. Locking the phone or
+  //           leaving the page still empties the lock screen card.
+  //   stop    the same iframe is told to stop after every clip and when the page leaves the screen, which empties its
+  //           media. Tried on an iPhone: the lock screen card was left empty (no title, no picture) and play worked again
+  //           on return, but every clip began cold, as above.
+  //   off     nothing; the default elsewhere (desktop Safari, Firefox), where none of these has been tried.
+  const HIDE_MODE = ['retire', 'onhide', 'stop', 'off'].includes(params.get('hide')) ? params.get('hide')
+    : navigator.userAgentData ? 'retire' : IS_IOS ? 'onhide' : 'off';
   const RETIRE_PLAYERS = HIDE_MODE === 'retire';
   dbg('hide mode: ' + HIDE_MODE);
 
@@ -1466,7 +1471,7 @@
   }
   setInterval(tickCountdown, 1000);
   // The page leaves the screen (the browser or app is closed or switched away from, the screen locks) in the middle of a game:
-  // the clip stops at once and, with ?hide=retire or stop, whatever the player played is taken off the lock screen, where
+  // the clip stops at once and, unless ?hide=off, whatever the player played is taken off the lock screen, where
   // YouTube's title and picture would give the answer away. A finished game is left alone: its answer is no secret.
   function hidePage() {
     if (rec.done) return;
@@ -1477,7 +1482,7 @@
     if (HIDE_MODE === 'off' || !player || !playedOnce) return;
     const old = player;
     try { old.pauseVideo(); } catch (e) { /* not ready */ }
-    if (HIDE_MODE === 'stop') { try { old.stopVideo(); } catch (e) { /* not ready */ } playedOnce = false; }
+    if (HIDE_MODE === 'stop' || HIDE_MODE === 'onhide') { try { old.stopVideo(); } catch (e) { /* not ready */ } playedOnce = false; }
     else { try { old.destroy(); } catch (e) { /* already gone */ } player = null; playerReady = false; playedOnce = false; }
     dbg('page hidden: media removed (' + HIDE_MODE + ')');
   }
