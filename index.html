@@ -196,7 +196,7 @@
   .btn.ghost { background: transparent; border-color: var(--mid); color: var(--ink); }
   @media (hover: hover) { .btn.ghost:hover:not(:disabled) { border-color: var(--ink); } }
   /* "skip" sits right under the progress line it lengthens: a small button framed in the day's colour, with a + */
-  .btn.skip { height: 44px; padding: 0 20px; border: 1.5px solid var(--accent); background: transparent; color: var(--ink); font-size: 15px; transition: transform .1s ease, background-color .15s ease; }
+  .btn.skip { height: 44px; padding: 0 20px; border: 1.5px solid var(--accent); border-radius: 999px; background: transparent; color: var(--ink); font-size: 15px; transition: transform .1s ease, background-color .15s ease; }
   .btn.skip .i-plus { width: 16px; height: 16px; stroke: var(--accent); stroke-width: 2; }
   .btn.skip.reveal .i-plus { display: none; }        /* the last attempt: "show me the song" adds nothing */
   @media (hover: hover) { .btn.skip:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 8%, transparent); } }
