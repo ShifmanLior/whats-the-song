@@ -140,7 +140,7 @@
   .tl-marks { position: relative; height: 20px; margin-top: 8px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
   .tl-marks span { position: absolute; transform: translateX(-50%); }
   .tl-marks span:last-child { transform: translateX(-100%); }
-  .tl-label { margin-bottom: 14px; text-align: center; color: var(--muted); font-size: 14px; }   /* above the record: room for its ring */
+  .tl-label { text-align: center; color: var(--muted); font-size: 14px; }   /* under the record, over the progress line it describes */
 
   /* guess area */
   .guess { margin-top: 20px; }
@@ -397,12 +397,12 @@
   .cal-nav { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--mid); background: transparent; color: var(--ink); cursor: pointer; }
   .cal-nav:disabled { opacity: .25; cursor: default; }
   .cal-nav svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; }
-  .cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+  .cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; text-align: center; }   /* small squares with air between them */
   .cal-week { margin-bottom: 6px; color: var(--muted); font-size: 13px; }
   .cal-day {
     position: relative; display: block; aspect-ratio: 1; padding: 0;
     border: 1px solid var(--line); background: transparent; color: var(--ink);
-    font: inherit; font-size: 16px; font-style: normal; line-height: 1; cursor: pointer;
+    font: inherit; font-size: 15px; font-style: normal; line-height: 1; cursor: pointer;
   }
   button.cal-day { line-height: normal; }
   .cal-day:disabled { border-color: transparent; color: var(--mid); cursor: default; }
@@ -490,12 +490,12 @@
   </div>
 
   <section class="stage" id="stage" data-s="game" aria-label="נגן">
-    <div class="tl-label" id="tlLabel"></div>
     <button class="play" id="play" type="button" aria-label="נגן את הקטע" data-state="loading" disabled>
       <span class="disc" aria-hidden="true"></span>
       <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z"/></svg>
       <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>
     </button>
+    <div class="tl-label" id="tlLabel"></div>
     <div class="timeline-wrap" dir="ltr">
       <div class="timeline" id="timeline" aria-hidden="true">
         <div class="tl-unlocked" id="tlUnlocked"></div>
