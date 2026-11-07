@@ -817,33 +817,18 @@
 
   // ---------- YouTube player: play only the first N seconds ----------
   let player = null, playerReady = false, clip = null;
-  let playedOnce = false;                           // the current player has played a clip, so its media is on the phone's lock screen
-  const retiring = new Set();                       // players that are about to be destroyed, 700ms after their clip
   const clipsSeen = new Set();                      // the attempts whose clip has already been counted
   // True at the start and after every skip or wrong guess, until the player presses play: the record invites a press.
   let needsPlay = true;
   function renderInvite() {
     $('play').classList.toggle('invite', needsPlay);
   }
-  let pending = null;                               // 'clip' or 'full': waits for a fresh player to get ready
+  let pending = null;                               // 'clip' or 'full': waits for the player to get ready
 
-  // Chromium and iOS list whatever a YouTube iframe has played in their media notification, lock screen and control centre,
-  // with the video's title, channel and a frame of it, which gives the answer away (an iPhone's lock screen showed "Ed Sheeran -
-  // Shape Of You" in the middle of the game). So the media has to go. Four ways, chosen with ?hide=
-  //   retire  after every clip the iframe is thrown away and a fresh one that has never played takes its place. This is
-  //           Chromium's default (tested there); it also worked on an iPhone.
-  //   onhide  the paused media stays between clips, and the iframe is thrown away only when the page leaves the screen or
-  //           loses focus (Notification Centre or Control Centre pulled down over it); a fresh one is built on return.
-  //           The default on iPhone and iPad. A player whose media was stopped or is new has to load the video and start
-  //           its sound again, and iOS swallows the first half second or so of the clip: with stop after every clip,
-  //           players heard nothing in the first attempts. Kept, the media plays again at once and from its first moment.
-  //   stop    the same iframe is told to stop after every clip and when the page leaves the screen. Every clip began cold,
-  //           as above, and a player's Notification Centre still showed the song's title over a stopped card (0:00).
-  //   off     nothing; the default elsewhere (desktop Safari, Firefox), where none of these has been tried.
-  const HIDE_MODE = ['retire', 'onhide', 'stop', 'off'].includes(params.get('hide')) ? params.get('hide')
-    : navigator.userAgentData ? 'retire' : IS_IOS ? 'onhide' : 'off';
-  const RETIRE_PLAYERS = HIDE_MODE === 'retire';
-  dbg('hide mode: ' + HIDE_MODE);
+  // One player for the whole game; between clips its media is only paused. Phones list what it played (the video's title
+  // and picture) in their media notification and on the lock screen, so a player who leaves mid-game can see the song:
+  // that is accepted. Hiding it (a new player after every clip, or after leaving the page) brought bugs on Android and
+  // cut the start of the clips.
 
   function setPlayState(state) {
     const b = $('play');
@@ -854,8 +839,8 @@
 
   function startClip() {
     if (rec.done) return;
-    if (!playerReady) { pending = 'clip'; setPlayState('loading'); return; }   // a fresh player is still loading
-    stopClip(false);
+    if (!playerReady) { pending = 'clip'; setPlayState('loading'); return; }   // the player is still loading
+    stopClip();
     const start = answer.start || 0;
     const len = secsUnlocked();
     const attempt = rec.g.length + 1;
@@ -863,7 +848,6 @@
     clip = { start, len, playing: false, playedAt: 0, lastCt: null, armed: false, fresh: false, wall0: 0, stalledAt: 0, nudgedAt: 0, launched: performance.now() };
     player.seekTo(start, true);
     player.playVideo();
-    playedOnce = true;
     setPlayState('loading');
     $('play').disabled = false;
     clip.timer = setInterval(tick, 16);
@@ -940,23 +924,13 @@
     if (elapsed >= START_LAG + clip.len - STOP_LEAD) stopClip();
   }
 
-  function stopClip(retire = true) {
+  function stopClip() {
     if (clip) {
-      const c = clip, old = player;
+      const c = clip;
       clearInterval(c.timer); clip = null;
-      try { old.pauseVideo(); } catch (e) { /* not ready */ }
-      const swap = retire && RETIRE_PLAYERS;
-      const empty = retire && HIDE_MODE === 'stop';      // the same iframe, told to stop once the pause has reached it
-      if (swap) { buildPlayer(); retiring.add(old); }
-      // the old iframe goes only after the pause has reached it, or the clip would end early;
-      // ?debug logs how far the media really advanced, to tune STOP_LEAD
-      if (swap || empty || (DEBUG && c.armed)) {
-        setTimeout(() => {
-          if (DEBUG && c.armed) dbg(`clip ${c.len}s: media advanced ${(old.getCurrentTime() - c.start).toFixed(2)}s`);
-          if (swap) { try { old.destroy(); } catch (e) { /* already gone */ } retiring.delete(old); }
-          else if (empty && !clip && player === old) { try { old.stopVideo(); dbg('player stopped'); } catch (e) { /* not ready */ } }   // not if the next clip has begun
-        }, 700);
-      }
+      try { player.pauseVideo(); } catch (e) { /* not ready */ }
+      // ?debug logs how far the media really advanced once the pause has reached it, to tune STOP_LEAD
+      if (DEBUG && c.armed) setTimeout(() => dbg(`clip ${c.len}s: media advanced ${(player.getCurrentTime() - c.start).toFixed(2)}s`), 700);
     }
     $('tlPlayed').style.width = '0%';
     setPlayState('idle');
@@ -969,7 +943,7 @@
     $('playerWrap').appendChild(holder);
     const vars = { playsinline: 1, rel: 0, modestbranding: 1, controls: 1, disablekb: 1, start: answer.start || 0 };
     if (/^https?:$/.test(location.protocol)) vars.origin = location.origin;
-    playerReady = false; playedOnce = false;
+    playerReady = false;
     const me = player = new YT.Player(holder, {
       width: '100%', height: '100%', videoId: answer.id, playerVars: vars,
       events: {
@@ -986,7 +960,7 @@
           if (me !== player) return;
           pending = null;
           track('player_error', { day: dayNo, code: e.data });
-          stopClip(false);
+          stopClip();
           showNotice(`הסרטון של היום לא מתנגן כאן: ${YT_ERRORS[e.data] || 'שגיאה ' + e.data}. השיר: ${label(answer)}.`);
         },
       },
@@ -1018,7 +992,7 @@
     needsPlay = true;                               // the next clip is longer: play it first
     const won = entry !== 'skip' && entry.ok;
     if (won || rec.g.length >= STAGES.length) { rec.done = true; rec.won = won; }
-    stopClip(!rec.done);                            // at the end the same player goes on to play the whole song
+    stopClip();                                     // at the end the same player goes on to play the whole song
     persist();
     track('guess', { day: dayNo, attempt: rec.g.length, result: entry === 'skip' ? 'skip' : entry.ok ? 'correct' : 'wrong' });
     if (rec.done) track('game_end', { day: dayNo, won, attempts: rec.g.length, late: !!rec.late });
@@ -1476,43 +1450,13 @@
     if (ms === 0 && !previewMode) location.reload();
   }
   setInterval(tickCountdown, 1000);
-  // The page leaves the screen (the browser or app is closed or switched away from, the screen locks), or on iPhone loses
-  // focus to Notification Centre or Control Centre, in the middle of a game:
-  // the clip stops at once and, unless ?hide=off, whatever the player played is taken off the lock screen, where
-  // YouTube's title and picture would give the answer away. A finished game is left alone: its answer is no secret.
-  function hidePage() {
-    if (rec.done) return;
-    if (clip) stopClip(false);                      // pause and reset the buttons; the swap below replaces the delayed one
-    pending = null;
-    retiring.forEach((p) => { try { p.destroy(); } catch (e) { /* already gone */ } });   // a clip that ended a moment ago: do not wait for the 700ms
-    retiring.clear();
-    if (HIDE_MODE === 'off' || !player || !playedOnce) return;
-    const old = player;
-    try { old.pauseVideo(); } catch (e) { /* not ready */ }
-    if (HIDE_MODE === 'stop') { try { old.stopVideo(); } catch (e) { /* not ready */ } playedOnce = false; }
-    else { try { old.destroy(); } catch (e) { /* already gone */ } player = null; playerReady = false; playedOnce = false; }
-    dbg('page hidden: media removed (' + HIDE_MODE + ')');
-  }
   // A page from an earlier day reloads, so it gets the new day's song: when it comes back on screen, when the browser
   // restores it from its back-forward cache, and once a minute while it stays open, finished game or not.
   const newDay = () => !previewMode && dayNumberOf(new Date()) !== today;
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { hidePage(); return; }
-    if (!player && window.YT && YT.Player && !rec.done) buildPlayer();   // the player was thrown away when the page left
+    if (document.hidden) { if (clip) stopClip(); return; }   // a hidden page's timers slow down: stop the clip before it runs long
     if (newDay()) location.reload();
   });
-  window.addEventListener('pagehide', hidePage);
-  // On iPhone the page stays on screen under a pulled-down Notification Centre or Control Centre, which list the paused
-  // media; the window loses focus then. Focus that moved into the player's own iframe is not that.
-  if (HIDE_MODE === 'onhide') {
-    window.addEventListener('blur', () => {
-      if (document.activeElement && document.activeElement.tagName === 'IFRAME') return;
-      dbg('window blur'); hidePage();
-    });
-    window.addEventListener('focus', () => {
-      if (!document.hidden && !player && window.YT && YT.Player && !rec.done) buildPlayer();
-    });
-  }
   window.addEventListener('pageshow', (e) => { if (e.persisted && newDay()) location.reload(); });
   setInterval(() => { if (!document.hidden && newDay()) location.reload(); }, 60000);
 
