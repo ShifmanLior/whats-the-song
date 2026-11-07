@@ -408,9 +408,11 @@
   .cal-day:disabled { border-color: transparent; color: var(--mid); cursor: default; }
   .cal-day.today { border-color: var(--ink); }
   .cal-day.current { outline: 2px solid var(--ink); outline-offset: 2px; }
-  .cal-day.won { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--soft); }
-  .cal-day.lost { color: var(--muted); text-decoration: line-through; }
-  .cal-day.going::after { content: ""; position: absolute; left: 50%; bottom: 5px; width: 4px; height: 4px; margin-left: -2px; background: currentColor; }
+  /* a played day is a filled square in the colours of the result's tiles: guessed in the day's colour, missed in ink,
+     started in a light grey; a day not played yet keeps its thin frame */
+  .cal-day.won { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .cal-day.lost { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .cal-day.going { background: rgba(var(--shade), .16); border-color: transparent; }
   .cal-key { display: flex; flex-wrap: wrap; gap: 8px 10px; margin: 16px 0; color: var(--muted); font-size: 13px; }
   .cal-key span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
   .cal-key .cal-day { width: 22px; font-size: 12px; display: inline-grid; place-items: center; cursor: default; }
