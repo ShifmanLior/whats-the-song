@@ -140,7 +140,7 @@
   .tl-marks { position: relative; height: 20px; margin-top: 8px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
   .tl-marks span { position: absolute; transform: translateX(-50%); }
   .tl-marks span:last-child { transform: translateX(-100%); }
-  .tl-label { text-align: center; color: var(--muted); font-size: 14px; }
+  .tl-label { margin-bottom: 14px; text-align: center; color: var(--muted); font-size: 14px; }   /* above the record: room for its ring */
 
   /* guess area */
   .guess { margin-top: 20px; }
@@ -195,12 +195,13 @@
   .btn.primary { background: transparent; border-color: var(--ink); color: var(--ink); }
   .btn.ghost { background: transparent; border-color: var(--mid); color: var(--ink); }
   @media (hover: hover) { .btn.ghost:hover:not(:disabled) { border-color: var(--ink); } }
-  /* "skip" is a plain line of text under the guess button: the guess is the main action, and until the clip has been played
-     (see needsPlay) the line is lighter still, so the record is what to press */
-  .btn.skip { height: 46px; border-color: transparent; background: transparent; color: var(--ink); font-size: 15px; font-weight: 300; }
-  .btn.skip.quiet { color: var(--muted); }
-  @media (hover: hover) { .btn.skip:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; } }
-  .guess .actions { grid-template-columns: 1fr; gap: 2px; }   /* the guess button across the width, the skip line under it */
+  /* "skip" sits right under the progress line it lengthens: a small button framed in the day's colour, with a + */
+  .btn.skip { height: 44px; padding: 0 20px; border: 1.5px solid var(--accent); border-radius: 999px; background: transparent; color: var(--ink); font-size: 15px; transition: transform .1s ease, background-color .15s ease; }
+  .btn.skip .i-plus { width: 16px; height: 16px; stroke: var(--accent); stroke-width: 2; }
+  .btn.skip.reveal .i-plus { display: none; }        /* the last attempt: "show me the song" adds nothing */
+  @media (hover: hover) { .btn.skip:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 8%, transparent); } }
+  .app.typing .btn.skip { display: none; }           /* while typing the guess, the stage is one small row */
+  .guess .actions { grid-template-columns: 1fr; }   /* the guess button across the width */
 
   /* result: no frame; it lines up with the boxes below it, so it needs no side padding */
   .result {
@@ -487,6 +488,7 @@
   </div>
 
   <section class="stage" id="stage" data-s="game" aria-label="נגן">
+    <div class="tl-label" id="tlLabel"></div>
     <button class="play" id="play" type="button" aria-label="נגן את הקטע" data-state="loading" disabled>
       <span class="disc" aria-hidden="true"></span>
       <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z"/></svg>
@@ -499,7 +501,7 @@
       </div>
       <div class="tl-marks" id="tlMarks" aria-hidden="true"></div>
     </div>
-    <div class="tl-label" id="tlLabel"></div>
+    <button class="btn skip" id="skipBtn" type="button"><svg class="i-plus" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span id="skipText">עוד חצי שנייה</span></button>
   </section>
 
   <section class="guess" id="guess" data-s="game" aria-label="ניחוש">
@@ -511,7 +513,6 @@
     </div>
     <div class="actions">
       <button class="btn primary" id="guessBtn" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>נחשו</button>
-      <button class="btn skip" id="skipBtn" type="button"><span id="skipText">לא הצלחתי, תנו לי עוד חצי שנייה</span></button>
     </div>
   </section>
 
@@ -736,7 +737,8 @@
     $('tlLabel').textContent = `${secsText(s)} מתחילת השיר, ניסיון ${Math.min(rec.g.length + 1, STAGES.length)} מתוך ${STAGES.length}`;
     const i = rec.g.length;
     const last = i >= STAGES.length - 1;
-    $('skipText').textContent = last ? 'לא הצלחתי, גלו לי את השיר' : `לא הצלחתי, תנו לי עוד ${secsText(STAGES[i + 1] - STAGES[i])}`;
+    $('skipText').textContent = last ? 'גלו לי את השיר' : `עוד ${secsText(STAGES[i + 1] - STAGES[i])}`;
+    $('skipBtn').classList.toggle('reveal', last);
     renderInvite();
     $('stage').hidden = rec.done;
     $('guess').hidden = rec.done;
@@ -816,12 +818,10 @@
   let playedOnce = false;                           // the current player has played a clip, so its media is on the phone's lock screen
   const retiring = new Set();                       // players that are about to be destroyed, 700ms after their clip
   const clipsSeen = new Set();                      // the attempts whose clip has already been counted
-  // True at the start and after every skip or wrong guess, until the player presses play: the record invites and "skip"
-  // steps back, so a second tap on it is less likely than a tap on play.
+  // True at the start and after every skip or wrong guess, until the player presses play: the record invites a press.
   let needsPlay = true;
   function renderInvite() {
     $('play').classList.toggle('invite', needsPlay);
-    $('skipBtn').classList.toggle('quiet', needsPlay);
   }
   let pending = null;                               // 'clip' or 'full': waits for a fresh player to get ready
 
