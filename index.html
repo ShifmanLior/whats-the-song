@@ -202,6 +202,8 @@
   @media (hover: hover) { .btn.skip:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 8%, transparent); } }
   .app.typing .btn.skip { display: none; }           /* while typing the guess, the stage is one small row */
   .guess .actions { grid-template-columns: 1fr; }   /* the guess button across the width */
+  .guess .note { margin: 18px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; text-align: center; }   /* playback differs between phones and networks */
+  .app.typing .guess .note { display: none; }
 
   /* result: no frame; it lines up with the boxes below it, so it needs no side padding */
   .result {
@@ -516,6 +518,7 @@
     <div class="actions">
       <button class="btn primary" id="guessBtn" type="button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>נחשו</button>
     </div>
+    <p class="note" id="playNote">הניגון עשוי להשתנות קצת ממכשיר למכשיר ולפי מצב הרוח של הרשת, בואו נזכור שכולנו פה בשביל הכיף ואפשר להאשים יחד את יוטיוב 🙋‍♂️</p>
   </section>
 
   <!-- home, after the game: how it went, the song, sharing and the countdown to the next one -->
