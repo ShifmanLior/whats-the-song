@@ -18,10 +18,13 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="תו השעה: מניפת עטיפות אלבומים מאוירות, הכותרת וכפתור שחקו, שיר חדש בכל יום">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@200;300;400&display=swap" rel="stylesheet">
 <style>
 
   /* Clean and bright: a quiet light-grey page with one white rounded card in the middle that holds everything. Near-black
-     text, grey secondary text, the device's own font in fine weights (titles 600, labels 500, text 400). The main buttons
+     text, grey secondary text, Assistant in thin, delicate weights (titles 200, text 300, labels and buttons 400). The main buttons
      are black (--btn) with white text. One blue accent for state, not for buttons: --accent for the progress, a right
      answer and focus (white on it 4.7:1), --accent-ink for blue link text (5.6:1 on white). Small rounded "app icon" tiles with
      gradients mark the stats and the links.
@@ -62,9 +65,9 @@
     overflow-x: clip;
     background: var(--page);
     color: var(--ink);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Hebrew", Arial, sans-serif;
+    font-family: "Assistant", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
     font-size: 17px;
-    font-weight: 400;
+    font-weight: 300;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
   }
@@ -85,7 +88,7 @@
 
   /* the name and the day, under the covers */
   .info { margin-top: var(--sp-3); text-align: center; }
-  h1 { margin: 0; font-size: 40px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.2; }
+  h1 { margin: 0; font-size: 50px; font-weight: 200; letter-spacing: -0.01em; line-height: 1.2; }
   .sub { margin: var(--sp-1) 0 0; color: var(--muted); font-size: 15px; }
   .lead { margin: var(--sp-5) 0 0; color: var(--muted); font-size: 15px; text-align: center; }   /* a group of its own under the start button */
   .app[data-state="after"] .sub.quiet { display: none; }
@@ -100,7 +103,7 @@
     display: flex; flex-direction: column; align-items: center; gap: var(--sp-1);
     background: var(--paper); border-radius: var(--r-l); box-shadow: var(--shadow-tile), inset 0 0 0 1px rgba(var(--shade), .04);
   }
-  .stat b { display: block; margin-top: var(--sp-1); font-size: 24px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .stat b { display: block; margin-top: var(--sp-1); font-size: 28px; font-weight: 200; line-height: 1.1; font-variant-numeric: tabular-nums; }
   .stat span { display: block; color: var(--muted); font-size: 13px; }
   /* an app-icon tile: a rounded square with a gradient and a white icon */
   .tile { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 2px 6px rgba(var(--shade), .14); }
@@ -115,7 +118,7 @@
   /* player stage: the status and the progress line, then the controls */
   .stage { margin-top: var(--sp-5); display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
   .stage[hidden] { display: none; }
-  .tl-label { text-align: center; font-size: 15px; font-weight: 500; }   /* over the progress line it describes */
+  .tl-label { text-align: center; font-size: 16px; font-weight: 400; }   /* over the progress line it describes */
 
   /* the play button: a round black button with a white icon */
   .play {
@@ -186,7 +189,7 @@
   .list[hidden] { display: none; }
   .list li { position: relative; padding: var(--sp-3) var(--sp-4); cursor: pointer; touch-action: manipulation; }
   .list li + li::before { content: ""; position: absolute; top: 0; inset-inline: var(--sp-4) 0; height: 1px; background: var(--soft-2); }   /* inset separators */
-  .list li b { display: block; font-weight: 500; }
+  .list li b { display: block; font-weight: 400; }
   .list li small { display: block; color: var(--muted); font-size: 14px; }
   .list li[aria-selected="true"] { background: var(--soft); }
   @media (hover: hover) { .list li:hover { background: var(--soft); } }
@@ -209,7 +212,7 @@
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
     height: 50px; padding: 0 var(--sp-5); border: 0; border-radius: var(--pill);
-    font-weight: 500; font-size: 16px; cursor: pointer;
+    font-weight: 400; font-size: 17px; cursor: pointer;
     transition: transform .1s ease, background-color .15s ease;
   }
   .btn:active:not(:disabled) { transform: scale(0.97); }
@@ -228,16 +231,16 @@
   .hint { margin: var(--sp-1) 0 0; color: var(--muted); font-size: 13px; text-align: center; }   /* the play button's caption, 16px under it: the ring that grows from the button needs that room */   /* under the play button: playing again is free */
   .app.typing .hint { display: none; }
   .guess .actions { grid-template-columns: 1fr; }   /* the guess button across the width */
-  .guess .note { margin: var(--sp-4) 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; text-align: center; }   /* playback differs between phones and networks */
+  .guess .note { margin: var(--sp-4) 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; text-align: center; }   /* playback differs between phones and networks */
   .app.typing .guess .note { display: none; }
 
   /* result */
   .result { padding-top: var(--sp-4); text-align: center; }
   .result[hidden] { display: none; }
-  .result h2 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.015em; }
+  .result h2 { margin: 0; font-size: 28px; font-weight: 200; }
   /* the song, one line: the band, a colon, the title; it sits between the share button and the video */
-  .song-line { margin: var(--sp-5) 0 0; text-align: center; font-size: 19px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.35; }
-  .song-line .by { color: var(--muted); font-weight: 400; }
+  .song-line { margin: var(--sp-5) 0 0; text-align: center; font-size: 22px; font-weight: 400; line-height: 1.35; }
+  .song-line .by { color: var(--muted); font-weight: 300; }
   /* the score: one tile per attempt. A tick on blue is the right answer, a cross on ink a wrong one, a grey tile a skip,
      and a hollow slot an attempt that was not needed. They pop in one after the other. */
   .squares { display: flex; justify-content: center; gap: var(--sp-2); margin: var(--sp-4) 0; }
@@ -267,7 +270,7 @@
   .btn svg, .startbtn svg, .fblink svg { order: 1; }
   .btn[hidden] { display: none; }
   .next { margin: var(--sp-3) 0 0; color: var(--muted); font-size: 14px; }
-  .next b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .next b { color: var(--ink); font-weight: 400; font-variant-numeric: tabular-nums; }
 
   /* YouTube player: kept off-screen while guessing, shown at the end */
   .player-wrap { position: fixed; left: -10000px; top: 0; width: 220px; height: 220px; pointer-events: none; }
@@ -318,7 +321,7 @@
     position: relative; display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
     min-width: 200px; height: 56px; padding: 0 var(--sp-6);
     background: var(--btn); color: #fff; border: 0; border-radius: var(--pill);
-    font-size: 18px; font-weight: 500; cursor: pointer;
+    font-size: 20px; font-weight: 400; cursor: pointer;
     box-shadow: var(--btn-edge), 0 10px 24px rgba(var(--shade), .2);
     transition: transform .12s ease, background-color .15s ease;
     animation: rise .7s cubic-bezier(.2, .8, .2, 1) .5s both;
@@ -335,7 +338,7 @@
   .more { margin-top: var(--sp-5); background: var(--paper); border-radius: var(--r-l); box-shadow: var(--shadow-tile), inset 0 0 0 1px rgba(var(--shade), .04); overflow: hidden; }
   .row {
     position: relative; display: flex; align-items: center; gap: var(--sp-3); width: 100%; min-height: 56px;
-    padding: var(--sp-2) var(--sp-4); background: none; border: 0; color: var(--ink); font-size: 16px; font-weight: 400; text-align: start; cursor: pointer;
+    padding: var(--sp-2) var(--sp-4); background: none; border: 0; color: var(--ink); font-size: 17px; font-weight: 300; text-align: start; cursor: pointer;
   }
   .row > span { flex: 1; }
   .row + .row::before { content: ""; position: absolute; top: 0; inset-inline: calc(var(--sp-4) + 32px + var(--sp-3)) 0; height: 1px; background: var(--soft-2); }   /* the separator starts after the icon */
@@ -349,9 +352,9 @@
   .remind { font-size: 15px; }
   .remind p { margin: 0 0 var(--sp-3); color: var(--muted); font-size: 14px; text-align: center; }
   .remind label { display: flex; align-items: center; justify-content: center; gap: var(--sp-3); margin-bottom: var(--sp-3); }
-  .remind input[type="time"] { height: 42px; padding: 0 var(--sp-3); border: 0; border-radius: 10px; background: var(--soft); color: var(--ink); font: inherit; font-weight: 500; }
+  .remind input[type="time"] { height: 42px; padding: 0 var(--sp-3); border: 0; border-radius: 10px; background: var(--soft); color: var(--ink); font: inherit; font-weight: 400; }
   .remind .actions .btn { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 58px; border-radius: var(--r-m); font-size: 15px; text-align: center; text-decoration: none; line-height: 1.25; }
-  .remind .actions .btn small { color: var(--muted); font-size: 12px; font-weight: 400; }
+  .remind .actions .btn small { color: var(--muted); font-size: 13px; font-weight: 300; }
   .remind .alt { display: block; width: 100%; margin-top: var(--sp-3); padding: var(--sp-2); background: none; border: 0; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; font: inherit; font-size: 13px; cursor: pointer; }
   .remind .alt[hidden] { display: none; }
 
@@ -360,30 +363,30 @@
   .fbrow[hidden] { display: none; }
   .fblink {
     display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 44px; padding: 0 var(--sp-2);
-    background: none; border: 0; color: var(--accent-ink); font: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
+    background: none; border: 0; color: var(--accent-ink); font: inherit; font-size: 16px; font-weight: 400; cursor: pointer;
   }
   .fblink svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; }
   @media (hover: hover) { .fblink:hover { text-decoration: underline; text-underline-offset: 3px; } }
-  .fb h2 { margin: 0 0 var(--sp-2); font-size: 20px; font-weight: 600; letter-spacing: -0.01em; text-align: center; }
+  .fb h2 { margin: 0 0 var(--sp-2); font-size: 24px; font-weight: 200; text-align: center; }
   .fb h2:focus { outline: none; }
   .fb .lead { margin: 0 0 var(--sp-4); color: var(--muted); font-size: 14px; text-align: center; }
   .fb textarea, .fb input[type="email"] { display: block; width: 100%; padding: var(--sp-3) var(--sp-4); border: 0; border-radius: var(--r-m); background: var(--soft); color: var(--ink); font: inherit; font-size: 16px; }
   .fb textarea { height: 120px; resize: none; }
   .fb textarea:focus, .fb input[type="email"]:focus { outline: none; background: var(--paper); box-shadow: 0 0 0 2px var(--accent); }
-  .fb label { display: block; margin: var(--sp-4) 0 var(--sp-2); font-size: 14px; font-weight: 500; }
-  .fb label small { color: var(--muted); font-size: 13px; font-weight: 400; }
+  .fb label { display: block; margin: var(--sp-4) 0 var(--sp-2); font-size: 15px; font-weight: 400; }
+  .fb label small { color: var(--muted); font-size: 13px; font-weight: 300; }
   .fb .btn { margin-top: var(--sp-3); }
   .fb .note { min-height: 20px; margin: var(--sp-3) 0 0; color: var(--muted); font-size: 13px; text-align: center; }
-  .fb .note.bad { color: var(--ink); font-weight: 500; }
+  .fb .note.bad { color: var(--ink); font-weight: 400; }
   .fb .thanks { padding: var(--sp-4) 0 var(--sp-1); text-align: center; }
-  .fb .thanks p { margin: 0 0 var(--sp-2); font-size: 19px; font-weight: 600; }
+  .fb .thanks p { margin: 0 0 var(--sp-2); font-size: 22px; font-weight: 300; }
   .fb [hidden] { display: none; }
   .remind #remindClose { margin-top: var(--sp-4); }
 
   .toast {
     position: fixed; inset-inline: 0; bottom: var(--sp-5); margin: 0 auto; width: max-content; max-width: calc(100% - var(--sp-6));
     padding: var(--sp-3) var(--sp-5); border-radius: var(--pill);
-    background: rgba(29, 29, 31, .86); color: #fff; font-size: 15px; font-weight: 500;
+    background: rgba(29, 29, 31, .86); color: #fff; font-size: 16px; font-weight: 400;
     -webkit-backdrop-filter: blur(16px) saturate(180%); backdrop-filter: blur(16px) saturate(180%);
     box-shadow: 0 10px 26px rgba(var(--shade), .2);
     opacity: 0; transform: translateY(12px); pointer-events: none;
@@ -397,7 +400,7 @@
   .links { margin: var(--sp-3) 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-1) var(--sp-4); font-size: 15px; }
   .link {
     display: inline-flex; align-items: center; gap: var(--sp-2);
-    padding: 0; border: 0; background: none; color: var(--accent-ink); font: inherit; font-weight: 500;
+    padding: 0; border: 0; background: none; color: var(--accent-ink); font: inherit; font-weight: 400;
     text-decoration: none; white-space: nowrap; cursor: pointer;
   }
   .link[hidden] { display: none; }
@@ -410,19 +413,19 @@
   dialog.cal::backdrop { background: rgba(var(--shade), .25); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
   .cal-body { padding: var(--sp-5) var(--sp-4) var(--sp-4); }
   .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-4); }
-  .cal-head h2 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .cal-head h2 { margin: 0; font-size: 24px; font-weight: 200; }
   .cal-nav { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--soft); color: var(--ink); cursor: pointer; }
   .cal-nav:disabled { opacity: .3; cursor: default; }
   .cal-nav svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
   .cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--sp-3); text-align: center; }   /* small squares with air between them */
-  .cal-week { margin-bottom: var(--sp-2); color: var(--muted); font-size: 13px; font-weight: 500; }
+  .cal-week { margin-bottom: var(--sp-2); color: var(--muted); font-size: 13px; font-weight: 400; }
   .cal-day {
     position: relative; display: block; aspect-ratio: 1; padding: 0;
     border: 0; border-radius: var(--r-s); background: var(--soft); color: var(--ink);
-    font: inherit; font-size: 15px; font-weight: 500; font-style: normal; line-height: 1; cursor: pointer;
+    font: inherit; font-size: 16px; font-weight: 400; font-style: normal; line-height: 1; cursor: pointer;
   }
   button.cal-day { line-height: normal; }
-  .cal-day:disabled { background: transparent; color: var(--mid); font-weight: 400; cursor: default; }
+  .cal-day:disabled { background: transparent; color: var(--mid); font-weight: 300; cursor: default; }
   .cal-day.today { box-shadow: inset 0 0 0 2px var(--ink); }
   .cal-day.today.won, .cal-day.today.lost { box-shadow: none; }   /* filled, today shows by the outline of the day on screen */
   .cal-day.current { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -440,9 +443,8 @@
   @media (max-width: 480px) {
     :root { --pad: var(--sp-4); }
     body { padding: var(--sp-3); }
-    h1 { font-size: 36px; }
+    h1 { font-size: 44px; }
     .lead { font-size: 14px; }
-    .guess .note { font-size: 11px; }                 /* its two lines fit the card on a phone */
   }
   @media (max-width: 360px) { .tl-label { font-size: 14px; } .combo input { font-size: 15px; } }
   @media (prefers-reduced-motion: reduce) {
