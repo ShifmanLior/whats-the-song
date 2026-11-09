@@ -20,13 +20,15 @@
 <meta name="twitter:card" content="summary_large_image">
 <style>
 
-  /* Clean and bright, in the manner of a music app: white and light-grey surfaces, near-black text with grey secondary
-     text, the device's own font with bold titles, rounded artwork with soft shadows, and pill-shaped buttons. One fixed
-     pink-red accent: --accent for fills (white text on it is 4.7:1) and --accent-ink for accent-coloured text on white
-     or grey (6.3:1). --muted is the grey of secondary text (5.1:1 on white). --accent-l, the accent mixed with white, is
-     for the drawn sleeves. State is still shown with fill, icons and shape as well as colour. Light only. */
+  /* Glass over colour: a pale wash of colours behind everything (they change with the day, from the same hue as the
+     mystery cover), and on it translucent, blurred "glass" surfaces with a bright top edge: buttons, the search field,
+     cards and dialogs. Near-black text, grey secondary text, the device's own font with bold titles, rounded artwork and
+     pill-shaped buttons. The main actions are dark glass with white text; colour is kept to small places: the day's hue
+     for the progress and the rings, and pink-red (--accent, white on it 4.7:1) only for a right answer. --muted is the
+     grey of secondary text (5.1:1 on white). --accent-l, the accent mixed with white, is for the drawn sleeves. Light only. */
   :root {
     color-scheme: light;
+    --h: 330;                                       /* the day's hue; the main script sets it from the day number */
     --paper: #ffffff;
     --ink: #1d1d1f;
     --muted: #6e6e73;
@@ -37,10 +39,16 @@
     --accent: #e11d48;
     --accent-ink: #be123c;
     --accent-l: #f6c6d1;
-    --accent-tint: #fde8ed;
+    --tint: hsl(var(--h) 70% 48%);                  /* the day's colour, for lines and rings (not for text) */
     --shade: 0, 0, 0;                               /* the colour of shadows, as r, g, b */
-    --r-s: 8px; --r-m: 12px; --r-l: 16px; --pill: 999px;
-    --shadow: 0 8px 24px rgba(var(--shade), .12);
+    --r-s: 8px; --r-m: 14px; --r-l: 22px; --pill: 999px;
+    --blur: blur(22px) saturate(180%);
+    --glass: linear-gradient(180deg, rgba(255, 255, 255, .64), rgba(255, 255, 255, .34));
+    --glass-strong: linear-gradient(180deg, rgba(255, 255, 255, .9), rgba(255, 255, 255, .74));
+    --glass-dark: linear-gradient(180deg, rgba(48, 48, 52, .9), rgba(22, 22, 24, .86));
+    --edge: inset 0 1px 1px rgba(255, 255, 255, .95), inset 0 -1px 1px rgba(255, 255, 255, .4), inset 0 0 0 1px rgba(255, 255, 255, .5);   /* a bright top edge and a softer lower one, like the rim of glass */
+    --edge-dark: inset 0 1px 0 rgba(255, 255, 255, .22), inset 0 0 0 1px rgba(255, 255, 255, .08);
+    --lift: 0 8px 28px rgba(40, 30, 80, .12);
     --art: min(58vw, 30vh, 250px);                  /* the mystery cover on the game screen */
   }
   * { box-sizing: border-box; }
@@ -49,7 +57,7 @@
   body {
     margin: 0;
     min-height: 100vh;
-    background: var(--paper);
+    background: #f1f0f6;
     color: var(--ink);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Hebrew", Arial, sans-serif;
     font-size: 17px;
@@ -57,14 +65,30 @@
     line-height: 1.45;
     -webkit-font-smoothing: antialiased;
   }
+  body::before {                                     /* the wash of colour behind the glass */
+    content: ""; position: fixed; inset: -15%; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(38% 30% at 18% 12%, hsl(var(--h) 90% 78% / .8), transparent 70%),
+      radial-gradient(42% 34% at 88% 22%, hsl(calc(var(--h) + 60) 90% 80% / .7), transparent 70%),
+      radial-gradient(48% 40% at 24% 78%, hsl(calc(var(--h) + 150) 80% 82% / .7), transparent 70%),
+      radial-gradient(44% 38% at 86% 86%, hsl(calc(var(--h) + 220) 85% 84% / .7), transparent 70%);
+    filter: blur(30px);
+  }
   button, input { font: inherit; color: inherit; }
-  :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+  :focus-visible { outline: 3px solid var(--tint); outline-offset: 3px; }
 
   .app {
     width: 100%;
     max-width: 440px;
     margin: 0 auto;
     padding: 28px 20px 56px;
+  }
+
+  /* the glass itself, shared by the surfaces below */
+  .back, .stat, .combo input, .list, .btn.ghost, .btn.skip, .play, .cal-day:not(:disabled), .cal-nav, .notice, dialog.cal, .remind input[type="time"], .fb textarea, .fb input[type="email"] {
+    background: var(--glass);
+    -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+    box-shadow: var(--edge), var(--lift);
   }
 
   /* the name and the day, under the sleeves */
@@ -74,7 +98,7 @@
   .stats { display: flex; justify-content: center; gap: 10px; margin-top: 16px; }
   .stats.below { margin-top: 28px; }                     /* after the game they sit under the video */
   .app[data-state="after"] .sub.quiet { display: none; }   /* after today's game the day number is not repeated under the name */
-  .stat { flex: 1; max-width: 140px; padding: 12px 10px; text-align: center; background: var(--soft); border-radius: var(--r-m); }
+  .stat { flex: 1; max-width: 140px; padding: 12px 10px; text-align: center; border-radius: var(--r-m); }
   .stat b { display: block; font-size: 26px; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; }
   .stat span { display: block; color: var(--muted); font-size: 13px; }
   .lead { margin: 18px 0 0; color: var(--muted); font-size: 15px; text-align: center; }
@@ -82,10 +106,9 @@
   /* player stage: a mystery cover, the status and the progress line under it, then the controls */
   .stage { margin-top: clamp(12px, 3vh, 32px); display: flex; flex-direction: column; align-items: center; gap: 14px; }
   .stage[hidden] { display: none; }
-  /* the cover of a song nobody has named yet: blurred colours that change with the day, and a question mark. Like a
-     now-playing screen it is a little smaller while paused and grows while the clip plays. */
+  /* the cover of a song nobody has named yet: blurred colours of the day's hue, and a question mark. Like a now-playing
+     screen it is a little smaller while paused and grows while the clip plays. */
   .art {
-    --h: 340;
     position: relative; width: var(--art); aspect-ratio: 1; border-radius: var(--r-m); overflow: hidden;
     background:
       radial-gradient(circle at 28% 24%, hsl(var(--h) 90% 66%) 0, transparent 58%),
@@ -94,41 +117,39 @@
       radial-gradient(circle at 20% 82%, hsl(calc(var(--h) + 230) 70% 52%) 0, transparent 55%),
       linear-gradient(135deg, hsl(calc(var(--h) + 200) 55% 34%), hsl(calc(var(--h) + 300) 60% 24%));
     background-size: 160% 160%; background-position: 30% 30%;
-    box-shadow: 0 18px 40px rgba(var(--shade), .22);
+    box-shadow: 0 18px 40px rgba(40, 30, 80, .25), inset 0 0 0 1px rgba(255, 255, 255, .35);
     transform: scale(.92);
     transition: transform .45s cubic-bezier(.3, 1.4, .5, 1), box-shadow .45s ease;
   }
-  .art::after {                                      /* a soft glass sheen */
+  .art::after {                                      /* a glass sheen */
     content: ""; position: absolute; inset: 0;
-    background: linear-gradient(160deg, rgba(255, 255, 255, .28), transparent 42%);
+    background: linear-gradient(160deg, rgba(255, 255, 255, .34), transparent 45%);
   }
   .art .q {
     position: absolute; inset: 0; display: grid; place-items: center;
-    color: rgba(255, 255, 255, .78); font-size: calc(var(--art) * .42); font-weight: 700; line-height: 1;
+    color: rgba(255, 255, 255, .8); font-size: calc(var(--art) * .42); font-weight: 700; line-height: 1;
     text-shadow: 0 6px 24px rgba(var(--shade), .25);
   }
   .stage:has(.play[data-state="playing"]) .art {
-    transform: scale(1); box-shadow: 0 24px 50px rgba(var(--shade), .28);
+    transform: scale(1); box-shadow: 0 24px 50px rgba(40, 30, 80, .3), inset 0 0 0 1px rgba(255, 255, 255, .35);
     animation: drift 5s ease-in-out infinite alternate;
   }
   @keyframes drift { to { background-position: 70% 65%; } }
   .tl-label { margin-top: 2px; text-align: center; font-size: 15px; font-weight: 600; }   /* under the cover, like a song's title */
 
-  /* the play button: a round pink-red button with a white icon */
+  /* the play button: a round glass button with a dark icon */
   .play {
     position: relative;
     width: 64px; height: 64px;
     padding: 0; border: 0; border-radius: 50%;
-    background: var(--accent);
-    color: #fff;
+    color: var(--ink);
     cursor: pointer;
     display: block;
-    box-shadow: 0 6px 16px rgba(225, 29, 72, .35);
-    transition: transform .12s ease, background-color .15s ease;
+    transition: transform .12s ease;
   }
   @media (hover: hover) { .play:hover:not(:disabled) { transform: scale(1.06); } }
   .play:active:not(:disabled) { transform: scale(0.94); }
-  .play:disabled { cursor: progress; opacity: .45; }
+  .play:disabled { cursor: progress; opacity: .5; }
   .play svg { position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; transform: translate(-50%, -50%); fill: currentColor; }
   .play .i-play { margin-left: 2px; }                /* a triangle looks centred a little to the right of the middle */
   .play .i-pause { display: none; }
@@ -136,16 +157,16 @@
   .play[data-state="playing"] .i-pause { display: block; }
   .play[data-state="playing"]::after {
     content: ""; position: absolute; inset: -6px; border-radius: 50%;
-    border: 2px solid var(--accent); opacity: 0;
+    border: 2px solid var(--tint); opacity: 0;
     animation: pulse 1.2s ease-out infinite;
   }
   .play.invite[data-state="idle"]::after {          /* press play: a ring that grows from it, for a clip not yet played by hand */
-    content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid var(--accent); opacity: 0; pointer-events: none;
+    content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid var(--tint); opacity: 0; pointer-events: none;
     animation: ring 2.6s ease-out infinite;
   }
   .play[data-state="loading"]::after {
     content: ""; position: absolute; inset: -6px; border-radius: 50%;
-    border: 2px solid transparent; border-top-color: var(--accent);
+    border: 2px solid transparent; border-top-color: var(--tint);
     animation: spin .8s linear infinite;
   }
   @keyframes pulse { from { transform: scale(0.9); opacity: .6; } to { transform: scale(1.3); opacity: 0; } }
@@ -154,15 +175,16 @@
   .timeline-wrap { width: 100%; }
   .timeline {
     position: relative;
-    height: 5px;
+    height: 6px;
     border-radius: var(--pill);
-    background: var(--soft-2);
+    background: rgba(255, 255, 255, .6);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .6), 0 1px 3px rgba(40, 30, 80, .08);
     overflow: hidden;
   }
   .tl-unlocked, .tl-played { position: absolute; inset-block: 0; left: 0; }
-  .tl-unlocked { background: #c7c7cc; transition: width .35s ease; }
-  .tl-played { background: var(--accent); }
-  .tl-tick { position: absolute; inset-block: 0; width: 2px; background: var(--paper); }
+  .tl-unlocked { background: rgba(29, 29, 31, .2); transition: width .35s ease; }
+  .tl-played { background: var(--tint); }
+  .tl-tick { position: absolute; inset-block: 0; width: 2px; background: rgba(255, 255, 255, .9); }
   .tl-marks { position: relative; height: 18px; margin-top: 6px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
   .tl-marks span { position: absolute; transform: translateX(-50%); }
   .tl-marks span:last-child { transform: translateX(-100%); }
@@ -171,31 +193,29 @@
   .guess { margin-top: 18px; }
   .guess[hidden] { display: none; }
   .combo { position: relative; }
-  .combo .i-search { position: absolute; inset-inline-start: 14px; top: 15px; width: 20px; height: 20px; fill: none; stroke: var(--mid); stroke-width: 2; pointer-events: none; }
+  .combo .i-search { position: absolute; inset-inline-start: 14px; top: 15px; z-index: 1; width: 20px; height: 20px; fill: none; stroke: var(--muted); stroke-width: 2; pointer-events: none; }
   .combo input {
     width: 100%; height: 50px; padding: 0 16px; padding-inline-start: 44px;
-    background: var(--soft-2);
     border: 0; border-radius: var(--r-m);
     font-size: 17px;
-    transition: background-color .15s ease, box-shadow .15s ease;
+    transition: box-shadow .15s ease;
   }
   .combo input::placeholder { color: var(--muted); }
-  .combo input:focus { outline: none; background: var(--paper); box-shadow: 0 0 0 2px var(--accent); }
+  .combo input:focus { outline: none; background: var(--glass-strong); box-shadow: var(--edge), 0 0 0 2px var(--tint), var(--lift); }
   .list {
     position: absolute; z-index: 5; inset-inline: 0; top: calc(100% + 8px);
     margin: 0; padding: 4px 0; list-style: none;
-    background: var(--paper);
+    background: var(--glass-strong);
     border-radius: var(--r-m);
-    box-shadow: 0 12px 36px rgba(var(--shade), .16), 0 0 0 1px rgba(var(--shade), .05);
     max-height: 320px; overflow-y: auto;
   }
   .list[hidden] { display: none; }
   .list li { position: relative; padding: 11px 16px; cursor: pointer; touch-action: manipulation; }
-  .list li + li::before { content: ""; position: absolute; top: 0; inset-inline: 16px 0; height: 1px; background: var(--soft-2); }   /* inset separators */
+  .list li + li::before { content: ""; position: absolute; top: 0; inset-inline: 16px 0; height: 1px; background: rgba(29, 29, 31, .08); }   /* inset separators */
   .list li b { display: block; font-weight: 600; }
   .list li small { display: block; color: var(--muted); font-size: 14px; }
-  .list li[aria-selected="true"] { background: var(--soft); }
-  @media (hover: hover) { .list li:hover { background: var(--soft); } }
+  .list li[aria-selected="true"] { background: rgba(255, 255, 255, .7); }
+  @media (hover: hover) { .list li:hover { background: rgba(255, 255, 255, .7); } }
   .list li.status { color: var(--muted); font-size: 14px; cursor: default; }
   @media (hover: hover) { .list li.status:hover { background: none; } }
   /* typing mode: while the guess field has focus, the cover steps aside and the play button sits small beside the line,
@@ -204,7 +224,7 @@
   .app.typing .bar { display: none; }
   .app.typing .stage { margin-top: 10px; flex-direction: row; align-items: center; gap: 16px; width: 100%; }
   .app.typing .art { display: none; }
-  .app.typing .play { width: 44px; height: 44px; flex: none; order: -1; box-shadow: none; }
+  .app.typing .play { width: 44px; height: 44px; flex: none; order: -1; }
   .app.typing .play svg { width: 18px; height: 18px; }
   .app.typing .play.invite::after { display: none; }   /* no ring while typing: it would run off the edge */
   .app.typing .timeline-wrap { flex: 1; min-width: 0; }
@@ -216,23 +236,26 @@
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     height: 50px; padding: 0 22px; border: 0; border-radius: var(--pill);
     font-weight: 600; font-size: 16px; cursor: pointer;
-    transition: transform .1s ease, background-color .15s ease, opacity .15s ease;
+    transition: transform .1s ease, opacity .15s ease, filter .15s ease;
   }
   .btn:active:not(:disabled) { transform: scale(0.97); }
   .btn:disabled { cursor: not-allowed; }
-  /* the main action: filled pink-red; disabled it turns grey */
-  .btn.primary { background: var(--accent); color: #fff; }
-  .btn.primary:disabled { background: var(--soft-2); color: var(--mid); }
-  @media (hover: hover) { .btn.primary:hover:not(:disabled) { background: #cc1840; } }
-  /* a second action: a grey pill with pink-red text */
-  .btn.ghost { background: var(--soft); color: var(--accent-ink); }
-  .btn.ghost:disabled { opacity: .4; }
-  @media (hover: hover) { .btn.ghost:hover:not(:disabled) { background: var(--soft-2); } }
-  /* "skip" sits under the play button: a pink-tinted pill with a + */
-  .btn.skip { height: 40px; padding: 0 18px; background: var(--accent-tint); color: var(--accent-ink); font-size: 15px; }
+  /* the main action: dark glass with white text; disabled it is clear glass with grey text */
+  .btn.primary, .result .btn.share, .fb .btn.send {
+    background: var(--glass-dark); color: #fff;
+    -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+    box-shadow: var(--edge-dark), 0 10px 26px rgba(20, 15, 40, .22);
+  }
+  .btn.primary:disabled, .fb .btn.send:disabled { background: var(--glass); color: var(--muted); box-shadow: var(--edge), var(--lift); }
+  @media (hover: hover) { .btn.primary:hover:not(:disabled), .result .btn.share:hover, .fb .btn.send:hover:not(:disabled) { filter: brightness(1.25); } }
+  /* a second action: a clear glass pill with dark text */
+  .btn.ghost { color: var(--ink); }
+  .btn.ghost:disabled { opacity: .5; }
+  @media (hover: hover) { .btn.ghost:hover:not(:disabled), .btn.skip:hover:not(:disabled) { background: var(--glass-strong); } }
+  /* "skip" sits under the play button: a small glass pill with a + */
+  .btn.skip { height: 40px; padding: 0 18px; color: var(--ink); font-size: 15px; }
   .btn.skip .i-plus { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2.4; }
   .btn.skip.reveal .i-plus { display: none; }        /* the last attempt: "show me the song" adds nothing */
-  @media (hover: hover) { .btn.skip:hover:not(:disabled) { background: #fbd5de; } }
   .app.typing .btn.skip { display: none; }           /* while typing the guess, the stage is one small row */
   .guess .actions { grid-template-columns: 1fr; }   /* the guess button across the width */
   .guess .note { margin: 16px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; text-align: center; }   /* playback differs between phones and networks */
@@ -245,16 +268,16 @@
   /* the song, one line: the band, a colon, the title; it sits between the share button and the video */
   .song-line { margin: 28px 0 0; text-align: center; font-size: 21px; font-weight: 700; line-height: 1.35; }
   .song-line .by { color: var(--muted); font-weight: 400; }
-  /* the score: one tile per attempt. A tick on the accent is the right answer, a cross on ink a wrong one, a plain grey
-     tile a skip, and a hollow slot an attempt that was not needed. They pop in one after the other. */
+  /* the score: one tile per attempt. A tick on pink-red is the right answer, a cross on ink a wrong one, a grey tile a
+     skip, and a clear glass slot an attempt that was not needed. They pop in one after the other. */
   .squares { display: flex; justify-content: center; gap: 6px; margin: 16px 0; }
   .squares i {
-    position: relative; flex: 1 1 0; max-width: 30px; aspect-ratio: 1; border-radius: 7px;
-    box-shadow: inset 0 0 0 1.5px var(--soft-2);
+    position: relative; flex: 1 1 0; max-width: 30px; aspect-ratio: 1; border-radius: 8px;
+    background: rgba(255, 255, 255, .5); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .7);
     animation: tile .4s cubic-bezier(.2, .8, .2, 1) calc(var(--n, 0) * 55ms) backwards;
   }
-  .squares i.skip { background: #d1d1d6; box-shadow: none; }
-  .squares i.win, .squares i.bad { box-shadow: 0 3px 8px rgba(var(--shade), .18); }
+  .squares i.skip { background: rgba(29, 29, 31, .18); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3); }
+  .squares i.win, .squares i.bad { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 3px 8px rgba(var(--shade), .18); }
   .squares i.win { background: var(--accent); }
   .squares i.bad { background: var(--ink); }
   .squares i.win::after {
@@ -270,8 +293,6 @@
   .result .btn { width: 100%; }
   a.btn { text-decoration: none; }
   .btn svg { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
-  .result .btn.share { background: var(--accent); color: #fff; }
-  @media (hover: hover) { .result .btn.share:hover { background: #cc1840; } }
   .btn[hidden] { display: none; }
   .next { margin: 12px 0 0; color: var(--muted); font-size: 14px; }
   .next b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -287,16 +308,12 @@
     position: static; left: auto;
     width: 100%; height: auto; aspect-ratio: 16 / 9;
     margin-top: 16px; pointer-events: auto;
-    border-radius: var(--r-m); overflow: hidden; box-shadow: var(--shadow);
+    border-radius: var(--r-m); overflow: hidden; box-shadow: 0 0 0 1px rgba(255, 255, 255, .6), var(--lift);
   }
 
-  .notice {
-    margin: 16px 0 0; padding: 12px 16px;
-    background: var(--soft); border-radius: var(--r-m);
-    font-size: 14px;
-  }
+  .notice { margin: 16px 0 0; padding: 12px 16px; border-radius: var(--r-m); font-size: 14px; }
   .notice[hidden] { display: none; }
-  .notice code { direction: ltr; unicode-bidi: embed; background: var(--soft-2); padding: 1px 6px; border-radius: 6px; }
+  .notice code { direction: ltr; unicode-bidi: embed; background: rgba(255, 255, 255, .7); padding: 1px 6px; border-radius: 6px; }
   .foot { margin-top: 32px; text-align: center; color: var(--muted); font-size: 13px; }
   .foot.credit { margin-top: 6px; }
 
@@ -304,8 +321,8 @@
   .app[data-screen="home"] > :not([data-s~="home"]),
   .app[data-screen="game"] > :not([data-s~="game"]) { display: none; }
   .bar { display: flex; align-items: center; }
-  .back { width: 40px; height: 40px; display: grid; place-items: center; padding: 0; background: var(--soft); border: 0; border-radius: 50%; color: var(--ink); cursor: pointer; }
-  @media (hover: hover) { .back:hover { background: var(--soft-2); } }
+  .back { width: 40px; height: 40px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; color: var(--ink); cursor: pointer; }
+  @media (hover: hover) { .back:hover { background: var(--glass-strong); } }
   .back svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; }
   .start { margin-top: 28px; text-align: center; }
   .status { margin: 10px 0 0; color: var(--muted); font-size: 15px; }
@@ -316,7 +333,7 @@
   .sleeve {
     position: absolute; left: 50%; top: 0; width: var(--s); height: var(--s); margin-left: calc(var(--s) / -2);
     background: var(--soft-2); border-radius: var(--r-s); overflow: hidden;
-    box-shadow: 0 10px 24px rgba(var(--shade), .18), 0 0 0 1px rgba(var(--shade), .04);
+    box-shadow: 0 12px 28px rgba(40, 30, 80, .22), 0 0 0 1px rgba(255, 255, 255, .4);
     z-index: var(--z, 1);
     transform: translate(calc(var(--s) * var(--x)), var(--y)) rotate(var(--r));
     transition: transform .9s cubic-bezier(.45, .05, .2, 1);   /* a change of seat glides */
@@ -328,18 +345,19 @@
   .sleeve .a { fill: var(--accent); } .sleeve .l { fill: var(--accent-l); } .sleeve .i { fill: var(--ink); }
   .sleeve .p { fill: var(--paper); } .sleeve .s { fill: var(--soft-2); }
   @keyframes deal { from { transform: translate(0, 26px) rotate(0deg) scale(.7); } }
-  /* the way in: a filled pink-red pill with a play icon */
+  /* the way in: a dark glass pill with a play icon */
   .startbtn {
     position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
     min-width: 200px; height: 56px; padding: 0 30px;
-    background: var(--accent); color: #fff; border: 0; border-radius: var(--pill);
+    background: var(--glass-dark); color: #fff; border: 0; border-radius: var(--pill);
+    -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
     font-size: 19px; font-weight: 700; cursor: pointer;
-    box-shadow: 0 10px 24px rgba(225, 29, 72, .35);
-    transition: transform .12s ease, background-color .15s ease;
+    box-shadow: var(--edge-dark), 0 12px 30px rgba(20, 15, 40, .25);
+    transition: transform .12s ease, filter .15s ease;
     animation: rise .7s cubic-bezier(.2, .8, .2, 1) .5s both;
   }
   .startbtn svg { width: 20px; height: 20px; fill: currentColor; }
-  @media (hover: hover) { .startbtn:hover { background: #cc1840; } }
+  @media (hover: hover) { .startbtn:hover { filter: brightness(1.25); } }
   .startbtn:active { transform: scale(.97); }
   @keyframes rise { from { transform: translateY(14px) scale(.9); opacity: 0; } }
   @keyframes ring { 0% { transform: scale(1); opacity: .6; } 100% { transform: scale(1.45); opacity: 0; } }
@@ -352,13 +370,10 @@
   .remind { font-size: 15px; }
   .remind p { margin: 0 0 12px; color: var(--muted); font-size: 14px; text-align: center; }
   .remind label { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 12px; }
-  .remind input[type="time"] {
-    height: 42px; padding: 0 12px; border: 0; border-radius: 10px;
-    background: var(--soft-2); color: var(--ink); font: inherit; font-weight: 600;
-  }
+  .remind input[type="time"] { height: 42px; padding: 0 12px; border: 0; border-radius: 12px; color: var(--ink); font: inherit; font-weight: 600; }
   .remind .actions .btn { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 58px; border-radius: var(--r-m); font-size: 15px; text-align: center; text-decoration: none; line-height: 1.25; }
   .remind .actions .btn small { color: var(--muted); font-size: 12px; font-weight: 400; }
-  .remind .alt { display: block; width: 100%; margin-top: 10px; padding: 6px; background: none; border: 0; color: var(--accent-ink); font: inherit; font-size: 13px; cursor: pointer; }
+  .remind .alt { display: block; width: 100%; margin-top: 10px; padding: 6px; background: none; border: 0; color: var(--ink); font: inherit; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
   .remind .alt[hidden] { display: none; }
 
   /* feedback: a quiet line of text above the credit opens a dialog with a message and an email address that is optional */
@@ -366,24 +381,19 @@
   .fbrow[hidden] { display: none; }
   .fblink {
     display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 6px;
-    background: none; border: 0; color: var(--accent-ink); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+    background: none; border: 0; color: var(--ink); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
   }
   .fblink svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; }
   @media (hover: hover) { .fblink:hover { text-decoration: underline; text-underline-offset: 3px; } }
   .fb h2 { margin: 0 0 6px; font-size: 22px; font-weight: 700; text-align: center; }
   .fb h2:focus { outline: none; }
   .fb .lead { margin: 0 0 14px; color: var(--muted); font-size: 14px; text-align: center; }
-  .fb textarea, .fb input[type="email"] {
-    display: block; width: 100%; padding: 12px 14px; border: 0; border-radius: var(--r-m);
-    background: var(--soft-2); color: var(--ink); font: inherit; font-size: 16px;
-  }
+  .fb textarea, .fb input[type="email"] { display: block; width: 100%; padding: 12px 14px; border: 0; border-radius: var(--r-m); color: var(--ink); font: inherit; font-size: 16px; }
   .fb textarea { height: 120px; resize: none; }
-  .fb textarea:focus, .fb input[type="email"]:focus { outline: none; background: var(--paper); box-shadow: 0 0 0 2px var(--accent); }
+  .fb textarea:focus, .fb input[type="email"]:focus { outline: none; background: var(--glass-strong); box-shadow: var(--edge), 0 0 0 2px var(--tint); }
   .fb label { display: block; margin: 14px 0 6px; font-size: 14px; font-weight: 600; }
   .fb label small { color: var(--muted); font-size: 13px; font-weight: 400; }
   .fb .btn { margin-top: 12px; }
-  .fb .btn.send { background: var(--accent); color: #fff; }
-  .fb .btn.send:disabled { background: var(--soft-2); color: var(--mid); }
   .fb .note { min-height: 20px; margin: 10px 0 0; color: var(--muted); font-size: 13px; text-align: center; }
   .fb .note.bad { color: var(--accent-ink); font-weight: 600; }
   .fb .thanks { padding: 18px 0 4px; text-align: center; }
@@ -394,9 +404,9 @@
   .toast {
     position: fixed; inset-inline: 0; bottom: 24px; margin: 0 auto; width: max-content; max-width: calc(100% - 32px);
     padding: 12px 20px; border-radius: var(--pill);
-    background: rgba(29, 29, 31, .88); color: #fff; font-size: 15px; font-weight: 600;
-    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-    box-shadow: var(--shadow);
+    background: var(--glass-dark); color: #fff; font-size: 15px; font-weight: 600;
+    -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+    box-shadow: var(--edge-dark), 0 10px 26px rgba(20, 15, 40, .25);
     opacity: 0; transform: translateY(12px); pointer-events: none;
     transition: opacity .2s ease, transform .2s ease;
   }
@@ -410,36 +420,36 @@
   .links { margin: 10px 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 16px; font-size: 15px; }
   .link {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 0; border: 0; background: none; color: var(--accent-ink); font: inherit; font-weight: 600;
-    text-decoration: none; white-space: nowrap; cursor: pointer;
+    padding: 0; border: 0; background: none; color: var(--ink); font: inherit; font-weight: 600;
+    text-decoration: underline; text-decoration-color: var(--tint); text-underline-offset: 3px; white-space: nowrap; cursor: pointer;
   }
   .link[hidden] { display: none; }
   .link svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
-  dialog.cal { width: min(92vw, 380px); padding: 0; border: 0; border-radius: var(--r-l); background: var(--paper); color: var(--ink); box-shadow: 0 24px 64px rgba(var(--shade), .28); }
-  dialog.cal::backdrop { background: rgba(var(--shade), .32); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  dialog.cal { width: min(92vw, 380px); padding: 0; border: 0; border-radius: var(--r-l); color: var(--ink); background: var(--glass-strong); box-shadow: var(--edge), 0 30px 70px rgba(20, 15, 40, .28); }
+  dialog.cal::backdrop { background: rgba(30, 20, 60, .18); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
   .cal-body { padding: 20px 18px 18px; }
   .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .cal-head h2 { margin: 0; font-size: 22px; font-weight: 700; }
-  .cal-nav { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--soft); color: var(--ink); cursor: pointer; }
+  .cal-nav { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 50%; color: var(--ink); cursor: pointer; }
   .cal-nav:disabled { opacity: .3; cursor: default; }
   .cal-nav svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
   .cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; text-align: center; }   /* small squares with air between them */
   .cal-week { margin-bottom: 6px; color: var(--muted); font-size: 13px; font-weight: 600; }
   .cal-day {
     position: relative; display: block; aspect-ratio: 1; padding: 0;
-    border: 0; border-radius: var(--r-s); background: var(--soft); color: var(--ink);
+    border: 0; border-radius: var(--r-s); color: var(--ink);
     font: inherit; font-size: 15px; font-weight: 600; font-style: normal; line-height: 1; cursor: pointer;
   }
   button.cal-day { line-height: normal; }
   .cal-day:disabled { background: transparent; color: var(--mid); font-weight: 400; cursor: default; }
-  .cal-day.today { box-shadow: inset 0 0 0 2px var(--ink); }
+  .cal-day.today { box-shadow: var(--edge), inset 0 0 0 2px var(--ink); }
   .cal-day.today.won, .cal-day.today.lost { box-shadow: none; }   /* filled, today shows by the outline of the day on screen */
-  .cal-day.current { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .cal-day.current { outline: 2px solid var(--tint); outline-offset: 2px; }
   /* a played day is a filled square in the colours of the result's tiles: guessed in pink-red, missed in ink, started in
-     grey; a day not played yet is light grey */
-  .cal-day.won { background: var(--accent); color: #fff; }
-  .cal-day.lost { background: var(--ink); color: #fff; }
-  .cal-day.going { background: #d1d1d6; }
+     grey; a day not played yet is clear glass */
+  .cal-day.won { background: var(--accent); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3); }
+  .cal-day.lost { background: var(--ink); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2); }
+  .cal-day.going { background: rgba(29, 29, 31, .18); }
   .cal-key { display: flex; flex-wrap: wrap; gap: 8px 12px; margin: 16px 0; color: var(--muted); font-size: 13px; }
   .cal-key span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
   .cal-key .cal-day { width: 22px; border-radius: 6px; font-size: 12px; display: inline-grid; place-items: center; cursor: default; }
@@ -660,7 +670,7 @@
   const asked = parseInt(params.get('day'), 10);    // ?day=2 plays an earlier day, saved like any other; later days are not open yet
   const dayNo = previewMode ? (asked || today) : asked >= 1 && asked <= today ? asked : today;
   const isToday = dayNo === today;
-  document.getElementById('art').style.setProperty('--h', (dayNo * 137) % 360);   // the mystery cover's colours change every day
+  document.documentElement.style.setProperty('--h', (dayNo * 137) % 360);   // the day's hue: the wash behind the glass, the mystery cover, the rings
 
   // ---------- events (Vercel Web Analytics) ----------
   // Small anonymous events that say how the game is used. Only numbers, words and true/false are sent: never what someone
