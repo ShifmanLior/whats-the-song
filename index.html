@@ -250,11 +250,11 @@
   .btn.ghost { background: var(--soft); color: var(--ink); }
   .btn.ghost:disabled { opacity: .45; }
   @media (hover: hover) { .btn.ghost:hover:not(:disabled), .btn.skip:hover:not(:disabled) { background: var(--soft-2); } }
-  /* "skip" sits under the play button: a small grey pill with a + */
+  /* "skip" sits under the play button: a small grey pill that names the attempt it leads to */
   .btn.skip { height: 40px; padding: 0 var(--sp-4); background: var(--soft); color: var(--ink); font-size: 15px; }
-  .btn.skip .i-plus { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2.4; }
-  .btn.skip.reveal .i-plus { display: none; }        /* the last attempt: "show me the song" adds nothing */
   .app.typing .btn.skip { display: none; }           /* while typing the guess, the stage is one small row */
+  .hint { margin: 0; color: var(--muted); font-size: 13px; text-align: center; }   /* under the play button: playing again is free */
+  .app.typing .hint { display: none; }
   .guess .actions { grid-template-columns: 1fr; }   /* the guess button across the width */
   .guess .note { margin: var(--sp-4) 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; text-align: center; }   /* playback differs between phones and networks */
   .app.typing .guess .note { display: none; }
@@ -471,7 +471,7 @@
     .guess { margin-top: var(--sp-4); }
     .guess .note { font-size: 11px; }                 /* its two lines fit the card on a phone */
   }
-  @media (max-width: 360px) { .tl-label { font-size: 14px; } }
+  @media (max-width: 360px) { .tl-label { font-size: 14px; } .combo input { font-size: 15px; } }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
@@ -508,7 +508,7 @@
     </button>
     <p class="status" id="homeStatus"></p>
   </section>
-  <p class="lead" data-s="home" data-when="before">שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה, עד 5 שניות.</p>
+  <p class="lead" data-s="home" data-when="before">שיר חדש בכל יום. משמיעים את הקטע כמה פעמים שרוצים, מחפשים ובוחרים מהרשימה (החיפוש לא עולה כלום). כל דילוג או ניחוש שגוי הוא ניסיון, ומוסיף עוד חצי שנייה. 10 ניסיונות, עד 5 שניות.</p>
 
   <div class="bar" data-s="game">
     <button class="back" id="backBtn" type="button" aria-label="חזרה למסך הראשי"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
@@ -528,7 +528,8 @@
       <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z"/></svg>
       <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>
     </button>
-    <button class="btn skip" id="skipBtn" type="button"><svg class="i-plus" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span id="skipText">עוד חצי שנייה</span></button>
+    <p class="hint" id="playHint">אפשר להשמיע כמה פעמים שרוצים</p>
+    <button class="btn skip" id="skipBtn" type="button"><span id="skipText">דלגו לניסיון 2 (⁦+½⁩ שנייה)</span></button>
   </section>
 
   <section class="guess" id="guess" data-s="game" aria-label="ניחוש">
@@ -536,7 +537,7 @@
       <label class="sr-only" for="q">חפשו שיר או אמן</label>
       <svg class="i-search" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/></svg>
       <input id="q" type="text" role="combobox" aria-expanded="false" aria-controls="list" aria-autocomplete="list"
-             autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="התחילו להקליד ובחרו מהרשימה">
+             autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="חפשו שיר או אמן (לא עולה ניסיון)">
       <ul class="list" id="list" role="listbox" aria-label="הצעות" hidden></ul>
     </div>
     <div class="actions">
@@ -766,8 +767,8 @@
     $('tlLabel').textContent = `${secsText(s)} מתחילת השיר, ניסיון ${Math.min(rec.g.length + 1, STAGES.length)} מתוך ${STAGES.length}`;
     const i = rec.g.length;
     const last = i >= STAGES.length - 1;
-    $('skipText').textContent = last ? 'גלו לי את השיר' : `עוד ${secsText(STAGES[i + 1] - STAGES[i])}`;
-    $('skipBtn').classList.toggle('reveal', last);
+    const step = STAGES[Math.min(i + 1, STAGES.length - 1)] - STAGES[i];
+    $('skipText').textContent = last ? 'גלו לי את השיר' : `דלגו לניסיון ${i + 2} (${step === 0.5 ? '\u2066+½\u2069 שנייה' : '+' + secsText(step)})`;   // a skip is an attempt: say so. "+½" is isolated left to right, or the Hebrew around it turns it into "½+"
     renderInvite();
     $('stage').hidden = rec.done;
     $('guess').hidden = rec.done;
