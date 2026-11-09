@@ -355,7 +355,7 @@
   .remind { font-size: 15px; }
   .remind p { margin: 0 0 var(--sp-3); color: var(--muted); font-size: 14px; text-align: center; }
   .remind label { display: flex; align-items: center; justify-content: center; gap: var(--sp-3); margin-bottom: var(--sp-3); }
-  .remind input[type="time"] { height: 42px; padding: 0 var(--sp-3); border: 0; border-radius: 10px; background: var(--soft); color: var(--ink); font: inherit; font-weight: 400; }
+  .remind input[type="time"] { height: 42px; padding: 0 var(--sp-3); border: 0; border-radius: 10px; background: var(--soft-2); color: var(--ink); font: inherit; font-weight: 400; }
   .remind .actions .btn { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 58px; border-radius: var(--r-m); font-size: 15px; text-align: center; text-decoration: none; line-height: 1.25; }
   .remind .actions .btn small { color: var(--muted); font-size: 13px; font-weight: 300; }
   .remind .alt { display: block; width: 100%; margin-top: var(--sp-3); padding: var(--sp-2); background: none; border: 0; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; font: inherit; font-size: 13px; cursor: pointer; }
@@ -373,7 +373,7 @@
   .fb h2 { margin: 0 0 var(--sp-2); font-size: 24px; font-weight: 200; text-align: center; }
   .fb h2:focus { outline: none; }
   .fb .lead { margin: 0 0 var(--sp-4); color: var(--muted); font-size: 14px; text-align: center; }
-  .fb textarea, .fb input[type="email"] { display: block; width: 100%; padding: var(--sp-3) var(--sp-4); border: 0; border-radius: var(--r-m); background: var(--soft); color: var(--ink); font: inherit; font-size: 16px; }
+  .fb textarea, .fb input[type="email"] { display: block; width: 100%; padding: var(--sp-3) var(--sp-4); border: 0; border-radius: var(--r-m); background: var(--soft-2); color: var(--ink); font: inherit; font-size: 16px; }
   .fb textarea { height: 120px; resize: none; }
   .fb textarea:focus, .fb input[type="email"]:focus { outline: none; background: var(--paper); box-shadow: 0 0 0 2px var(--accent); }
   .fb label { display: block; margin: var(--sp-4) 0 var(--sp-2); font-size: 15px; font-weight: 400; }
@@ -410,37 +410,39 @@
   .link svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
   dialog.cal {
     width: min(92vw, 380px); padding: 0; border: 0; border-radius: var(--r-card); color: var(--ink);
-    background: rgba(255, 255, 255, .9); -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%);
+    background: var(--paper);                       /* solid: a see-through sheet took the colours of the page behind it and its light parts faded */
     box-shadow: 0 30px 70px rgba(var(--shade), .25);
   }
   dialog.cal::backdrop { background: rgba(var(--shade), .25); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
   .cal-body { padding: var(--sp-5) var(--sp-4) var(--sp-4); }
   .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-4); }
   .cal-head h2 { margin: 0; font-size: 24px; font-weight: 200; }
-  .cal-nav { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--soft); color: var(--ink); cursor: pointer; }
+  .cal-nav { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid #d1d1d6; border-radius: 50%; background: var(--soft-2); color: var(--ink); cursor: pointer; }
   .cal-nav:disabled { opacity: .3; cursor: default; }
   .cal-nav svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
   .cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--sp-3); text-align: center; }   /* small squares with air between them */
   .cal-week { margin-bottom: var(--sp-2); color: var(--muted); font-size: 13px; font-weight: 400; }
   .cal-day {
     position: relative; display: block; aspect-ratio: 1; padding: 0;
-    border: 0; border-radius: var(--r-s); background: var(--soft); color: var(--ink);
+    border: 1.5px solid #c7c7cc; border-radius: var(--r-s); background: var(--paper); color: var(--ink);   /* a day to play: a white box with a clear frame */
     font: inherit; font-size: 16px; font-weight: 400; font-style: normal; line-height: 1; cursor: pointer;
   }
   button.cal-day { line-height: normal; }
-  .cal-day:disabled { background: transparent; color: var(--mid); font-weight: 300; cursor: default; }
-  .cal-day.today { box-shadow: inset 0 0 0 2px var(--ink); }
+  .cal-day:disabled { background: transparent; border-color: transparent; color: var(--mid); font-weight: 300; cursor: default; }
+  .cal-day.today { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
   .cal-day.today.won, .cal-day.today.lost { box-shadow: none; }   /* filled, today shows by the outline of the day on screen */
   .cal-day.current { outline: 2px solid var(--accent); outline-offset: 2px; }
   /* a played day is a filled square in the colours of the result's tiles: guessed in blue, missed in ink, started in
      grey; a day not played yet is light grey */
-  .cal-day.won { background: var(--accent); color: #fff; }
-  .cal-day.lost { background: var(--ink); color: #fff; }
-  .cal-day.going { background: #d1d1d6; }
+  .cal-day.won { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .cal-day.lost { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .cal-day.going { background: #d1d1d6; border-color: #b8b8bd; }
   .cal-key { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-3); margin: var(--sp-4) 0; color: var(--muted); font-size: 13px; }
   .cal-key span { display: inline-flex; align-items: center; gap: var(--sp-2); white-space: nowrap; }
   .cal-key .cal-day { width: 22px; border-radius: 6px; font-size: 12px; display: inline-grid; place-items: center; cursor: default; }
   .cal-body .btn { width: 100%; }
+  dialog.cal .btn.ghost { background: var(--soft-2); }   /* on the white sheet the second actions need a stronger grey */
+  @media (hover: hover) { dialog.cal .btn.ghost:hover:not(:disabled) { background: #d8d8de; } }
 
   /* phones: the card sits close to the screen's edges, with a little less padding */
   @media (max-width: 480px) {
