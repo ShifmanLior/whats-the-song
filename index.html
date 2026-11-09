@@ -13,25 +13,28 @@
 <meta property="og:description" content="שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה.">
 <meta property="og:url" content="https://whats-the-song.vercel.app/">
 <meta property="og:locale" content="he_IL">
-<meta property="og:image" content="https://whats-the-song.vercel.app/og.png?v=8">
+<meta property="og:image" content="https://whats-the-song.vercel.app/og.png?v=9">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="תו השעה: מניפת עטיפות אלבומים מאוירות ותקליט עם כפתור נגינה, שיר חדש בכל יום">
+<meta property="og:image:alt" content="תו השעה: מניפת עטיפות אלבומים מאוירות, הכותרת וכפתור שחקו, שיר חדש בכל יום">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@200;300;400&display=swap" rel="stylesheet">
 <style>
 
   /* Clean and bright: a quiet light-grey page with one white rounded card in the middle that holds everything. Near-black
-     text, grey secondary text, the device's own font in fine weights (titles 600, labels 500, text 400). The main buttons
-     are black (--btn) with white text. One blue accent for state, not for buttons: --accent for the progress, a right
+     text, grey secondary text, Assistant in thin, delicate weights (titles 200, text 300, labels and buttons 400). The main buttons
+     and the play button are blue (--btn, a subtle gradient) with white text; the skip button light blue. Blue also
+     marks state: --accent for the progress, a right
      answer and focus (white on it 4.7:1), --accent-ink for blue link text (5.6:1 on white). Small rounded "app icon" tiles with
-     gradients mark the stats and the links. The mystery cover keeps the day's colours (--h, set by the main script).
+     gradients mark the stats and the links.
      State is still shown with fill, icons and shape as well as colour. Light only.
      Spacing: one scale on a 4px base, --sp-1 4px to --sp-7 48px. Small steps inside a component, middle steps between
      related items, large steps between groups and around the card. Control heights (40/44/50/56px) are sizes, not
      spacing. */
   :root {
     color-scheme: light;
-    --h: 330;
     --page: #f5f5f7;
     --paper: #ffffff;
     --ink: #1d1d1f;
@@ -42,8 +45,11 @@
     --mid: #86868b;
     --accent: #0071e3;
     --accent-ink: #0066cc;
-    --btn: #1d1d1f;                                 /* the main buttons: black with white text */
-    --btn-hover: #3a3a3c;
+    --btn: linear-gradient(180deg, #2474d8 0%, #005bbf 100%);   /* the main buttons: blue with a subtle gradient, white text (4.6:1 at its lightest) */
+    --btn-hover: linear-gradient(180deg, #2f80e4 0%, #0a66cc 100%);
+    --btn-shadow: 0, 91, 191;                       /* the colour of their shadows, as r, g, b */
+    --accent-tint: #e8f1fd;                         /* a light blue for the skip button, under blue text (4.9:1) */
+    --btn-edge: inset 0 1px 0 rgba(255, 255, 255, .14);       /* a faint light top edge on them */
     --accent-l: #bcd9f7;
     --shade: 0, 0, 0;                               /* the colour of shadows, as r, g, b */
     --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px; --sp-7: 48px;
@@ -51,7 +57,6 @@
     --r-s: 8px; --r-m: 12px; --r-l: 18px; --r-card: 28px; --pill: 999px;
     --shadow-card: 0 1px 2px rgba(var(--shade), .04), 0 12px 40px rgba(var(--shade), .08);
     --shadow-tile: 0 1px 2px rgba(var(--shade), .04), 0 4px 16px rgba(var(--shade), .07);
-    --art: min(52vw, 26vh, 240px);                  /* the mystery cover on the game screen */
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
@@ -63,9 +68,9 @@
     overflow-x: clip;
     background: var(--page);
     color: var(--ink);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Hebrew", Arial, sans-serif;
+    font-family: "Assistant", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
     font-size: 17px;
-    font-weight: 400;
+    font-weight: 300;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
   }
@@ -86,7 +91,7 @@
 
   /* the name and the day, under the covers */
   .info { margin-top: var(--sp-3); text-align: center; }
-  h1 { margin: 0; font-size: 40px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.2; }
+  h1 { margin: 0; font-size: 50px; font-weight: 200; letter-spacing: -0.01em; line-height: 1.2; }
   .sub { margin: var(--sp-1) 0 0; color: var(--muted); font-size: 15px; }
   .lead { margin: var(--sp-5) 0 0; color: var(--muted); font-size: 15px; text-align: center; }   /* a group of its own under the start button */
   .app[data-state="after"] .sub.quiet { display: none; }
@@ -101,7 +106,7 @@
     display: flex; flex-direction: column; align-items: center; gap: var(--sp-1);
     background: var(--paper); border-radius: var(--r-l); box-shadow: var(--shadow-tile), inset 0 0 0 1px rgba(var(--shade), .04);
   }
-  .stat b { display: block; margin-top: var(--sp-1); font-size: 24px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .stat b { display: block; margin-top: var(--sp-1); font-size: 28px; font-weight: 200; line-height: 1.1; font-variant-numeric: tabular-nums; }
   .stat span { display: block; color: var(--muted); font-size: 13px; }
   /* an app-icon tile: a rounded square with a gradient and a white icon */
   .tile { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 2px 6px rgba(var(--shade), .14); }
@@ -113,67 +118,41 @@
   .t-flame svg { fill: currentColor; }
   .t-trophy svg, .t-cal svg, .t-bell svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-  /* player stage: a mystery cover, the status and the progress line under it, then the controls */
-  .stage { margin-top: var(--sp-2); display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
+  /* player stage: the status and the progress line, then the controls */
+  .stage { margin-top: var(--sp-5); display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
   .stage[hidden] { display: none; }
-  /* the cover of a song nobody has named yet, shaped like an app icon: blurred colours of the day's hue and a question
-     mark. Like a now-playing screen it is a little smaller while paused and grows while the clip plays. */
-  .art {
-    position: relative; width: var(--art); aspect-ratio: 1; border-radius: 22%; overflow: hidden;
-    background:
-      radial-gradient(circle at 28% 24%, hsl(var(--h) 90% 66%) 0, transparent 58%),
-      radial-gradient(circle at 78% 72%, hsl(calc(var(--h) + 55) 85% 58%) 0, transparent 56%),
-      radial-gradient(circle at 76% 18%, hsl(calc(var(--h) + 150) 75% 62%) 0, transparent 50%),
-      radial-gradient(circle at 20% 82%, hsl(calc(var(--h) + 230) 70% 52%) 0, transparent 55%),
-      linear-gradient(135deg, hsl(calc(var(--h) + 200) 55% 34%), hsl(calc(var(--h) + 300) 60% 24%));
-    background-size: 160% 160%; background-position: 30% 30%;
-    box-shadow: 0 16px 36px rgba(var(--shade), .2), inset 0 1px 0 rgba(255, 255, 255, .35);
-    transform: scale(.92); transform-origin: 50% 100%;   /* paused it shrinks towards the status under it, so that gap stays true */
-    transition: transform .45s cubic-bezier(.3, 1.4, .5, 1), box-shadow .45s ease;
-  }
-  .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(160deg, rgba(255, 255, 255, .3), transparent 45%); }   /* a soft sheen */
-  .art .q {
-    position: absolute; inset: 0; display: grid; place-items: center;
-    color: rgba(255, 255, 255, .8); font-size: calc(var(--art) * .42); font-weight: 600; line-height: 1;
-    text-shadow: 0 6px 24px rgba(var(--shade), .25);
-  }
-  .stage:has(.play[data-state="playing"]) .art {
-    transform: scale(1); box-shadow: 0 22px 48px rgba(var(--shade), .26), inset 0 1px 0 rgba(255, 255, 255, .35);
-    animation: drift 5s ease-in-out infinite alternate;
-  }
-  @keyframes drift { to { background-position: 70% 65%; } }
-  .tl-label { text-align: center; font-size: 15px; font-weight: 500; }   /* under the cover, like a song's title */
+  .tl-label { text-align: center; font-size: 16px; font-weight: 400; }   /* over the progress line it describes */
 
-  /* the play button: a round black button with a white icon */
+  /* the play button: a round blue button with a white icon */
   .play {
     position: relative;
-    width: 64px; height: 64px;
+    width: 80px; height: 80px;
     padding: 0; border: 0; border-radius: 50%;
     background: var(--btn); color: #fff;
     cursor: pointer;
     display: block;
-    box-shadow: 0 6px 16px rgba(var(--shade), .22);
+    box-shadow: var(--btn-edge), 0 6px 18px rgba(var(--btn-shadow), .3);
     transition: transform .12s ease, background-color .15s ease;
   }
   @media (hover: hover) { .play:hover:not(:disabled) { transform: scale(1.06); } }
   .play:active:not(:disabled) { transform: scale(0.94); }
   .play:disabled { cursor: progress; opacity: .45; }
-  .play svg { position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; transform: translate(-50%, -50%); fill: currentColor; }
+  .play svg { position: absolute; left: 50%; top: 50%; width: 32px; height: 32px; transform: translate(-50%, -50%); fill: currentColor; }
   .play .i-pause { display: none; }
   .play[data-state="playing"] .i-play { display: none; }
   .play[data-state="playing"] .i-pause { display: block; }
   .play[data-state="playing"]::after {
     content: ""; position: absolute; inset: -6px; border-radius: 50%;
-    border: 2px solid rgba(29, 29, 31, .5); opacity: 0;
+    border: 2px solid rgba(0, 113, 227, .5); opacity: 0;
     animation: pulse 1.2s ease-out infinite;
   }
   .play.invite[data-state="idle"]::after {          /* press play: a ring that grows from it, for a clip not yet played by hand */
-    content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid rgba(29, 29, 31, .45); opacity: 0; pointer-events: none;
+    content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid rgba(0, 113, 227, .45); opacity: 0; pointer-events: none;
     animation: ring 2.6s ease-out infinite;
   }
   .play[data-state="loading"]::after {
     content: ""; position: absolute; inset: -6px; border-radius: 50%;
-    border: 2px solid transparent; border-top-color: var(--btn);
+    border: 2px solid transparent; border-top-color: var(--accent);
     animation: spin .8s linear infinite;
   }
   @keyframes pulse { from { transform: scale(0.9); opacity: .6; } to { transform: scale(1.3); opacity: 0; } }
@@ -213,20 +192,19 @@
   .list[hidden] { display: none; }
   .list li { position: relative; padding: var(--sp-3) var(--sp-4); cursor: pointer; touch-action: manipulation; }
   .list li + li::before { content: ""; position: absolute; top: 0; inset-inline: var(--sp-4) 0; height: 1px; background: var(--soft-2); }   /* inset separators */
-  .list li b { display: block; font-weight: 500; }
+  .list li b { display: block; font-weight: 400; }
   .list li small { display: block; color: var(--muted); font-size: 14px; }
   .list li[aria-selected="true"] { background: var(--soft); }
   @media (hover: hover) { .list li:hover { background: var(--soft); } }
   .list li.status { color: var(--muted); font-size: 14px; cursor: default; }
   @media (hover: hover) { .list li.status:hover { background: none; } }
-  /* typing mode: while the guess field has focus, the cover steps aside and the play button sits small beside the line,
+  /* typing mode: while the guess field has focus, the play button sits small beside the line,
      with the back button gone, so the suggestions and the guess button fit above the keyboard without scrolling. The
      suggestions then sit in the page, under the field, instead of floating over what is below it. */
   .app.typing .bar { display: none; }
   .app.typing { margin-top: 0; }                   /* at the top, not centred: the suggestions stay above the keyboard */
   .app.typing .stage { margin-top: var(--sp-3); flex-direction: row; align-items: center; gap: var(--sp-4); width: 100%; }
-  .app.typing .art { display: none; }
-  .app.typing .play { width: 44px; height: 44px; flex: none; order: -1; box-shadow: none; }
+  .app.typing .play { width: 44px; height: 44px; flex: none; order: -1; box-shadow: var(--btn-edge); }
   .app.typing .play svg { width: 18px; height: 18px; }
   .app.typing .play.invite::after { display: none; }   /* no ring while typing: it would run off the edge */
   .app.typing .timeline-wrap { flex: 1; min-width: 0; }
@@ -237,35 +215,35 @@
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
     height: 50px; padding: 0 var(--sp-5); border: 0; border-radius: var(--pill);
-    font-weight: 500; font-size: 16px; cursor: pointer;
+    font-weight: 400; font-size: 17px; cursor: pointer;
     transition: transform .1s ease, background-color .15s ease;
   }
   .btn:active:not(:disabled) { transform: scale(0.97); }
   .btn:disabled { cursor: not-allowed; }
-  /* the main action: a black pill; disabled it turns grey */
-  .btn.primary, .result .btn.share, .fb .btn.send { background: var(--btn); color: #fff; }
-  .btn.primary:disabled, .fb .btn.send:disabled { background: var(--soft-2); color: var(--mid); }
+  /* the main action: a blue pill; disabled it turns grey */
+  .btn.primary, .result .btn.share, .fb .btn.send { background: var(--btn); color: #fff; box-shadow: var(--btn-edge); }
+  .btn.primary:disabled, .fb .btn.send:disabled { background: var(--soft-2); color: var(--mid); box-shadow: none; }
   @media (hover: hover) { .btn.primary:hover:not(:disabled), .result .btn.share:hover, .fb .btn.send:hover:not(:disabled) { background: var(--btn-hover); } }
   /* a second action: a grey pill with dark text */
   .btn.ghost { background: var(--soft); color: var(--ink); }
   .btn.ghost:disabled { opacity: .45; }
-  @media (hover: hover) { .btn.ghost:hover:not(:disabled), .btn.skip:hover:not(:disabled) { background: var(--soft-2); } }
-  /* "skip" sits under the play button: a small grey pill that names the attempt it leads to */
-  .btn.skip { height: 40px; padding: 0 var(--sp-4); background: var(--soft); color: var(--ink); font-size: 15px; }
+  @media (hover: hover) { .btn.ghost:hover:not(:disabled) { background: var(--soft-2); } .btn.skip:hover:not(:disabled) { background: #d8e7fb; } }
+  /* "skip" sits under the play button: a small light-blue pill that names the attempt it leads to */
+  .btn.skip { height: 40px; padding: 0 var(--sp-4); background: var(--accent-tint); color: var(--accent-ink); font-size: 15px; }
   .app.typing .btn.skip { display: none; }           /* while typing the guess, the stage is one small row */
   .hint { margin: var(--sp-1) 0 0; color: var(--muted); font-size: 13px; text-align: center; }   /* the play button's caption, 16px under it: the ring that grows from the button needs that room */   /* under the play button: playing again is free */
   .app.typing .hint { display: none; }
   .guess .actions { grid-template-columns: 1fr; }   /* the guess button across the width */
-  .guess .note { margin: var(--sp-4) 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; text-align: center; }   /* playback differs between phones and networks */
+  .guess .note { margin: var(--sp-4) 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; text-align: center; }   /* playback differs between phones and networks */
   .app.typing .guess .note { display: none; }
 
   /* result */
   .result { padding-top: var(--sp-4); text-align: center; }
   .result[hidden] { display: none; }
-  .result h2 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.015em; }
+  .result h2 { margin: 0; font-size: 28px; font-weight: 200; }
   /* the song, one line: the band, a colon, the title; it sits between the share button and the video */
-  .song-line { margin: var(--sp-5) 0 0; text-align: center; font-size: 19px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.35; }
-  .song-line .by { color: var(--muted); font-weight: 400; }
+  .song-line { margin: var(--sp-5) 0 0; text-align: center; font-size: 22px; font-weight: 400; line-height: 1.35; }
+  .song-line .by { color: var(--muted); font-weight: 300; }
   /* the score: one tile per attempt. A tick on blue is the right answer, a cross on ink a wrong one, a grey tile a skip,
      and a hollow slot an attempt that was not needed. They pop in one after the other. */
   .squares { display: flex; justify-content: center; gap: var(--sp-2); margin: var(--sp-4) 0; }
@@ -291,9 +269,11 @@
   .result .btn { width: 100%; }
   a.btn { text-decoration: none; }
   .btn svg { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
+  /* in every button the icon comes after the text, so on its left; all icons are 18px, 8px from the text */
+  .btn svg, .startbtn svg, .fblink svg { order: 1; }
   .btn[hidden] { display: none; }
   .next { margin: var(--sp-3) 0 0; color: var(--muted); font-size: 14px; }
-  .next b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .next b { color: var(--ink); font-weight: 400; font-variant-numeric: tabular-nums; }
 
   /* YouTube player: kept off-screen while guessing, shown at the end */
   .player-wrap { position: fixed; left: -10000px; top: 0; width: 220px; height: 220px; pointer-events: none; }
@@ -339,17 +319,17 @@
   .sleeve .a { fill: var(--accent); } .sleeve .l { fill: var(--accent-l); } .sleeve .i { fill: var(--ink); }
   .sleeve .p { fill: var(--paper); } .sleeve .s { fill: var(--soft-2); }
   @keyframes deal { from { transform: translate(0, 26px) rotate(0deg) scale(.7); } }
-  /* the way in: a black pill with a play icon */
+  /* the way in: a blue pill with a play icon */
   .startbtn {
-    position: relative; display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-3);
+    position: relative; display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
     min-width: 200px; height: 56px; padding: 0 var(--sp-6);
     background: var(--btn); color: #fff; border: 0; border-radius: var(--pill);
-    font-size: 18px; font-weight: 500; cursor: pointer;
-    box-shadow: 0 10px 24px rgba(var(--shade), .2);
+    font-size: 20px; font-weight: 400; cursor: pointer;
+    box-shadow: var(--btn-edge), 0 10px 24px rgba(var(--btn-shadow), .28);
     transition: transform .12s ease, background-color .15s ease;
     animation: rise .7s cubic-bezier(.2, .8, .2, 1) .5s both;
   }
-  .startbtn svg { width: 20px; height: 20px; fill: currentColor; }
+  .startbtn svg { width: 18px; height: 18px; fill: currentColor; }
   @media (hover: hover) { .startbtn:hover { background: var(--btn-hover); } }
   .startbtn:active { transform: scale(.97); }
   @keyframes rise { from { transform: translateY(14px) scale(.9); opacity: 0; } }
@@ -361,7 +341,7 @@
   .more { margin-top: var(--sp-5); background: var(--paper); border-radius: var(--r-l); box-shadow: var(--shadow-tile), inset 0 0 0 1px rgba(var(--shade), .04); overflow: hidden; }
   .row {
     position: relative; display: flex; align-items: center; gap: var(--sp-3); width: 100%; min-height: 56px;
-    padding: var(--sp-2) var(--sp-4); background: none; border: 0; color: var(--ink); font-size: 16px; font-weight: 400; text-align: start; cursor: pointer;
+    padding: var(--sp-2) var(--sp-4); background: none; border: 0; color: var(--ink); font-size: 17px; font-weight: 300; text-align: start; cursor: pointer;
   }
   .row > span { flex: 1; }
   .row + .row::before { content: ""; position: absolute; top: 0; inset-inline: calc(var(--sp-4) + 32px + var(--sp-3)) 0; height: 1px; background: var(--soft-2); }   /* the separator starts after the icon */
@@ -375,9 +355,9 @@
   .remind { font-size: 15px; }
   .remind p { margin: 0 0 var(--sp-3); color: var(--muted); font-size: 14px; text-align: center; }
   .remind label { display: flex; align-items: center; justify-content: center; gap: var(--sp-3); margin-bottom: var(--sp-3); }
-  .remind input[type="time"] { height: 42px; padding: 0 var(--sp-3); border: 0; border-radius: 10px; background: var(--soft); color: var(--ink); font: inherit; font-weight: 500; }
+  .remind input[type="time"] { height: 42px; padding: 0 var(--sp-3); border: 0; border-radius: 10px; background: var(--soft); color: var(--ink); font: inherit; font-weight: 400; }
   .remind .actions .btn { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 58px; border-radius: var(--r-m); font-size: 15px; text-align: center; text-decoration: none; line-height: 1.25; }
-  .remind .actions .btn small { color: var(--muted); font-size: 12px; font-weight: 400; }
+  .remind .actions .btn small { color: var(--muted); font-size: 13px; font-weight: 300; }
   .remind .alt { display: block; width: 100%; margin-top: var(--sp-3); padding: var(--sp-2); background: none; border: 0; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; font: inherit; font-size: 13px; cursor: pointer; }
   .remind .alt[hidden] { display: none; }
 
@@ -386,30 +366,30 @@
   .fbrow[hidden] { display: none; }
   .fblink {
     display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 44px; padding: 0 var(--sp-2);
-    background: none; border: 0; color: var(--accent-ink); font: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
+    background: none; border: 0; color: var(--accent-ink); font: inherit; font-size: 16px; font-weight: 400; cursor: pointer;
   }
   .fblink svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; }
   @media (hover: hover) { .fblink:hover { text-decoration: underline; text-underline-offset: 3px; } }
-  .fb h2 { margin: 0 0 var(--sp-2); font-size: 20px; font-weight: 600; letter-spacing: -0.01em; text-align: center; }
+  .fb h2 { margin: 0 0 var(--sp-2); font-size: 24px; font-weight: 200; text-align: center; }
   .fb h2:focus { outline: none; }
   .fb .lead { margin: 0 0 var(--sp-4); color: var(--muted); font-size: 14px; text-align: center; }
   .fb textarea, .fb input[type="email"] { display: block; width: 100%; padding: var(--sp-3) var(--sp-4); border: 0; border-radius: var(--r-m); background: var(--soft); color: var(--ink); font: inherit; font-size: 16px; }
   .fb textarea { height: 120px; resize: none; }
   .fb textarea:focus, .fb input[type="email"]:focus { outline: none; background: var(--paper); box-shadow: 0 0 0 2px var(--accent); }
-  .fb label { display: block; margin: var(--sp-4) 0 var(--sp-2); font-size: 14px; font-weight: 500; }
-  .fb label small { color: var(--muted); font-size: 13px; font-weight: 400; }
+  .fb label { display: block; margin: var(--sp-4) 0 var(--sp-2); font-size: 15px; font-weight: 400; }
+  .fb label small { color: var(--muted); font-size: 13px; font-weight: 300; }
   .fb .btn { margin-top: var(--sp-3); }
   .fb .note { min-height: 20px; margin: var(--sp-3) 0 0; color: var(--muted); font-size: 13px; text-align: center; }
-  .fb .note.bad { color: var(--ink); font-weight: 500; }
+  .fb .note.bad { color: var(--ink); font-weight: 400; }
   .fb .thanks { padding: var(--sp-4) 0 var(--sp-1); text-align: center; }
-  .fb .thanks p { margin: 0 0 var(--sp-2); font-size: 19px; font-weight: 600; }
+  .fb .thanks p { margin: 0 0 var(--sp-2); font-size: 22px; font-weight: 300; }
   .fb [hidden] { display: none; }
   .remind #remindClose { margin-top: var(--sp-4); }
 
   .toast {
     position: fixed; inset-inline: 0; bottom: var(--sp-5); margin: 0 auto; width: max-content; max-width: calc(100% - var(--sp-6));
     padding: var(--sp-3) var(--sp-5); border-radius: var(--pill);
-    background: rgba(29, 29, 31, .86); color: #fff; font-size: 15px; font-weight: 500;
+    background: rgba(29, 29, 31, .86); color: #fff; font-size: 16px; font-weight: 400;
     -webkit-backdrop-filter: blur(16px) saturate(180%); backdrop-filter: blur(16px) saturate(180%);
     box-shadow: 0 10px 26px rgba(var(--shade), .2);
     opacity: 0; transform: translateY(12px); pointer-events: none;
@@ -423,7 +403,7 @@
   .links { margin: var(--sp-3) 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-1) var(--sp-4); font-size: 15px; }
   .link {
     display: inline-flex; align-items: center; gap: var(--sp-2);
-    padding: 0; border: 0; background: none; color: var(--accent-ink); font: inherit; font-weight: 500;
+    padding: 0; border: 0; background: none; color: var(--accent-ink); font: inherit; font-weight: 400;
     text-decoration: none; white-space: nowrap; cursor: pointer;
   }
   .link[hidden] { display: none; }
@@ -436,19 +416,19 @@
   dialog.cal::backdrop { background: rgba(var(--shade), .25); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
   .cal-body { padding: var(--sp-5) var(--sp-4) var(--sp-4); }
   .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-4); }
-  .cal-head h2 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .cal-head h2 { margin: 0; font-size: 24px; font-weight: 200; }
   .cal-nav { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--soft); color: var(--ink); cursor: pointer; }
   .cal-nav:disabled { opacity: .3; cursor: default; }
   .cal-nav svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
   .cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--sp-3); text-align: center; }   /* small squares with air between them */
-  .cal-week { margin-bottom: var(--sp-2); color: var(--muted); font-size: 13px; font-weight: 500; }
+  .cal-week { margin-bottom: var(--sp-2); color: var(--muted); font-size: 13px; font-weight: 400; }
   .cal-day {
     position: relative; display: block; aspect-ratio: 1; padding: 0;
     border: 0; border-radius: var(--r-s); background: var(--soft); color: var(--ink);
-    font: inherit; font-size: 15px; font-weight: 500; font-style: normal; line-height: 1; cursor: pointer;
+    font: inherit; font-size: 16px; font-weight: 400; font-style: normal; line-height: 1; cursor: pointer;
   }
   button.cal-day { line-height: normal; }
-  .cal-day:disabled { background: transparent; color: var(--mid); font-weight: 400; cursor: default; }
+  .cal-day:disabled { background: transparent; color: var(--mid); font-weight: 300; cursor: default; }
   .cal-day.today { box-shadow: inset 0 0 0 2px var(--ink); }
   .cal-day.today.won, .cal-day.today.lost { box-shadow: none; }   /* filled, today shows by the outline of the day on screen */
   .cal-day.current { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -466,9 +446,8 @@
   @media (max-width: 480px) {
     :root { --pad: var(--sp-4); }
     body { padding: var(--sp-3); }
-    h1 { font-size: 36px; }
+    h1 { font-size: 44px; }
     .lead { font-size: 14px; }
-    .guess .note { font-size: 11px; }                 /* its two lines fit the card on a phone */
   }
   @media (max-width: 360px) { .tl-label { font-size: 14px; } .combo input { font-size: 15px; } }
   @media (prefers-reduced-motion: reduce) {
@@ -514,7 +493,6 @@
   </div>
 
   <section class="stage" id="stage" data-s="game" aria-label="נגן">
-    <div class="art" id="art" aria-hidden="true"><span class="q">?</span></div>
     <div class="tl-label" id="tlLabel"></div>
     <div class="timeline-wrap" dir="ltr">
       <div class="timeline" id="timeline" aria-hidden="true">
@@ -679,7 +657,6 @@
   const asked = parseInt(params.get('day'), 10);    // ?day=2 plays an earlier day, saved like any other; later days are not open yet
   const dayNo = previewMode ? (asked || today) : asked >= 1 && asked <= today ? asked : today;
   const isToday = dayNo === today;
-  document.documentElement.style.setProperty('--h', (dayNo * 137) % 360);   // the day's hue: the wash behind the glass, the mystery cover, the rings
 
   // ---------- events (Vercel Web Analytics) ----------
   // Small anonymous events that say how the game is used. Only numbers, words and true/false are sent: never what someone
@@ -1153,21 +1130,65 @@
     if (active >= 0) input.setAttribute('aria-activedescendant', 'opt-' + active);
   }
 
-  // suggestions come from the iTunes catalog (millions of songs, Hebrew included);
-  // if it is unreachable we fall back to the game's own list
-  const catalogCache = new Map();
-  let searchTimer = 0, searchCtl = null, searchSeq = 0;
+  // Suggestions come from the iTunes catalog (millions of songs, Hebrew included), and our own list is always searched as
+  // well, so today's song can always be found.
+  //  - A search asks for 50 songs, so an artist's name brings many of their songs, not a handful.
+  //  - The Israeli store comes first. For a search in Latin letters that it answers with few songs, the American store
+  //    is asked too and its songs are added.
+  //  - If nothing is found while the last word is still being typed ("shalom han"), the words before it are searched
+  //    and the songs are kept whose names have a word starting with it.
+  //  - While a search is on its way, what an earlier search found for the start of the same words is shown already.
+  //  - iTunes answers a limited number of searches a minute from one address. When it refuses (403 or 429), searches
+  //    rest for a minute, earlier results and our own list are used, and the list says the catalog is busy instead of
+  //    "not found".
+  const catalogCache = new Map();                   // "il|query" or "us|query" -> songs
+  let searchTimer = 0, searchCtl = null, searchSeq = 0, catalogRestUntil = 0;
   function cancelSearch() { clearTimeout(searchTimer); if (searchCtl) searchCtl.abort(); searchSeq++; }
+  const catalogBusy = () => Date.now() < catalogRestUntil;
 
-  async function searchCatalog(q, signal) {
-    if (catalogCache.has(q)) return catalogCache.get(q);
-    const r = await fetch('https://itunes.apple.com/search?media=music&entity=song&limit=10&country=IL&term=' + encodeURIComponent(q), { signal });
+  async function fetchStore(country, q, signal) {
+    const key = country + '|' + q;
+    if (catalogCache.has(key)) return catalogCache.get(key);
+    if (catalogBusy()) throw new Error('catalog busy');
+    const r = await fetch(`https://itunes.apple.com/search?media=music&entity=song&limit=50&country=${country}&term=` + encodeURIComponent(q), { signal });
+    if (r.status === 403 || r.status === 429) { catalogRestUntil = Date.now() + 60000; throw new Error('catalog busy'); }
     if (!r.ok) throw new Error('catalog ' + r.status);
     const out = ((await r.json()).results || [])
       .filter((x) => x.trackName && x.artistName)
       .map((x) => ({ title: x.trackName, artist: x.artistName }));
-    catalogCache.set(q, out);
+    catalogCache.set(key, out);
     return out;
+  }
+  const merge = (...lists) => lists.flat();
+  // the songs whose title or artist has every finished word, and a word starting with the last one
+  function narrow(songs, raw) {
+    const toks = norm(raw).split(' ').filter(Boolean);
+    if (!toks.length) return songs;
+    const last = toks.pop();
+    return songs.filter((s) => {
+      const words = norm(s.title + ' ' + s.artist).split(' ');
+      return toks.every((t) => words.includes(t)) && words.some((w) => w.startsWith(last));
+    });
+  }
+  async function searchCatalog(q, signal) {
+    const latin = !HE.test(q);
+    let found = await fetchStore('il', q, signal);
+    if (latin && found.length < 10) found = merge(found, await fetchStore('us', q, signal).catch((e) => { if (e.name === 'AbortError') throw e; return []; }));
+    if (!found.length && q.includes(' ')) {           // the last word may still be half typed
+      const head = q.slice(0, q.lastIndexOf(' '));
+      found = narrow(await fetchStore('il', head, signal), q);
+    }
+    return found;
+  }
+  // what earlier searches found for the start of these words, narrowed to them: shown while the new search runs
+  function cachedFor(raw) {
+    const q = raw.trim();
+    for (let n = q.length - 1; n >= 2; n--) {
+      const head = q.slice(0, n).trim();
+      const hit = catalogCache.get('il|' + head) || catalogCache.get('us|' + head);
+      if (hit) return narrow(hit, q);
+    }
+    return null;
   }
   // our own songs match by words, and also by spelling key, so "ביילי גין" and "bilie jean" find Billie Jean
   function localMatches(raw) {
@@ -1181,7 +1202,7 @@
     // the catalog knows nothing about Hebrew spellings of English names, so for Hebrew our own list goes first;
     // otherwise two of our own songs are added after the catalog's, so that today's song can always be found
     const pool = HE.test(raw) ? [...local, ...(found || [])]
-      : found && found.length ? [...found.slice(0, 6), ...local.slice(0, 2)] : local;
+      : found && found.length ? [...found.slice(0, 10), ...local.slice(0, 2)] : local;
     const guessed = new Set(rec.g.filter((g) => g !== 'skip').map((g) => norm(g.t)));
     const seen = new Set();
     return pool.filter((s) => {
@@ -1189,7 +1210,7 @@
       if (seen.has(key) || guessed.has(norm(label(s)))) return false;
       seen.add(key);
       return true;
-    }).slice(0, 8);
+    }).slice(0, 12);
   }
 
   function updateList() {
@@ -1198,18 +1219,22 @@
     $('guessBtn').disabled = true;                  // only a song picked from the list can be sent
     cancelSearch();
     if (raw.length < 2) { matches = []; closeList(); return; }
-    if (!matches.length) renderList('מחפש...');
+    const early = cachedFor(raw);                   // what we already know, at once
+    if (early && early.length) { matches = suggestions(early, raw); active = -1; renderList(''); }
+    else if (!matches.length) renderList('מחפש...');
     const seq = searchSeq;
     searchTimer = setTimeout(async () => {
       searchCtl = new AbortController();
       let found = null;
       try { found = await searchCatalog(raw, searchCtl.signal); }
-      catch (e) { if (e.name === 'AbortError') return; }
+      catch (e) { if (e.name === 'AbortError') return; found = cachedFor(raw); }
       if (seq !== searchSeq) return;
       matches = suggestions(found, raw);
       active = -1;
-      renderList(matches.length ? '' : 'לא נמצא שיר כזה. נסו לכתוב אחרת');
-    }, 280);
+      const busy = catalogBusy() && !(found && found.length);
+      renderList(matches.length ? (busy ? 'החיפוש המלא עמוס לרגע, אלה תוצאות חלקיות' : '')
+        : busy ? 'החיפוש עמוס לרגע. נסו שוב בעוד דקה' : 'לא נמצא שיר כזה. נסו לכתוב אחרת');
+    }, 350);
   }
   function pick(i) {
     const s = matches[i];
