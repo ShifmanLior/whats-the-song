@@ -23,12 +23,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@200;300;400&display=swap" rel="stylesheet">
 <style>
 
-  /* Flat, black and white: a light-grey page with one white card framed by a hairline, surfaces and thin lines, no
-     drop shadows or gradients. Assistant in thin, delicate weights (titles 200, text 300, labels and buttons 400). The
-     main buttons and the play button are flat black with white text; second actions are white with a thin line. State
-     is black, greys and lines (a right answer black, a wrong one framed with a cross, a skip light grey). A touch of
-     glass in a few places only: the dialogs, the toast and the suggestions are frosted with a bright rim. --muted is the
-     grey of secondary text (5.1:1 on white).
+  /* Flat, black and white with one colour: a light-grey page with one white card framed by a hairline, surfaces and
+     thin lines, no drop shadows or gradients. Assistant in thin, delicate weights (titles 200, text 300, labels and
+     buttons 400). One accent colour, which changes every day (see ACCENTS in the head): a muted, deep tone, never red,
+     at least 5.5:1 with white. It fills the main buttons and the play button (white text and icon on it), the played
+     part of the progress line, the rings, a right answer and a guessed day, and draws the focus lines. Everything else
+     is black, greys and lines; second actions are white with a thin line. A touch of glass in a few places only: the
+     dialogs, the toast and the suggestions are frosted with a bright rim. --muted is the grey of secondary text (5.1:1
+     on white).
      Spacing: one scale on a 4px base, --sp-1 4px to --sp-7 48px. Small steps inside a component, middle steps between
      related items, large steps between groups and around the card. Control heights (40/44/50/56px) are sizes, not
      spacing. */
@@ -43,11 +45,11 @@
     --soft: #f5f5f5;
     --soft-2: #e8e8e8;
     --mid: #8e8e93;
-    --accent: #111111;                              /* black and white: the one "accent" is black */
-    --accent-ink: #111111;
-    --accent-l: #d4d4d4;
-    --btn: #111111;                                 /* main buttons: flat black with white text */
-    --btn-hover: #333333;
+    --accent: #2f6c70;                              /* the colour of the day (set in the head); this is the fallback */
+    --accent-d: #275a5d;                            /* the accent a little darker, for hover */
+    --accent-l: #c3d6d7;                            /* a light tint of it */
+    --btn: var(--accent);                           /* main buttons: flat, in the colour of the day, with white text */
+    --btn-hover: var(--accent-d);
     --shade: 0, 0, 0;
     --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px; --sp-7: 48px;
     --pad: var(--sp-5);                             /* the card's padding */
@@ -117,7 +119,7 @@
   .stage[hidden] { display: none; }
   .tl-label { text-align: center; font-size: 16px; font-weight: 400; }   /* over the progress line it describes */
 
-  /* the play button: a flat black circle with a white icon */
+  /* the play button: a flat circle in the colour of the day, with a white icon */
   .play {
     position: relative;
     width: 80px; height: 80px;
@@ -136,16 +138,16 @@
   .play[data-state="playing"] .i-pause { display: block; }
   .play[data-state="playing"]::after {
     content: ""; position: absolute; inset: -6px; border-radius: 50%;
-    border: 1.5px solid rgba(17, 17, 17, .45); opacity: 0;
+    border: 1.5px solid var(--accent); opacity: 0;
     animation: pulse 1.2s ease-out infinite;
   }
   .play.invite[data-state="idle"]::after {          /* press play: a ring that grows from it, for a clip not yet played by hand */
-    content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 1.5px solid rgba(17, 17, 17, .4); opacity: 0; pointer-events: none;
+    content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 1.5px solid var(--accent); opacity: 0; pointer-events: none;
     animation: ring 2.6s ease-out infinite;
   }
   .play[data-state="loading"]::after {
     content: ""; position: absolute; inset: -6px; border-radius: 50%;
-    border: 1.5px solid transparent; border-top-color: var(--ink);
+    border: 1.5px solid transparent; border-top-color: var(--accent);
     animation: spin .8s linear infinite;
   }
   @keyframes pulse { from { transform: scale(0.9); opacity: .6; } to { transform: scale(1.3); opacity: 0; } }
@@ -173,7 +175,7 @@
     transition: background-color .15s ease, box-shadow .15s ease;
   }
   .combo input::placeholder { color: var(--muted); }
-  .combo input:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+  .combo input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
   .list {
     position: absolute; z-index: 5; inset-inline: 0; top: calc(100% + var(--sp-2));
     margin: 0; padding: var(--sp-1) 0; list-style: none;
@@ -237,7 +239,7 @@
   /* the song, one line: the band, a colon, the title; it sits between the share button and the video */
   .song-line { margin: var(--sp-5) 0 0; text-align: center; font-size: 22px; font-weight: 400; line-height: 1.35; }
   .song-line .by { color: var(--muted); font-weight: 300; }
-  /* the score: one tile per attempt. A white tick on black is the right answer, a black cross in a framed white tile a
+  /* the score: one tile per attempt. A white tick on the colour of the day is the right answer, a black cross in a framed white tile a
      wrong one, a light grey tile a skip, and a hollow slot an attempt that was not needed. They pop in one after the other. */
   .squares { display: flex; justify-content: center; gap: var(--sp-2); margin: var(--sp-4) 0; }
   .squares i {
@@ -246,7 +248,7 @@
     animation: tile .4s cubic-bezier(.2, .8, .2, 1) calc(var(--n, 0) * 55ms) backwards;
   }
   .squares i.skip { background: var(--soft-2); box-shadow: none; }
-  .squares i.win { background: var(--ink); box-shadow: none; }
+  .squares i.win { background: var(--accent); box-shadow: none; }
   .squares i.bad { background: var(--paper); box-shadow: inset 0 0 0 1px var(--ink); }
   .squares i.win::after {
     content: ""; position: absolute; left: 50%; top: 46%; width: 28%; height: 52%;
@@ -311,7 +313,7 @@
   .sleeve .a { fill: var(--accent); } .sleeve .l { fill: var(--accent-l); } .sleeve .i { fill: var(--ink); }
   .sleeve .p { fill: var(--paper); } .sleeve .s { fill: var(--soft-2); }
   @keyframes deal { from { transform: translate(0, 26px) rotate(0deg) scale(.7); } }
-  /* the way in: a flat black pill with a play icon */
+  /* the way in: a flat pill in the colour of the day, with a play icon */
   .startbtn {
     position: relative; display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
     min-width: 200px; height: 56px; padding: 0 var(--sp-6);
@@ -366,7 +368,7 @@
   .fb .lead { margin: 0 0 var(--sp-4); color: var(--muted); font-size: 14px; text-align: center; }
   .fb textarea, .fb input[type="email"] { display: block; width: 100%; padding: var(--sp-3) var(--sp-4); border: 1px solid var(--line-2); border-radius: var(--r-m); background: var(--paper); color: var(--ink); font: inherit; font-size: 16px; }
   .fb textarea { height: 120px; resize: none; }
-  .fb textarea:focus, .fb input[type="email"]:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+  .fb textarea:focus, .fb input[type="email"]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
   .fb label { display: block; margin: var(--sp-4) 0 var(--sp-2); font-size: 15px; font-weight: 400; }
   .fb label small { color: var(--muted); font-size: 13px; font-weight: 300; }
   .fb .btn { margin-top: var(--sp-3); }
@@ -420,12 +422,12 @@
   }
   button.cal-day { line-height: normal; }
   .cal-day:disabled { background: transparent; border-color: transparent; color: var(--mid); font-weight: 300; cursor: default; }
-  .cal-day.today { border-color: var(--ink); }
+  .cal-day.today { border-color: var(--accent); }
   .cal-day.today.won, .cal-day.today.lost { box-shadow: none; }   /* filled, today shows by the outline of the day on screen */
-  .cal-day.current { outline: 1px solid var(--ink); outline-offset: 3px; }
-  /* a played day is a filled square: guessed in black, missed in mid grey, started in light grey; a day still to play
+  .cal-day.current { outline: 1px solid var(--accent); outline-offset: 3px; }
+  /* a played day is a filled square: guessed in the colour of the day, missed in mid grey, started in light grey; a day still to play
      is white with a thin line */
-  .cal-day.won { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .cal-day.won { background: var(--accent); border-color: var(--accent); color: #fff; }
   .cal-day.lost { background: var(--mid); border-color: var(--mid); color: #fff; }
   .cal-day.going { background: var(--soft-2); border-color: var(--soft-2); }
   .cal-key { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-3); margin: var(--sp-4) 0; color: var(--muted); font-size: 13px; }
@@ -445,6 +447,29 @@
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
 </style>
+<script>
+  // The colour of the day: one muted, deep tone a day, set before the page is drawn so it never flashes. Seven colours,
+  // none of them red (a red reads as a mistake), each at least 5.5:1 with white so white text and icons sit well on it.
+  // In order: petrol teal, bronze, slate blue, moss, dusk violet, ochre, plum, so two days in a row never look alike.
+  // --accent-d is the accent mixed with 18% black (hover), --accent-l the accent mixed with 72% white (a light tint).
+  // The day is the game's day: ?day and ?preview count, as in the main script.
+  window.ACCENTS = ['#2f6c70', '#7a5c36', '#47598a', '#4f6b3f', '#665a92', '#766137', '#74546f'];
+  window.setAccent = function (day) {
+    var n = window.ACCENTS.length, c = window.ACCENTS[(((day - 1) % n) + n) % n];
+    var mix = function (to, w) {
+      return 'rgb(' + [1, 3, 5].map(function (i) { return Math.round(parseInt(c.substr(i, 2), 16) * (1 - w) + to * w); }).join(',') + ')';
+    };
+    var st = document.documentElement.style;
+    st.setProperty('--accent', c);
+    st.setProperty('--accent-d', mix(0, 0.18));
+    st.setProperty('--accent-l', mix(255, 0.72));
+  };
+  (function () {
+    var q = new URLSearchParams(location.search), n = new Date(), asked = parseInt(q.get('day'), 10);
+    var today = Math.round((Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) - Date.UTC(2026, 9, 31)) / 86400000) + 1;
+    window.setAccent(q.has('preview') ? (asked || today) : (asked >= 1 && asked <= today ? asked : today));
+  })();
+</script>
 </head>
 <body>
 <main class="app" data-screen="home" data-state="before">
@@ -648,6 +673,7 @@
   const asked = parseInt(params.get('day'), 10);    // ?day=2 plays an earlier day, saved like any other; later days are not open yet
   const dayNo = previewMode ? (asked || today) : asked >= 1 && asked <= today ? asked : today;
   const isToday = dayNo === today;
+  window.setAccent(dayNo);                          // the colour of this day (the head already set it by the same rule)
 
   // ---------- events (Vercel Web Analytics) ----------
   // Small anonymous events that say how the game is used. Only numbers, words and true/false are sent: never what someone
