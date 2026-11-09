@@ -96,6 +96,9 @@
   .sub { margin: var(--sp-1) 0 0; color: var(--muted); font-size: 15px; }
   .lead { margin: var(--sp-5) 0 0; color: var(--muted); font-size: 15px; text-align: center; }   /* a group of its own under the start button */
   .app[data-state="after"] .sub.quiet { display: none; }
+  .app[data-state="after"] .info h1 {               /* the summary does without the name; screen readers still have it */
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
   /* centred text breaks into lines of even length, so no word is left alone on the last line */
   .lead, .sub, .status, .tl-label, .guess .note, .next, .result h2, .song-line, .foot, .remind p, .fb .lead { text-wrap: balance; }   /* after today's game the day number is not repeated under the name */
 
@@ -240,11 +243,12 @@
   /* the song, one line: the band, a colon, the title; it sits between the share button and the video */
   .song-line { margin: var(--sp-5) 0 0; text-align: center; font-size: 22px; font-weight: 400; line-height: 1.35; }
   .song-line .by { color: var(--muted); font-weight: 300; }
-  /* the score: one tile per attempt. A white tick on the colour of the day is the right answer, a black cross in a framed white tile a
-     wrong one, a light grey tile a skip, and a hollow slot an attempt that was not needed. They pop in one after the other. */
+  /* the score: one small dot per attempt. A white tick on the colour of the day is the right answer, a black cross in a
+     ringed white dot a wrong one, a light grey dot a skip, and a hollow ring an attempt that was not needed. They pop in
+     one after the other. */
   .squares { display: flex; justify-content: center; gap: var(--sp-2); margin: var(--sp-4) 0; }
   .squares i {
-    position: relative; flex: 1 1 0; max-width: 30px; aspect-ratio: 1; border-radius: 7px;
+    position: relative; flex: none; width: 18px; height: 18px; border-radius: 50%;
     box-shadow: inset 0 0 0 1px var(--line-2);
     animation: tile .4s cubic-bezier(.2, .8, .2, 1) calc(var(--n, 0) * 55ms) backwards;
   }
@@ -252,12 +256,12 @@
   .squares i.win { background: var(--accent); box-shadow: none; }
   .squares i.bad { background: var(--paper); box-shadow: inset 0 0 0 1px var(--ink); }
   .squares i.win::after {
-    content: ""; position: absolute; left: 50%; top: 46%; width: 28%; height: 52%;
-    border: solid var(--paper); border-width: 0 2.5px 2.5px 0; transform: translate(-50%, -50%) rotate(45deg);
+    content: ""; position: absolute; left: 50%; top: 45%; width: 26%; height: 48%;
+    border: solid var(--paper); border-width: 0 1.5px 1.5px 0; transform: translate(-50%, -50%) rotate(45deg);
   }
   .squares i.bad::before, .squares i.bad::after {
-    content: ""; position: absolute; left: 24%; top: calc(50% - 1.25px); width: 52%; height: 2.5px;
-    background: var(--ink); border-radius: 2px; transform: rotate(45deg);
+    content: ""; position: absolute; left: 27%; top: calc(50% - .75px); width: 46%; height: 1.5px;
+    background: var(--ink); border-radius: 1px; transform: rotate(45deg);
   }
   .squares i.bad::after { transform: rotate(-45deg); }
   @keyframes tile { from { transform: scale(.4); opacity: 0; } }
@@ -275,8 +279,8 @@
   .player-wrap iframe { width: 100%; height: 100%; border: 0; }
   .player-wrap.revealed {
     position: static; left: auto;
-    width: 100%; height: auto; aspect-ratio: 16 / 9;
-    margin-top: var(--sp-4); pointer-events: auto;
+    width: min(100%, 260px); height: auto; aspect-ratio: 16 / 9;   /* smaller than the card, centred */
+    margin: var(--sp-4) auto 0; pointer-events: auto;
     border-radius: var(--r-m); overflow: hidden; border: 1px solid var(--line);
   }
 
@@ -360,9 +364,9 @@
   .fbrow[hidden] { display: none; }
   .fblink {
     display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 44px; padding: 0 var(--sp-2);
-    background: none; border: 0; color: var(--ink); font: inherit; font-size: 16px; font-weight: 400; cursor: pointer; text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 4px;
+    background: none; border: 0; color: var(--muted); font: inherit; font-size: 16px; font-weight: 300; cursor: pointer; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 4px;
   }
-  .fblink svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; }
+  .fblink svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; }
   @media (hover: hover) { .fblink:hover { text-decoration: underline; text-underline-offset: 3px; } }
   .fb h2 { margin: 0 0 var(--sp-2); font-size: 24px; font-weight: 200; text-align: center; }
   .fb h2:focus { outline: none; }
