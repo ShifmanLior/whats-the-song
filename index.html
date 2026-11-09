@@ -25,7 +25,8 @@
 
   /* Clean and bright: a quiet light-grey page with one white rounded card in the middle that holds everything. Near-black
      text, grey secondary text, Assistant in thin, delicate weights (titles 200, text 300, labels and buttons 400). The main buttons
-     are black (--btn) with white text. One blue accent for state, not for buttons: --accent for the progress, a right
+     and the play button are blue (--btn, a subtle gradient) with white text; the skip button light blue. Blue also
+     marks state: --accent for the progress, a right
      answer and focus (white on it 4.7:1), --accent-ink for blue link text (5.6:1 on white). Small rounded "app icon" tiles with
      gradients mark the stats and the links.
      State is still shown with fill, icons and shape as well as colour. Light only.
@@ -44,8 +45,10 @@
     --mid: #86868b;
     --accent: #0071e3;
     --accent-ink: #0066cc;
-    --btn: linear-gradient(180deg, #48484c 0%, #1d1d1f 100%);   /* the main buttons: black with a subtle gradient, white text */
-    --btn-hover: linear-gradient(180deg, #5a5a5e 0%, #2c2c2e 100%);
+    --btn: linear-gradient(180deg, #2474d8 0%, #005bbf 100%);   /* the main buttons: blue with a subtle gradient, white text (4.6:1 at its lightest) */
+    --btn-hover: linear-gradient(180deg, #2f80e4 0%, #0a66cc 100%);
+    --btn-shadow: 0, 91, 191;                       /* the colour of their shadows, as r, g, b */
+    --accent-tint: #e8f1fd;                         /* a light blue for the skip button, under blue text (4.9:1) */
     --btn-edge: inset 0 1px 0 rgba(255, 255, 255, .14);       /* a faint light top edge on them */
     --accent-l: #bcd9f7;
     --shade: 0, 0, 0;                               /* the colour of shadows, as r, g, b */
@@ -120,7 +123,7 @@
   .stage[hidden] { display: none; }
   .tl-label { text-align: center; font-size: 16px; font-weight: 400; }   /* over the progress line it describes */
 
-  /* the play button: a round black button with a white icon */
+  /* the play button: a round blue button with a white icon */
   .play {
     position: relative;
     width: 80px; height: 80px;
@@ -128,7 +131,7 @@
     background: var(--btn); color: #fff;
     cursor: pointer;
     display: block;
-    box-shadow: var(--btn-edge), 0 6px 16px rgba(var(--shade), .22);
+    box-shadow: var(--btn-edge), 0 6px 18px rgba(var(--btn-shadow), .3);
     transition: transform .12s ease, background-color .15s ease;
   }
   @media (hover: hover) { .play:hover:not(:disabled) { transform: scale(1.06); } }
@@ -140,16 +143,16 @@
   .play[data-state="playing"] .i-pause { display: block; }
   .play[data-state="playing"]::after {
     content: ""; position: absolute; inset: -6px; border-radius: 50%;
-    border: 2px solid rgba(29, 29, 31, .5); opacity: 0;
+    border: 2px solid rgba(0, 113, 227, .5); opacity: 0;
     animation: pulse 1.2s ease-out infinite;
   }
   .play.invite[data-state="idle"]::after {          /* press play: a ring that grows from it, for a clip not yet played by hand */
-    content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid rgba(29, 29, 31, .45); opacity: 0; pointer-events: none;
+    content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid rgba(0, 113, 227, .45); opacity: 0; pointer-events: none;
     animation: ring 2.6s ease-out infinite;
   }
   .play[data-state="loading"]::after {
     content: ""; position: absolute; inset: -6px; border-radius: 50%;
-    border: 2px solid transparent; border-top-color: var(--btn);
+    border: 2px solid transparent; border-top-color: var(--accent);
     animation: spin .8s linear infinite;
   }
   @keyframes pulse { from { transform: scale(0.9); opacity: .6; } to { transform: scale(1.3); opacity: 0; } }
@@ -217,16 +220,16 @@
   }
   .btn:active:not(:disabled) { transform: scale(0.97); }
   .btn:disabled { cursor: not-allowed; }
-  /* the main action: a black pill; disabled it turns grey */
+  /* the main action: a blue pill; disabled it turns grey */
   .btn.primary, .result .btn.share, .fb .btn.send { background: var(--btn); color: #fff; box-shadow: var(--btn-edge); }
   .btn.primary:disabled, .fb .btn.send:disabled { background: var(--soft-2); color: var(--mid); box-shadow: none; }
   @media (hover: hover) { .btn.primary:hover:not(:disabled), .result .btn.share:hover, .fb .btn.send:hover:not(:disabled) { background: var(--btn-hover); } }
   /* a second action: a grey pill with dark text */
   .btn.ghost { background: var(--soft); color: var(--ink); }
   .btn.ghost:disabled { opacity: .45; }
-  @media (hover: hover) { .btn.ghost:hover:not(:disabled), .btn.skip:hover:not(:disabled) { background: var(--soft-2); } }
-  /* "skip" sits under the play button: a small grey pill that names the attempt it leads to */
-  .btn.skip { height: 40px; padding: 0 var(--sp-4); background: var(--soft); color: var(--ink); font-size: 15px; }
+  @media (hover: hover) { .btn.ghost:hover:not(:disabled) { background: var(--soft-2); } .btn.skip:hover:not(:disabled) { background: #d8e7fb; } }
+  /* "skip" sits under the play button: a small light-blue pill that names the attempt it leads to */
+  .btn.skip { height: 40px; padding: 0 var(--sp-4); background: var(--accent-tint); color: var(--accent-ink); font-size: 15px; }
   .app.typing .btn.skip { display: none; }           /* while typing the guess, the stage is one small row */
   .hint { margin: var(--sp-1) 0 0; color: var(--muted); font-size: 13px; text-align: center; }   /* the play button's caption, 16px under it: the ring that grows from the button needs that room */   /* under the play button: playing again is free */
   .app.typing .hint { display: none; }
@@ -316,13 +319,13 @@
   .sleeve .a { fill: var(--accent); } .sleeve .l { fill: var(--accent-l); } .sleeve .i { fill: var(--ink); }
   .sleeve .p { fill: var(--paper); } .sleeve .s { fill: var(--soft-2); }
   @keyframes deal { from { transform: translate(0, 26px) rotate(0deg) scale(.7); } }
-  /* the way in: a black pill with a play icon */
+  /* the way in: a blue pill with a play icon */
   .startbtn {
     position: relative; display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
     min-width: 200px; height: 56px; padding: 0 var(--sp-6);
     background: var(--btn); color: #fff; border: 0; border-radius: var(--pill);
     font-size: 20px; font-weight: 400; cursor: pointer;
-    box-shadow: var(--btn-edge), 0 10px 24px rgba(var(--shade), .2);
+    box-shadow: var(--btn-edge), 0 10px 24px rgba(var(--btn-shadow), .28);
     transition: transform .12s ease, background-color .15s ease;
     animation: rise .7s cubic-bezier(.2, .8, .2, 1) .5s both;
   }
