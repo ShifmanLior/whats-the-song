@@ -13,10 +13,10 @@
 <meta property="og:description" content="שיר חדש בכל יום. מתחילים עם חצי שנייה מתחילת השיר, וכל דילוג או ניחוש שגוי מוסיפים עוד חצי שנייה.">
 <meta property="og:url" content="https://whats-the-song.vercel.app/">
 <meta property="og:locale" content="he_IL">
-<meta property="og:image" content="https://whats-the-song.vercel.app/og.png?v=8">
+<meta property="og:image" content="https://whats-the-song.vercel.app/og.png?v=9">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="תו השעה: מניפת עטיפות אלבומים מאוירות ותקליט עם כפתור נגינה, שיר חדש בכל יום">
+<meta property="og:image:alt" content="תו השעה: מניפת עטיפות אלבומים מאוירות, הכותרת וכפתור שחקו, שיר חדש בכל יום">
 <meta name="twitter:card" content="summary_large_image">
 <style>
 
@@ -24,14 +24,13 @@
      text, grey secondary text, the device's own font in fine weights (titles 600, labels 500, text 400). The main buttons
      are black (--btn) with white text. One blue accent for state, not for buttons: --accent for the progress, a right
      answer and focus (white on it 4.7:1), --accent-ink for blue link text (5.6:1 on white). Small rounded "app icon" tiles with
-     gradients mark the stats and the links. The mystery cover keeps the day's colours (--h, set by the main script).
+     gradients mark the stats and the links.
      State is still shown with fill, icons and shape as well as colour. Light only.
      Spacing: one scale on a 4px base, --sp-1 4px to --sp-7 48px. Small steps inside a component, middle steps between
      related items, large steps between groups and around the card. Control heights (40/44/50/56px) are sizes, not
      spacing. */
   :root {
     color-scheme: light;
-    --h: 330;
     --page: #f5f5f7;
     --paper: #ffffff;
     --ink: #1d1d1f;
@@ -52,7 +51,6 @@
     --r-s: 8px; --r-m: 12px; --r-l: 18px; --r-card: 28px; --pill: 999px;
     --shadow-card: 0 1px 2px rgba(var(--shade), .04), 0 12px 40px rgba(var(--shade), .08);
     --shadow-tile: 0 1px 2px rgba(var(--shade), .04), 0 4px 16px rgba(var(--shade), .07);
-    --art: min(42vw, 22vh, 190px);                  /* the mystery cover on the game screen */
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
@@ -114,36 +112,10 @@
   .t-flame svg { fill: currentColor; }
   .t-trophy svg, .t-cal svg, .t-bell svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-  /* player stage: a mystery cover, the status and the progress line under it, then the controls */
-  .stage { margin-top: var(--sp-3); display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
+  /* player stage: the status and the progress line, then the controls */
+  .stage { margin-top: var(--sp-5); display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
   .stage[hidden] { display: none; }
-  /* the cover of a song nobody has named yet, shaped like an app icon: blurred colours of the day's hue and a question
-     mark. Like a now-playing screen it is a little smaller while paused and grows while the clip plays. */
-  .art {
-    position: relative; width: var(--art); aspect-ratio: 1; border-radius: 22%; overflow: hidden;
-    background:
-      radial-gradient(circle at 28% 24%, hsl(var(--h) 90% 66%) 0, transparent 58%),
-      radial-gradient(circle at 78% 72%, hsl(calc(var(--h) + 55) 85% 58%) 0, transparent 56%),
-      radial-gradient(circle at 76% 18%, hsl(calc(var(--h) + 150) 75% 62%) 0, transparent 50%),
-      radial-gradient(circle at 20% 82%, hsl(calc(var(--h) + 230) 70% 52%) 0, transparent 55%),
-      linear-gradient(135deg, hsl(calc(var(--h) + 200) 55% 34%), hsl(calc(var(--h) + 300) 60% 24%));
-    background-size: 160% 160%; background-position: 30% 30%;
-    box-shadow: 0 16px 36px rgba(var(--shade), .2), inset 0 1px 0 rgba(255, 255, 255, .35);
-    transform: scale(.92); transform-origin: 50% 100%;   /* paused it shrinks towards the status under it, so that gap stays true */
-    transition: transform .45s cubic-bezier(.3, 1.4, .5, 1), box-shadow .45s ease;
-  }
-  .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(160deg, rgba(255, 255, 255, .3), transparent 45%); }   /* a soft sheen */
-  .art .q {
-    position: absolute; inset: 0; display: grid; place-items: center;
-    color: rgba(255, 255, 255, .8); font-size: calc(var(--art) * .42); font-weight: 600; line-height: 1;
-    text-shadow: 0 6px 24px rgba(var(--shade), .25);
-  }
-  .stage:has(.play[data-state="playing"]) .art {
-    transform: scale(1); box-shadow: 0 22px 48px rgba(var(--shade), .26), inset 0 1px 0 rgba(255, 255, 255, .35);
-    animation: drift 5s ease-in-out infinite alternate;
-  }
-  @keyframes drift { to { background-position: 70% 65%; } }
-  .tl-label { text-align: center; font-size: 15px; font-weight: 500; }   /* under the cover, like a song's title */
+  .tl-label { text-align: center; font-size: 15px; font-weight: 500; }   /* over the progress line it describes */
 
   /* the play button: a round black button with a white icon */
   .play {
@@ -220,13 +192,12 @@
   @media (hover: hover) { .list li:hover { background: var(--soft); } }
   .list li.status { color: var(--muted); font-size: 14px; cursor: default; }
   @media (hover: hover) { .list li.status:hover { background: none; } }
-  /* typing mode: while the guess field has focus, the cover steps aside and the play button sits small beside the line,
+  /* typing mode: while the guess field has focus, the play button sits small beside the line,
      with the back button gone, so the suggestions and the guess button fit above the keyboard without scrolling. The
      suggestions then sit in the page, under the field, instead of floating over what is below it. */
   .app.typing .bar { display: none; }
   .app.typing { margin-top: 0; }                   /* at the top, not centred: the suggestions stay above the keyboard */
   .app.typing .stage { margin-top: var(--sp-3); flex-direction: row; align-items: center; gap: var(--sp-4); width: 100%; }
-  .app.typing .art { display: none; }
   .app.typing .play { width: 44px; height: 44px; flex: none; order: -1; box-shadow: var(--btn-edge); }
   .app.typing .play svg { width: 18px; height: 18px; }
   .app.typing .play.invite::after { display: none; }   /* no ring while typing: it would run off the edge */
@@ -517,7 +488,6 @@
   </div>
 
   <section class="stage" id="stage" data-s="game" aria-label="נגן">
-    <div class="art" id="art" aria-hidden="true"><span class="q">?</span></div>
     <div class="tl-label" id="tlLabel"></div>
     <div class="timeline-wrap" dir="ltr">
       <div class="timeline" id="timeline" aria-hidden="true">
@@ -682,7 +652,6 @@
   const asked = parseInt(params.get('day'), 10);    // ?day=2 plays an earlier day, saved like any other; later days are not open yet
   const dayNo = previewMode ? (asked || today) : asked >= 1 && asked <= today ? asked : today;
   const isToday = dayNo === today;
-  document.documentElement.style.setProperty('--h', (dayNo * 137) % 360);   // the day's hue: the wash behind the glass, the mystery cover, the rings
 
   // ---------- events (Vercel Web Analytics) ----------
   // Small anonymous events that say how the game is used. Only numbers, words and true/false are sent: never what someone
