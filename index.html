@@ -27,8 +27,8 @@
      thin lines, no drop shadows or gradients. Assistant in thin, delicate weights (titles 200, text 300, labels and
      buttons 400). One accent colour, which changes every day (see ACCENTS in the head): a muted, deep tone, never red,
      at least 5.5:1 with white. It fills the main buttons and the play button (white text and icon on it), the played
-     part of the progress line, the rings, a right answer and a guessed day, and draws the focus lines. Everything else
-     is black, greys and lines; second actions are white with a thin line. A touch of glass in a few places only: the
+     part of the progress line, the rings, a right answer and a guessed day, and draws the frame of the skip button and
+     the focus lines. Everything else is black, greys and lines; other second actions are white with a thin line. A touch of glass in a few places only: the
      dialogs, the toast and the suggestions are frosted with a bright rim. --muted is the grey of secondary text (5.1:1
      on white).
      Spacing: one scale on a 4px base, --sp-1 4px to --sp-7 48px. Small steps inside a component, middle steps between
@@ -222,9 +222,10 @@
   /* a second action: white with a thin line */
   .btn.ghost { background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-2); }
   .btn.ghost:disabled { opacity: .45; }
-  @media (hover: hover) { .btn.ghost:hover:not(:disabled), .btn.skip:hover:not(:disabled) { box-shadow: inset 0 0 0 1px var(--ink); } }
-  /* "skip" sits under the play button: a small white pill with a thin line, naming the attempt it leads to */
-  .btn.skip { height: 40px; padding: 0 var(--sp-4); background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-2); font-size: 15px; }
+  @media (hover: hover) { .btn.ghost:hover:not(:disabled) { box-shadow: inset 0 0 0 1px var(--ink); } }
+  /* "skip" sits under the play button: a small white pill framed in the colour of the day, naming the attempt it leads to */
+  .btn.skip { height: 40px; padding: 0 var(--sp-4); background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--accent); font-size: 15px; }
+  @media (hover: hover) { .btn.skip:hover:not(:disabled) { box-shadow: inset 0 0 0 1.5px var(--accent-d); } }
   .app.typing .btn.skip { display: none; }           /* while typing the guess, the stage is one small row */
   .hint { margin: var(--sp-1) 0 0; color: var(--muted); font-size: 13px; text-align: center; }   /* the play button's caption, 16px under it: the ring that grows from the button needs that room */   /* under the play button: playing again is free */
   .app.typing .hint { display: none; }
