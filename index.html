@@ -51,7 +51,7 @@
     --r-s: 8px; --r-m: 12px; --r-l: 18px; --r-card: 28px; --pill: 999px;
     --shadow-card: 0 1px 2px rgba(var(--shade), .04), 0 12px 40px rgba(var(--shade), .08);
     --shadow-tile: 0 1px 2px rgba(var(--shade), .04), 0 4px 16px rgba(var(--shade), .07);
-    --art: min(56vw, 28vh, 240px);                  /* the mystery cover on the game screen */
+    --art: min(52vw, 26vh, 240px);                  /* the mystery cover on the game screen */
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
@@ -77,7 +77,7 @@
     width: 100%;
     max-width: 440px;
     margin: auto;                                   /* centred on the screen when it is shorter than the screen */
-    padding: var(--pad) var(--pad) var(--sp-6);
+    padding: var(--pad);
     background: var(--paper);
     border-radius: var(--r-card);
     box-shadow: var(--shadow-card);
@@ -88,7 +88,7 @@
   .info { margin-top: var(--sp-3); text-align: center; }
   h1 { margin: 0; font-size: 40px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.2; }
   .sub { margin: var(--sp-1) 0 0; color: var(--muted); font-size: 15px; }
-  .lead { margin: var(--sp-4) 0 0; color: var(--muted); font-size: 15px; text-align: center; }
+  .lead { margin: var(--sp-5) 0 0; color: var(--muted); font-size: 15px; text-align: center; }   /* a group of its own under the start button */
   .app[data-state="after"] .sub.quiet { display: none; }
   /* centred text breaks into lines of even length, so no word is left alone on the last line */
   .lead, .sub, .status, .tl-label, .guess .note, .next, .result h2, .song-line, .foot, .remind p, .fb .lead { text-wrap: balance; }   /* after today's game the day number is not repeated under the name */
@@ -114,7 +114,7 @@
   .t-trophy svg, .t-cal svg, .t-bell svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
   /* player stage: a mystery cover, the status and the progress line under it, then the controls */
-  .stage { margin-top: clamp(var(--sp-3), 3vh, var(--sp-6)); display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
+  .stage { margin-top: var(--sp-2); display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
   .stage[hidden] { display: none; }
   /* the cover of a song nobody has named yet, shaped like an app icon: blurred colours of the day's hue and a question
      mark. Like a now-playing screen it is a little smaller while paused and grows while the clip plays. */
@@ -253,14 +253,14 @@
   /* "skip" sits under the play button: a small grey pill that names the attempt it leads to */
   .btn.skip { height: 40px; padding: 0 var(--sp-4); background: var(--soft); color: var(--ink); font-size: 15px; }
   .app.typing .btn.skip { display: none; }           /* while typing the guess, the stage is one small row */
-  .hint { margin: 0; color: var(--muted); font-size: 13px; text-align: center; }   /* under the play button: playing again is free */
+  .hint { margin: var(--sp-1) 0 0; color: var(--muted); font-size: 13px; text-align: center; }   /* the play button's caption, 16px under it: the ring that grows from the button needs that room */   /* under the play button: playing again is free */
   .app.typing .hint { display: none; }
   .guess .actions { grid-template-columns: 1fr; }   /* the guess button across the width */
   .guess .note { margin: var(--sp-4) 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; text-align: center; }   /* playback differs between phones and networks */
   .app.typing .guess .note { display: none; }
 
   /* result */
-  .result { padding-top: var(--sp-3); text-align: center; }
+  .result { padding-top: var(--sp-4); text-align: center; }
   .result[hidden] { display: none; }
   .result h2 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.015em; }
   /* the song, one line: the band, a colon, the title; it sits between the share button and the video */
@@ -353,7 +353,7 @@
   @media (hover: hover) { .startbtn:hover { background: var(--btn-hover); } }
   .startbtn:active { transform: scale(.97); }
   @keyframes rise { from { transform: translateY(14px) scale(.9); opacity: 0; } }
-  @keyframes ring { 0% { transform: scale(1); opacity: .6; } 100% { transform: scale(1.45); opacity: 0; } }
+  @keyframes ring { 0% { transform: scale(1); opacity: .6; } 100% { transform: scale(1.3); opacity: 0; } }
   .app[data-state="before"] [data-when="after"], .app[data-state="after"] [data-when="before"] { display: none; }   /* the home screen's two states */
   .foot .heart { width: 13px; height: 13px; vertical-align: -2px; fill: currentColor; }
 
@@ -467,8 +467,7 @@
     :root { --pad: var(--sp-4); }
     body { padding: var(--sp-3); }
     h1 { font-size: 36px; }
-    .lead { margin-top: var(--sp-3); font-size: 14px; }
-    .guess { margin-top: var(--sp-4); }
+    .lead { font-size: 14px; }
     .guess .note { font-size: 11px; }                 /* its two lines fit the card on a phone */
   }
   @media (max-width: 360px) { .tl-label { font-size: 14px; } .combo input { font-size: 15px; } }
