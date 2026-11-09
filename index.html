@@ -20,44 +20,44 @@
 <meta name="twitter:card" content="summary_large_image">
 <style>
 
-  /* Glass over colour: a pale wash of colours behind everything (they change with the day, from the same hue as the
-     mystery cover), and on it translucent, blurred "glass" surfaces with a bright top edge: buttons, the search field,
-     cards and dialogs. Near-black text, grey secondary text, the device's own font with bold titles, rounded artwork and
-     pill-shaped buttons. The main actions are dark glass with white text; colour is kept to small places: the day's hue
-     for the progress and the rings, and pink-red (--accent, white on it 4.7:1) only for a right answer. --muted is the
-     grey of secondary text (5.1:1 on white). --accent-l, the accent mixed with white, is for the drawn sleeves. Light only. */
+  /* Clean and bright: a quiet light-grey page with one white rounded card in the middle that holds everything. Near-black
+     text, grey secondary text, the device's own font with bold titles. One blue accent: --accent for fills (white on it
+     4.7:1), --accent-ink for blue text (5.6:1 on white, 5.0:1 on the grey fills). Small rounded "app icon" tiles with
+     gradients mark the stats and the links. The mystery cover keeps the day's colours (--h, set by the main script).
+     State is still shown with fill, icons and shape as well as colour. Light only.
+     Spacing: one scale on a 4px base, --sp-1 4px to --sp-7 48px. Small steps inside a component, middle steps between
+     related items, large steps between groups and around the card. Control heights (40/44/50/56px) are sizes, not
+     spacing. */
   :root {
     color-scheme: light;
-    --h: 330;                                       /* the day's hue; the main script sets it from the day number */
+    --h: 330;
+    --page: #f5f5f7;
     --paper: #ffffff;
     --ink: #1d1d1f;
     --muted: #6e6e73;
     --line: #d2d2d7;
-    --soft: #f5f5f7;
-    --soft-2: #e8e8ed;
+    --soft: #f2f2f7;
+    --soft-2: #e5e5ea;
     --mid: #86868b;
-    --accent: #e11d48;
-    --accent-ink: #be123c;
-    --accent-l: #f6c6d1;
-    --tint: hsl(var(--h) 70% 48%);                  /* the day's colour, for lines and rings (not for text) */
+    --accent: #0071e3;
+    --accent-ink: #0066cc;
+    --accent-dark: #0062c4;
+    --accent-l: #bcd9f7;
     --shade: 0, 0, 0;                               /* the colour of shadows, as r, g, b */
-    --r-s: 8px; --r-m: 14px; --r-l: 22px; --pill: 999px;
-    --blur: blur(22px) saturate(180%);
-    --glass: linear-gradient(180deg, rgba(255, 255, 255, .64), rgba(255, 255, 255, .34));
-    --glass-strong: linear-gradient(180deg, rgba(255, 255, 255, .9), rgba(255, 255, 255, .74));
-    --glass-dark: linear-gradient(180deg, rgba(48, 48, 52, .9), rgba(22, 22, 24, .86));
-    --edge: inset 0 1px 1px rgba(255, 255, 255, .95), inset 0 -1px 1px rgba(255, 255, 255, .4), inset 0 0 0 1px rgba(255, 255, 255, .5);   /* a bright top edge and a softer lower one, like the rim of glass */
-    --edge-dark: inset 0 1px 0 rgba(255, 255, 255, .22), inset 0 0 0 1px rgba(255, 255, 255, .08);
-    --lift: 0 8px 28px rgba(40, 30, 80, .12);
-    --art: min(58vw, 30vh, 250px);                  /* the mystery cover on the game screen */
+    --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px; --sp-7: 48px;
+    --pad: var(--sp-5);                             /* the card's padding */
+    --r-s: 8px; --r-m: 12px; --r-l: 18px; --r-card: 28px; --pill: 999px;
+    --shadow-card: 0 1px 2px rgba(var(--shade), .04), 0 12px 40px rgba(var(--shade), .08);
+    --shadow-tile: 0 1px 2px rgba(var(--shade), .04), 0 4px 16px rgba(var(--shade), .07);
+    --art: min(56vw, 28vh, 240px);                  /* the mystery cover on the game screen */
   }
   * { box-sizing: border-box; }
-  body { overflow-x: clip; }
   html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
     min-height: 100vh;
-    background: #f1f0f6;
+    overflow-x: clip;
+    background: var(--page);
     color: var(--ink);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Hebrew", Arial, sans-serif;
     font-size: 17px;
@@ -65,51 +65,55 @@
     line-height: 1.45;
     -webkit-font-smoothing: antialiased;
   }
-  body::before {                                     /* the wash of colour behind the glass */
-    content: ""; position: fixed; inset: -15%; z-index: -1; pointer-events: none;
-    background:
-      radial-gradient(38% 30% at 18% 12%, hsl(var(--h) 90% 78% / .8), transparent 70%),
-      radial-gradient(42% 34% at 88% 22%, hsl(calc(var(--h) + 60) 90% 80% / .7), transparent 70%),
-      radial-gradient(48% 40% at 24% 78%, hsl(calc(var(--h) + 150) 80% 82% / .7), transparent 70%),
-      radial-gradient(44% 38% at 86% 86%, hsl(calc(var(--h) + 220) 85% 84% / .7), transparent 70%);
-    filter: blur(30px);
-  }
   button, input { font: inherit; color: inherit; }
-  :focus-visible { outline: 3px solid var(--tint); outline-offset: 3px; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 
+  /* the card */
   .app {
-    width: 100%;
+    width: auto;
     max-width: 440px;
-    margin: 0 auto;
-    padding: 28px 20px 56px;
+    margin: var(--sp-7) auto;
+    padding: var(--pad) var(--pad) var(--sp-6);
+    background: var(--paper);
+    border-radius: var(--r-card);
+    box-shadow: var(--shadow-card);
+    overflow: clip;
   }
 
-  /* the glass itself, shared by the surfaces below */
-  .back, .stat, .combo input, .list, .btn.ghost, .btn.skip, .play, .cal-day:not(:disabled), .cal-nav, .notice, dialog.cal, .remind input[type="time"], .fb textarea, .fb input[type="email"] {
-    background: var(--glass);
-    -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
-    box-shadow: var(--edge), var(--lift);
-  }
-
-  /* the name and the day, under the sleeves */
-  .info { margin-top: 10px; text-align: center; }
+  /* the name and the day, under the covers */
+  .info { margin-top: var(--sp-3); text-align: center; }
   h1 { margin: 0; font-size: 44px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
-  .sub { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
-  .stats { display: flex; justify-content: center; gap: 10px; margin-top: 16px; }
-  .stats.below { margin-top: 28px; }                     /* after the game they sit under the video */
+  .sub { margin: var(--sp-1) 0 0; color: var(--muted); font-size: 15px; }
+  .lead { margin: var(--sp-4) 0 0; color: var(--muted); font-size: 15px; text-align: center; }
   .app[data-state="after"] .sub.quiet { display: none; }   /* after today's game the day number is not repeated under the name */
-  .stat { flex: 1; max-width: 140px; padding: 12px 10px; text-align: center; border-radius: var(--r-m); }
-  .stat b { display: block; font-size: 26px; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; }
+
+  /* the streak and the wins: two white tiles, each with a small gradient icon */
+  .stats { display: flex; justify-content: center; gap: var(--sp-3); margin-top: var(--sp-4); }
+  .stats.below { margin-top: var(--sp-5); }                /* after the game they sit under the video */
+  .stat {
+    flex: 1; max-width: 160px; padding: var(--sp-4) var(--sp-3) var(--sp-3);
+    display: flex; flex-direction: column; align-items: center; gap: var(--sp-1);
+    background: var(--paper); border-radius: var(--r-l); box-shadow: var(--shadow-tile), inset 0 0 0 1px rgba(var(--shade), .04);
+  }
+  .stat b { display: block; margin-top: var(--sp-1); font-size: 26px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
   .stat span { display: block; color: var(--muted); font-size: 13px; }
-  .lead { margin: 18px 0 0; color: var(--muted); font-size: 15px; text-align: center; }
+  /* an app-icon tile: a rounded square with a gradient and a white icon */
+  .tile { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 2px 6px rgba(var(--shade), .14); }
+  .tile svg { width: 19px; height: 19px; }
+  .t-flame { background: linear-gradient(160deg, #ffb340, #ff5e3a); }
+  .t-trophy { background: linear-gradient(160deg, #5ac8fa, #0a7aff); }
+  .t-cal { background: linear-gradient(160deg, #ff8a65, #ff3b30); }
+  .t-bell { background: linear-gradient(160deg, #d58cff, #8e44ef); }
+  .t-flame svg { fill: currentColor; }
+  .t-trophy svg, .t-cal svg, .t-bell svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
   /* player stage: a mystery cover, the status and the progress line under it, then the controls */
-  .stage { margin-top: clamp(12px, 3vh, 32px); display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .stage { margin-top: clamp(var(--sp-3), 3vh, var(--sp-6)); display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
   .stage[hidden] { display: none; }
-  /* the cover of a song nobody has named yet: blurred colours of the day's hue, and a question mark. Like a now-playing
-     screen it is a little smaller while paused and grows while the clip plays. */
+  /* the cover of a song nobody has named yet, shaped like an app icon: blurred colours of the day's hue and a question
+     mark. Like a now-playing screen it is a little smaller while paused and grows while the clip plays. */
   .art {
-    position: relative; width: var(--art); aspect-ratio: 1; border-radius: var(--r-m); overflow: hidden;
+    position: relative; width: var(--art); aspect-ratio: 1; border-radius: 22%; overflow: hidden;
     background:
       radial-gradient(circle at 28% 24%, hsl(var(--h) 90% 66%) 0, transparent 58%),
       radial-gradient(circle at 78% 72%, hsl(calc(var(--h) + 55) 85% 58%) 0, transparent 56%),
@@ -117,167 +121,155 @@
       radial-gradient(circle at 20% 82%, hsl(calc(var(--h) + 230) 70% 52%) 0, transparent 55%),
       linear-gradient(135deg, hsl(calc(var(--h) + 200) 55% 34%), hsl(calc(var(--h) + 300) 60% 24%));
     background-size: 160% 160%; background-position: 30% 30%;
-    box-shadow: 0 18px 40px rgba(40, 30, 80, .25), inset 0 0 0 1px rgba(255, 255, 255, .35);
+    box-shadow: 0 16px 36px rgba(var(--shade), .2), inset 0 1px 0 rgba(255, 255, 255, .35);
     transform: scale(.92);
     transition: transform .45s cubic-bezier(.3, 1.4, .5, 1), box-shadow .45s ease;
   }
-  .art::after {                                      /* a glass sheen */
-    content: ""; position: absolute; inset: 0;
-    background: linear-gradient(160deg, rgba(255, 255, 255, .34), transparent 45%);
-  }
+  .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(160deg, rgba(255, 255, 255, .3), transparent 45%); }   /* a soft sheen */
   .art .q {
     position: absolute; inset: 0; display: grid; place-items: center;
     color: rgba(255, 255, 255, .8); font-size: calc(var(--art) * .42); font-weight: 700; line-height: 1;
     text-shadow: 0 6px 24px rgba(var(--shade), .25);
   }
   .stage:has(.play[data-state="playing"]) .art {
-    transform: scale(1); box-shadow: 0 24px 50px rgba(40, 30, 80, .3), inset 0 0 0 1px rgba(255, 255, 255, .35);
+    transform: scale(1); box-shadow: 0 22px 48px rgba(var(--shade), .26), inset 0 1px 0 rgba(255, 255, 255, .35);
     animation: drift 5s ease-in-out infinite alternate;
   }
   @keyframes drift { to { background-position: 70% 65%; } }
-  .tl-label { margin-top: 2px; text-align: center; font-size: 15px; font-weight: 600; }   /* under the cover, like a song's title */
+  .tl-label { text-align: center; font-size: 15px; font-weight: 600; }   /* under the cover, like a song's title */
 
-  /* the play button: a round glass button with a dark icon */
+  /* the play button: a round blue button with a white icon */
   .play {
     position: relative;
     width: 64px; height: 64px;
     padding: 0; border: 0; border-radius: 50%;
-    color: var(--ink);
+    background: var(--accent); color: #fff;
     cursor: pointer;
     display: block;
-    transition: transform .12s ease;
+    box-shadow: 0 6px 16px rgba(0, 113, 227, .3);
+    transition: transform .12s ease, background-color .15s ease;
   }
   @media (hover: hover) { .play:hover:not(:disabled) { transform: scale(1.06); } }
   .play:active:not(:disabled) { transform: scale(0.94); }
-  .play:disabled { cursor: progress; opacity: .5; }
+  .play:disabled { cursor: progress; opacity: .45; }
   .play svg { position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; transform: translate(-50%, -50%); fill: currentColor; }
-  .play .i-play { margin-left: 2px; }                /* a triangle looks centred a little to the right of the middle */
+  .play .i-play { transform: translate(calc(-50% + 2px), -50%); }   /* a triangle looks centred a little to the right of the middle */
   .play .i-pause { display: none; }
   .play[data-state="playing"] .i-play { display: none; }
   .play[data-state="playing"] .i-pause { display: block; }
   .play[data-state="playing"]::after {
     content: ""; position: absolute; inset: -6px; border-radius: 50%;
-    border: 2px solid var(--tint); opacity: 0;
+    border: 2px solid var(--accent); opacity: 0;
     animation: pulse 1.2s ease-out infinite;
   }
   .play.invite[data-state="idle"]::after {          /* press play: a ring that grows from it, for a clip not yet played by hand */
-    content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid var(--tint); opacity: 0; pointer-events: none;
+    content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid var(--accent); opacity: 0; pointer-events: none;
     animation: ring 2.6s ease-out infinite;
   }
   .play[data-state="loading"]::after {
     content: ""; position: absolute; inset: -6px; border-radius: 50%;
-    border: 2px solid transparent; border-top-color: var(--tint);
+    border: 2px solid transparent; border-top-color: var(--accent);
     animation: spin .8s linear infinite;
   }
   @keyframes pulse { from { transform: scale(0.9); opacity: .6; } to { transform: scale(1.3); opacity: 0; } }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .timeline-wrap { width: 100%; }
-  .timeline {
-    position: relative;
-    height: 6px;
-    border-radius: var(--pill);
-    background: rgba(255, 255, 255, .6);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .6), 0 1px 3px rgba(40, 30, 80, .08);
-    overflow: hidden;
-  }
+  .timeline { position: relative; height: 5px; border-radius: var(--pill); background: var(--soft-2); overflow: hidden; }
   .tl-unlocked, .tl-played { position: absolute; inset-block: 0; left: 0; }
-  .tl-unlocked { background: rgba(29, 29, 31, .2); transition: width .35s ease; }
-  .tl-played { background: var(--tint); }
-  .tl-tick { position: absolute; inset-block: 0; width: 2px; background: rgba(255, 255, 255, .9); }
-  .tl-marks { position: relative; height: 18px; margin-top: 6px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .tl-unlocked { background: #c7c7cc; transition: width .35s ease; }
+  .tl-played { background: var(--accent); }
+  .tl-tick { position: absolute; inset-block: 0; width: 2px; background: var(--paper); }
+  .tl-marks { position: relative; height: 18px; margin-top: var(--sp-2); color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
   .tl-marks span { position: absolute; transform: translateX(-50%); }
   .tl-marks span:last-child { transform: translateX(-100%); }
 
   /* guess area */
-  .guess { margin-top: 18px; }
+  .guess { margin-top: var(--sp-5); }
   .guess[hidden] { display: none; }
   .combo { position: relative; }
-  .combo .i-search { position: absolute; inset-inline-start: 14px; top: 15px; z-index: 1; width: 20px; height: 20px; fill: none; stroke: var(--muted); stroke-width: 2; pointer-events: none; }
+  .combo .i-search { position: absolute; inset-inline-start: var(--sp-3); top: 15px; width: 20px; height: 20px; fill: none; stroke: var(--mid); stroke-width: 2; pointer-events: none; }
   .combo input {
-    width: 100%; height: 50px; padding: 0 16px; padding-inline-start: 44px;
-    border: 0; border-radius: var(--r-m);
+    width: 100%; height: 50px; padding: 0 var(--sp-4); padding-inline-start: calc(var(--sp-3) * 2 + 20px);
+    background: var(--soft); border: 0; border-radius: var(--r-m);
     font-size: 17px;
-    transition: box-shadow .15s ease;
+    transition: background-color .15s ease, box-shadow .15s ease;
   }
   .combo input::placeholder { color: var(--muted); }
-  .combo input:focus { outline: none; background: var(--glass-strong); box-shadow: var(--edge), 0 0 0 2px var(--tint), var(--lift); }
+  .combo input:focus { outline: none; background: var(--paper); box-shadow: 0 0 0 2px var(--accent); }
   .list {
-    position: absolute; z-index: 5; inset-inline: 0; top: calc(100% + 8px);
-    margin: 0; padding: 4px 0; list-style: none;
-    background: var(--glass-strong);
+    position: absolute; z-index: 5; inset-inline: 0; top: calc(100% + var(--sp-2));
+    margin: 0; padding: var(--sp-1) 0; list-style: none;
+    background: var(--paper);
     border-radius: var(--r-m);
+    box-shadow: 0 12px 36px rgba(var(--shade), .14), 0 0 0 1px rgba(var(--shade), .05);
     max-height: 320px; overflow-y: auto;
   }
   .list[hidden] { display: none; }
-  .list li { position: relative; padding: 11px 16px; cursor: pointer; touch-action: manipulation; }
-  .list li + li::before { content: ""; position: absolute; top: 0; inset-inline: 16px 0; height: 1px; background: rgba(29, 29, 31, .08); }   /* inset separators */
+  .list li { position: relative; padding: var(--sp-3) var(--sp-4); cursor: pointer; touch-action: manipulation; }
+  .list li + li::before { content: ""; position: absolute; top: 0; inset-inline: var(--sp-4) 0; height: 1px; background: var(--soft-2); }   /* inset separators */
   .list li b { display: block; font-weight: 600; }
   .list li small { display: block; color: var(--muted); font-size: 14px; }
-  .list li[aria-selected="true"] { background: rgba(255, 255, 255, .7); }
-  @media (hover: hover) { .list li:hover { background: rgba(255, 255, 255, .7); } }
+  .list li[aria-selected="true"] { background: var(--soft); }
+  @media (hover: hover) { .list li:hover { background: var(--soft); } }
   .list li.status { color: var(--muted); font-size: 14px; cursor: default; }
   @media (hover: hover) { .list li.status:hover { background: none; } }
   /* typing mode: while the guess field has focus, the cover steps aside and the play button sits small beside the line,
      with the back button gone, so the suggestions and the guess button fit above the keyboard without scrolling. The
      suggestions then sit in the page, under the field, instead of floating over what is below it. */
   .app.typing .bar { display: none; }
-  .app.typing .stage { margin-top: 10px; flex-direction: row; align-items: center; gap: 16px; width: 100%; }
+  .app.typing .stage { margin-top: var(--sp-3); flex-direction: row; align-items: center; gap: var(--sp-4); width: 100%; }
   .app.typing .art { display: none; }
-  .app.typing .play { width: 44px; height: 44px; flex: none; order: -1; }
+  .app.typing .play { width: 44px; height: 44px; flex: none; order: -1; box-shadow: none; }
   .app.typing .play svg { width: 18px; height: 18px; }
   .app.typing .play.invite::after { display: none; }   /* no ring while typing: it would run off the edge */
   .app.typing .timeline-wrap { flex: 1; min-width: 0; }
   .app.typing .tl-label { display: none; }
-  .app.typing .guess { margin-top: 12px; }
-  .app.typing .list { position: static; margin-top: 8px; max-height: 220px; }
-  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .app.typing .guess { margin-top: var(--sp-3); }
+  .app.typing .list { position: static; margin-top: var(--sp-2); max-height: 220px; }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); margin-top: var(--sp-3); }
   .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    height: 50px; padding: 0 22px; border: 0; border-radius: var(--pill);
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+    height: 50px; padding: 0 var(--sp-5); border: 0; border-radius: var(--pill);
     font-weight: 600; font-size: 16px; cursor: pointer;
-    transition: transform .1s ease, opacity .15s ease, filter .15s ease;
+    transition: transform .1s ease, background-color .15s ease;
   }
   .btn:active:not(:disabled) { transform: scale(0.97); }
   .btn:disabled { cursor: not-allowed; }
-  /* the main action: dark glass with white text; disabled it is clear glass with grey text */
-  .btn.primary, .result .btn.share, .fb .btn.send {
-    background: var(--glass-dark); color: #fff;
-    -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
-    box-shadow: var(--edge-dark), 0 10px 26px rgba(20, 15, 40, .22);
-  }
-  .btn.primary:disabled, .fb .btn.send:disabled { background: var(--glass); color: var(--muted); box-shadow: var(--edge), var(--lift); }
-  @media (hover: hover) { .btn.primary:hover:not(:disabled), .result .btn.share:hover, .fb .btn.send:hover:not(:disabled) { filter: brightness(1.25); } }
-  /* a second action: a clear glass pill with dark text */
-  .btn.ghost { color: var(--ink); }
-  .btn.ghost:disabled { opacity: .5; }
-  @media (hover: hover) { .btn.ghost:hover:not(:disabled), .btn.skip:hover:not(:disabled) { background: var(--glass-strong); } }
-  /* "skip" sits under the play button: a small glass pill with a + */
-  .btn.skip { height: 40px; padding: 0 18px; color: var(--ink); font-size: 15px; }
+  /* the main action: a blue pill; disabled it turns grey */
+  .btn.primary, .result .btn.share, .fb .btn.send { background: var(--accent); color: #fff; }
+  .btn.primary:disabled, .fb .btn.send:disabled { background: var(--soft-2); color: var(--mid); }
+  @media (hover: hover) { .btn.primary:hover:not(:disabled), .result .btn.share:hover, .fb .btn.send:hover:not(:disabled) { background: var(--accent-dark); } }
+  /* a second action: a grey pill with blue text */
+  .btn.ghost { background: var(--soft); color: var(--accent-ink); }
+  .btn.ghost:disabled { opacity: .45; }
+  @media (hover: hover) { .btn.ghost:hover:not(:disabled), .btn.skip:hover:not(:disabled) { background: var(--soft-2); } }
+  /* "skip" sits under the play button: a small grey pill with a + */
+  .btn.skip { height: 40px; padding: 0 var(--sp-4); background: var(--soft); color: var(--accent-ink); font-size: 15px; }
   .btn.skip .i-plus { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2.4; }
   .btn.skip.reveal .i-plus { display: none; }        /* the last attempt: "show me the song" adds nothing */
   .app.typing .btn.skip { display: none; }           /* while typing the guess, the stage is one small row */
   .guess .actions { grid-template-columns: 1fr; }   /* the guess button across the width */
-  .guess .note { margin: 16px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; text-align: center; }   /* playback differs between phones and networks */
+  .guess .note { margin: var(--sp-4) 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; text-align: center; }   /* playback differs between phones and networks */
   .app.typing .guess .note { display: none; }
 
   /* result */
-  .result { margin-top: 4px; padding: 14px 0 0; text-align: center; }
+  .result { padding-top: var(--sp-3); text-align: center; }
   .result[hidden] { display: none; }
   .result h2 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
   /* the song, one line: the band, a colon, the title; it sits between the share button and the video */
-  .song-line { margin: 28px 0 0; text-align: center; font-size: 21px; font-weight: 700; line-height: 1.35; }
+  .song-line { margin: var(--sp-5) 0 0; text-align: center; font-size: 21px; font-weight: 700; line-height: 1.35; }
   .song-line .by { color: var(--muted); font-weight: 400; }
-  /* the score: one tile per attempt. A tick on pink-red is the right answer, a cross on ink a wrong one, a grey tile a
-     skip, and a clear glass slot an attempt that was not needed. They pop in one after the other. */
-  .squares { display: flex; justify-content: center; gap: 6px; margin: 16px 0; }
+  /* the score: one tile per attempt. A tick on blue is the right answer, a cross on ink a wrong one, a grey tile a skip,
+     and a hollow slot an attempt that was not needed. They pop in one after the other. */
+  .squares { display: flex; justify-content: center; gap: var(--sp-2); margin: var(--sp-4) 0; }
   .squares i {
-    position: relative; flex: 1 1 0; max-width: 30px; aspect-ratio: 1; border-radius: 8px;
-    background: rgba(255, 255, 255, .5); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .7);
+    position: relative; flex: 1 1 0; max-width: 30px; aspect-ratio: 1; border-radius: 7px;
+    box-shadow: inset 0 0 0 1.5px var(--soft-2);
     animation: tile .4s cubic-bezier(.2, .8, .2, 1) calc(var(--n, 0) * 55ms) backwards;
   }
-  .squares i.skip { background: rgba(29, 29, 31, .18); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3); }
-  .squares i.win, .squares i.bad { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 3px 8px rgba(var(--shade), .18); }
+  .squares i.skip { background: #d1d1d6; box-shadow: none; }
+  .squares i.win, .squares i.bad { box-shadow: 0 3px 8px rgba(var(--shade), .16); }
   .squares i.win { background: var(--accent); }
   .squares i.bad { background: var(--ink); }
   .squares i.win::after {
@@ -285,8 +277,8 @@
     border: solid var(--paper); border-width: 0 2.5px 2.5px 0; transform: translate(-50%, -50%) rotate(45deg);
   }
   .squares i.bad::before, .squares i.bad::after {
-    content: ""; position: absolute; left: 50%; top: 50%; width: 52%; height: 2.5px;
-    margin: -1.25px 0 0 -26%; background: var(--paper); border-radius: 2px; transform: rotate(45deg);
+    content: ""; position: absolute; left: 24%; top: calc(50% - 1.25px); width: 52%; height: 2.5px;
+    background: var(--paper); border-radius: 2px; transform: rotate(45deg);
   }
   .squares i.bad::after { transform: rotate(-45deg); }
   @keyframes tile { from { transform: scale(.4); opacity: 0; } }
@@ -294,46 +286,42 @@
   a.btn { text-decoration: none; }
   .btn svg { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
   .btn[hidden] { display: none; }
-  .next { margin: 12px 0 0; color: var(--muted); font-size: 14px; }
+  .next { margin: var(--sp-3) 0 0; color: var(--muted); font-size: 14px; }
   .next b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 
   /* YouTube player: kept off-screen while guessing, shown at the end */
-  .player-wrap {
-    position: fixed; left: -10000px; top: 0;
-    width: 220px; height: 220px;
-    pointer-events: none;
-  }
+  .player-wrap { position: fixed; left: -10000px; top: 0; width: 220px; height: 220px; pointer-events: none; }
   .player-wrap iframe { width: 100%; height: 100%; border: 0; }
   .player-wrap.revealed {
     position: static; left: auto;
     width: 100%; height: auto; aspect-ratio: 16 / 9;
-    margin-top: 16px; pointer-events: auto;
-    border-radius: var(--r-m); overflow: hidden; box-shadow: 0 0 0 1px rgba(255, 255, 255, .6), var(--lift);
+    margin-top: var(--sp-4); pointer-events: auto;
+    border-radius: var(--r-m); overflow: hidden; box-shadow: var(--shadow-tile);
   }
 
-  .notice { margin: 16px 0 0; padding: 12px 16px; border-radius: var(--r-m); font-size: 14px; }
+  .notice { margin: var(--sp-4) 0 0; padding: var(--sp-3) var(--sp-4); background: var(--soft); border-radius: var(--r-m); font-size: 14px; }
   .notice[hidden] { display: none; }
-  .notice code { direction: ltr; unicode-bidi: embed; background: rgba(255, 255, 255, .7); padding: 1px 6px; border-radius: 6px; }
-  .foot { margin-top: 32px; text-align: center; color: var(--muted); font-size: 13px; }
-  .foot.credit { margin-top: 6px; }
+  .notice code { direction: ltr; unicode-bidi: embed; background: var(--soft-2); padding: 0 var(--sp-1); border-radius: 6px; }
+  .foot { margin-top: var(--sp-6); text-align: center; color: var(--muted); font-size: 13px; }
+  .foot.credit { margin-top: var(--sp-2); }
 
   /* screens: show only what belongs to the current one (home or game); home also has two states, before and after the game */
   .app[data-screen="home"] > :not([data-s~="home"]),
   .app[data-screen="game"] > :not([data-s~="game"]) { display: none; }
   .bar { display: flex; align-items: center; }
-  .back { width: 40px; height: 40px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; color: var(--ink); cursor: pointer; }
-  @media (hover: hover) { .back:hover { background: var(--glass-strong); } }
+  .back { width: 40px; height: 40px; display: grid; place-items: center; padding: 0; background: var(--soft); border: 0; border-radius: 50%; color: var(--ink); cursor: pointer; }
+  @media (hover: hover) { .back:hover { background: var(--soft-2); } }
   .back svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; }
-  .start { margin-top: 28px; text-align: center; }
-  .status { margin: 10px 0 0; color: var(--muted); font-size: 15px; }
+  .start { margin-top: var(--sp-5); text-align: center; }
+  .status { margin: var(--sp-3) 0 0; color: var(--muted); font-size: 15px; }
 
-  /* home hero: a fan of album covers, dealt in on load. Everything moves with transform and opacity only; with reduced
-     motion the animations are off and the fan stands still. */
-  .hero { --s: clamp(84px, 26vw, 112px); position: relative; height: calc(var(--s) * 1.2); margin: 10px calc(50% - 50vw) 0; overflow-x: clip; }   /* as wide as the screen, so a sleeve leaves and comes in at its edges */
+  /* home hero: a fan of album covers, dealt in on load, as wide as the card so a cover leaves and comes in at its
+     edges. Everything moves with transform and opacity only; with reduced motion the fan stands still. */
+  .hero { --s: clamp(84px, 24vw, 108px); position: relative; height: calc(var(--s) * 1.2); margin: var(--sp-2) calc(-1 * var(--pad)) 0; overflow-x: clip; }
   .sleeve {
     position: absolute; left: 50%; top: 0; width: var(--s); height: var(--s); margin-left: calc(var(--s) / -2);
     background: var(--soft-2); border-radius: var(--r-s); overflow: hidden;
-    box-shadow: 0 12px 28px rgba(40, 30, 80, .22), 0 0 0 1px rgba(255, 255, 255, .4);
+    box-shadow: 0 10px 24px rgba(var(--shade), .18), 0 0 0 1px rgba(var(--shade), .04);
     z-index: var(--z, 1);
     transform: translate(calc(var(--s) * var(--x)), var(--y)) rotate(var(--r));
     transition: transform .9s cubic-bezier(.45, .05, .2, 1);   /* a change of seat glides */
@@ -345,68 +333,79 @@
   .sleeve .a { fill: var(--accent); } .sleeve .l { fill: var(--accent-l); } .sleeve .i { fill: var(--ink); }
   .sleeve .p { fill: var(--paper); } .sleeve .s { fill: var(--soft-2); }
   @keyframes deal { from { transform: translate(0, 26px) rotate(0deg) scale(.7); } }
-  /* the way in: a dark glass pill with a play icon */
+  /* the way in: a blue pill with a play icon */
   .startbtn {
-    position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-    min-width: 200px; height: 56px; padding: 0 30px;
-    background: var(--glass-dark); color: #fff; border: 0; border-radius: var(--pill);
-    -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+    position: relative; display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-3);
+    min-width: 200px; height: 56px; padding: 0 var(--sp-6);
+    background: var(--accent); color: #fff; border: 0; border-radius: var(--pill);
     font-size: 19px; font-weight: 700; cursor: pointer;
-    box-shadow: var(--edge-dark), 0 12px 30px rgba(20, 15, 40, .25);
-    transition: transform .12s ease, filter .15s ease;
+    box-shadow: 0 10px 24px rgba(0, 113, 227, .28);
+    transition: transform .12s ease, background-color .15s ease;
     animation: rise .7s cubic-bezier(.2, .8, .2, 1) .5s both;
   }
   .startbtn svg { width: 20px; height: 20px; fill: currentColor; }
-  @media (hover: hover) { .startbtn:hover { filter: brightness(1.25); } }
+  @media (hover: hover) { .startbtn:hover { background: var(--accent-dark); } }
   .startbtn:active { transform: scale(.97); }
   @keyframes rise { from { transform: translateY(14px) scale(.9); opacity: 0; } }
   @keyframes ring { 0% { transform: scale(1); opacity: .6; } 100% { transform: scale(1.45); opacity: 0; } }
   .app[data-state="before"] [data-when="after"], .app[data-state="after"] [data-when="before"] { display: none; }   /* the home screen's two states */
   .foot .heart { width: 13px; height: 13px; vertical-align: -2px; fill: currentColor; }
 
+  /* after the game: the calendar and the reminder, as two rows of one grouped list, each with an icon tile */
+  .more { margin-top: var(--sp-5); background: var(--paper); border-radius: var(--r-l); box-shadow: var(--shadow-tile), inset 0 0 0 1px rgba(var(--shade), .04); overflow: hidden; }
+  .row {
+    position: relative; display: flex; align-items: center; gap: var(--sp-3); width: 100%; min-height: 56px;
+    padding: var(--sp-2) var(--sp-4); background: none; border: 0; color: var(--ink); font-size: 16px; font-weight: 500; text-align: start; cursor: pointer;
+  }
+  .row > span { flex: 1; }
+  .row + .row::before { content: ""; position: absolute; top: 0; inset-inline: calc(var(--sp-4) + 32px + var(--sp-3)) 0; height: 1px; background: var(--soft-2); }   /* the separator starts after the icon */
+  .row .chev { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--mid); stroke-width: 2; }
+  @media (hover: hover) { .row:hover { background: var(--soft); } }
+  .row:active { background: var(--soft-2); }
+
   /* daily reminder: a calendar event that repeats every day, so no account or email address is needed */
   .remind .cal-head { justify-content: center; }
   .remind h2:focus { outline: none; }
   .remind { font-size: 15px; }
-  .remind p { margin: 0 0 12px; color: var(--muted); font-size: 14px; text-align: center; }
-  .remind label { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 12px; }
-  .remind input[type="time"] { height: 42px; padding: 0 12px; border: 0; border-radius: 12px; color: var(--ink); font: inherit; font-weight: 600; }
+  .remind p { margin: 0 0 var(--sp-3); color: var(--muted); font-size: 14px; text-align: center; }
+  .remind label { display: flex; align-items: center; justify-content: center; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+  .remind input[type="time"] { height: 42px; padding: 0 var(--sp-3); border: 0; border-radius: 10px; background: var(--soft); color: var(--ink); font: inherit; font-weight: 600; }
   .remind .actions .btn { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 58px; border-radius: var(--r-m); font-size: 15px; text-align: center; text-decoration: none; line-height: 1.25; }
   .remind .actions .btn small { color: var(--muted); font-size: 12px; font-weight: 400; }
-  .remind .alt { display: block; width: 100%; margin-top: 10px; padding: 6px; background: none; border: 0; color: var(--ink); font: inherit; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .remind .alt { display: block; width: 100%; margin-top: var(--sp-3); padding: var(--sp-2); background: none; border: 0; color: var(--accent-ink); font: inherit; font-size: 13px; cursor: pointer; }
   .remind .alt[hidden] { display: none; }
 
   /* feedback: a quiet line of text above the credit opens a dialog with a message and an email address that is optional */
-  .fbrow { margin: 24px 0 0; text-align: center; }
+  .fbrow { margin: var(--sp-5) 0 0; text-align: center; }
   .fbrow[hidden] { display: none; }
   .fblink {
-    display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 6px;
-    background: none; border: 0; color: var(--ink); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+    display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 44px; padding: 0 var(--sp-2);
+    background: none; border: 0; color: var(--accent-ink); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
   }
   .fblink svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; }
   @media (hover: hover) { .fblink:hover { text-decoration: underline; text-underline-offset: 3px; } }
-  .fb h2 { margin: 0 0 6px; font-size: 22px; font-weight: 700; text-align: center; }
+  .fb h2 { margin: 0 0 var(--sp-2); font-size: 22px; font-weight: 700; text-align: center; }
   .fb h2:focus { outline: none; }
-  .fb .lead { margin: 0 0 14px; color: var(--muted); font-size: 14px; text-align: center; }
-  .fb textarea, .fb input[type="email"] { display: block; width: 100%; padding: 12px 14px; border: 0; border-radius: var(--r-m); color: var(--ink); font: inherit; font-size: 16px; }
+  .fb .lead { margin: 0 0 var(--sp-4); color: var(--muted); font-size: 14px; text-align: center; }
+  .fb textarea, .fb input[type="email"] { display: block; width: 100%; padding: var(--sp-3) var(--sp-4); border: 0; border-radius: var(--r-m); background: var(--soft); color: var(--ink); font: inherit; font-size: 16px; }
   .fb textarea { height: 120px; resize: none; }
-  .fb textarea:focus, .fb input[type="email"]:focus { outline: none; background: var(--glass-strong); box-shadow: var(--edge), 0 0 0 2px var(--tint); }
-  .fb label { display: block; margin: 14px 0 6px; font-size: 14px; font-weight: 600; }
+  .fb textarea:focus, .fb input[type="email"]:focus { outline: none; background: var(--paper); box-shadow: 0 0 0 2px var(--accent); }
+  .fb label { display: block; margin: var(--sp-4) 0 var(--sp-2); font-size: 14px; font-weight: 600; }
   .fb label small { color: var(--muted); font-size: 13px; font-weight: 400; }
-  .fb .btn { margin-top: 12px; }
-  .fb .note { min-height: 20px; margin: 10px 0 0; color: var(--muted); font-size: 13px; text-align: center; }
-  .fb .note.bad { color: var(--accent-ink); font-weight: 600; }
-  .fb .thanks { padding: 18px 0 4px; text-align: center; }
-  .fb .thanks p { margin: 0 0 6px; font-size: 20px; font-weight: 700; }
+  .fb .btn { margin-top: var(--sp-3); }
+  .fb .note { min-height: 20px; margin: var(--sp-3) 0 0; color: var(--muted); font-size: 13px; text-align: center; }
+  .fb .note.bad { color: var(--ink); font-weight: 600; }
+  .fb .thanks { padding: var(--sp-4) 0 var(--sp-1); text-align: center; }
+  .fb .thanks p { margin: 0 0 var(--sp-2); font-size: 20px; font-weight: 700; }
   .fb [hidden] { display: none; }
-  .remind #remindClose { margin-top: 16px; }
+  .remind #remindClose { margin-top: var(--sp-4); }
 
   .toast {
-    position: fixed; inset-inline: 0; bottom: 24px; margin: 0 auto; width: max-content; max-width: calc(100% - 32px);
-    padding: 12px 20px; border-radius: var(--pill);
-    background: var(--glass-dark); color: #fff; font-size: 15px; font-weight: 600;
-    -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
-    box-shadow: var(--edge-dark), 0 10px 26px rgba(20, 15, 40, .25);
+    position: fixed; inset-inline: 0; bottom: var(--sp-5); margin: 0 auto; width: max-content; max-width: calc(100% - var(--sp-6));
+    padding: var(--sp-3) var(--sp-5); border-radius: var(--pill);
+    background: rgba(29, 29, 31, .86); color: #fff; font-size: 15px; font-weight: 600;
+    -webkit-backdrop-filter: blur(16px) saturate(180%); backdrop-filter: blur(16px) saturate(180%);
+    box-shadow: 0 10px 26px rgba(var(--shade), .2);
     opacity: 0; transform: translateY(12px); pointer-events: none;
     transition: opacity .2s ease, transform .2s ease;
   }
@@ -414,55 +413,59 @@
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   /* header links and the calendar */
-  .more { margin-top: 28px; display: grid; gap: 10px; }
-  .more .btn { width: 100%; }
   .links:has(> [hidden]:only-child) { display: none; }   /* nothing to show: no empty row */
-  .links { margin: 10px 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 16px; font-size: 15px; }
+  .links { margin: var(--sp-3) 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-1) var(--sp-4); font-size: 15px; }
   .link {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 0; border: 0; background: none; color: var(--ink); font: inherit; font-weight: 600;
-    text-decoration: underline; text-decoration-color: var(--tint); text-underline-offset: 3px; white-space: nowrap; cursor: pointer;
+    display: inline-flex; align-items: center; gap: var(--sp-2);
+    padding: 0; border: 0; background: none; color: var(--accent-ink); font: inherit; font-weight: 600;
+    text-decoration: none; white-space: nowrap; cursor: pointer;
   }
   .link[hidden] { display: none; }
   .link svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
-  dialog.cal { width: min(92vw, 380px); padding: 0; border: 0; border-radius: var(--r-l); color: var(--ink); background: var(--glass-strong); box-shadow: var(--edge), 0 30px 70px rgba(20, 15, 40, .28); }
-  dialog.cal::backdrop { background: rgba(30, 20, 60, .18); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
-  .cal-body { padding: 20px 18px 18px; }
-  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  dialog.cal {
+    width: min(92vw, 380px); padding: 0; border: 0; border-radius: var(--r-card); color: var(--ink);
+    background: rgba(255, 255, 255, .9); -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%);
+    box-shadow: 0 30px 70px rgba(var(--shade), .25);
+  }
+  dialog.cal::backdrop { background: rgba(var(--shade), .25); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .cal-body { padding: var(--sp-5) var(--sp-4) var(--sp-4); }
+  .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-4); }
   .cal-head h2 { margin: 0; font-size: 22px; font-weight: 700; }
-  .cal-nav { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 50%; color: var(--ink); cursor: pointer; }
+  .cal-nav { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--soft); color: var(--ink); cursor: pointer; }
   .cal-nav:disabled { opacity: .3; cursor: default; }
   .cal-nav svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
-  .cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; text-align: center; }   /* small squares with air between them */
-  .cal-week { margin-bottom: 6px; color: var(--muted); font-size: 13px; font-weight: 600; }
+  .cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--sp-3); text-align: center; }   /* small squares with air between them */
+  .cal-week { margin-bottom: var(--sp-2); color: var(--muted); font-size: 13px; font-weight: 600; }
   .cal-day {
     position: relative; display: block; aspect-ratio: 1; padding: 0;
-    border: 0; border-radius: var(--r-s); color: var(--ink);
+    border: 0; border-radius: var(--r-s); background: var(--soft); color: var(--ink);
     font: inherit; font-size: 15px; font-weight: 600; font-style: normal; line-height: 1; cursor: pointer;
   }
   button.cal-day { line-height: normal; }
   .cal-day:disabled { background: transparent; color: var(--mid); font-weight: 400; cursor: default; }
-  .cal-day.today { box-shadow: var(--edge), inset 0 0 0 2px var(--ink); }
+  .cal-day.today { box-shadow: inset 0 0 0 2px var(--ink); }
   .cal-day.today.won, .cal-day.today.lost { box-shadow: none; }   /* filled, today shows by the outline of the day on screen */
-  .cal-day.current { outline: 2px solid var(--tint); outline-offset: 2px; }
-  /* a played day is a filled square in the colours of the result's tiles: guessed in pink-red, missed in ink, started in
-     grey; a day not played yet is clear glass */
-  .cal-day.won { background: var(--accent); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3); }
-  .cal-day.lost { background: var(--ink); color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2); }
-  .cal-day.going { background: rgba(29, 29, 31, .18); }
-  .cal-key { display: flex; flex-wrap: wrap; gap: 8px 12px; margin: 16px 0; color: var(--muted); font-size: 13px; }
-  .cal-key span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .cal-day.current { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* a played day is a filled square in the colours of the result's tiles: guessed in blue, missed in ink, started in
+     grey; a day not played yet is light grey */
+  .cal-day.won { background: var(--accent); color: #fff; }
+  .cal-day.lost { background: var(--ink); color: #fff; }
+  .cal-day.going { background: #d1d1d6; }
+  .cal-key { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-3); margin: var(--sp-4) 0; color: var(--muted); font-size: 13px; }
+  .cal-key span { display: inline-flex; align-items: center; gap: var(--sp-2); white-space: nowrap; }
   .cal-key .cal-day { width: 22px; border-radius: 6px; font-size: 12px; display: inline-grid; place-items: center; cursor: default; }
   .cal-body .btn { width: 100%; }
 
-  /* small phones: keep the guess box and buttons above the fold */
+  /* phones: the card sits close to the screen's edges, with a little less padding */
   @media (max-width: 480px) {
-    .app { padding: 16px 16px 48px; }
+    :root { --pad: var(--sp-4); }
+    .app { margin: var(--sp-3); }
     h1 { font-size: 40px; }
-    .lead { margin-top: 10px; font-size: 14px; }
-    .stage { gap: 12px; }
-    .guess { margin-top: 14px; }
+    .lead { margin-top: var(--sp-3); font-size: 14px; }
+    .guess { margin-top: var(--sp-4); }
+    .guess .note { font-size: 11px; }                 /* its two lines fit the card on a phone */
   }
+  @media (max-width: 360px) { .tl-label { font-size: 14px; } }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
@@ -549,13 +552,13 @@
 
   <p class="notice" id="notice" data-s="home game" role="alert" hidden></p>
   <div class="stats below" data-s="home" data-when="after">
-    <div class="stat"><b data-stat="streak">0</b><span>רצף</span></div>
-    <div class="stat"><b data-stat="wins">0</b><span>ניצחונות</span></div>
+    <div class="stat"><i class="tile t-flame" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 22c4.1 0 7-2.9 7-7 0-3.6-2.4-6.1-4.2-8.2-.3 2.1-1.3 3.6-2.8 4.2.3-3.3-1.2-6.5-3.8-9C8.6 5.1 5 8.6 5 14.2 5 18.9 8 22 12 22z"/></svg></i><b data-stat="streak">0</b><span>רצף</span></div>
+    <div class="stat"><i class="tile t-trophy" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4zM8 6H5v1.5A3 3 0 0 0 8 10.5M16 6h3v1.5a3 3 0 0 1-3 3M12 13v4M8.5 20h7M10 17h4v3h-4z"/></svg></i><b data-stat="wins">0</b><span>ניצחונות</span></div>
   </div>
   <!-- home, after the game: the history of played days and the daily reminder, at the bottom (the reminder opens over the page) -->
   <section class="more" data-s="home" data-when="after">
-    <button class="btn ghost" id="calBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 4v6h6M3.5 15a9 9 0 1 0 2.1-9.4L1.5 10M12 7v5l3 2"/></svg>שחקו בימים קודמים</button>
-    <button class="btn ghost" id="remindBtn" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16.5V11a6 6 0 0112 0v5.5l1.5 2h-15zM10 21a2 2 0 004 0"/></svg>תזכורת יומית ביומן</button>
+    <button class="row" id="calBtn" type="button"><i class="tile t-cal" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></i><span>שחקו בימים קודמים</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <button class="row" id="remindBtn" type="button" aria-haspopup="dialog"><i class="tile t-bell" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15zM10 21a2 2 0 0 0 4 0"/></svg></i><span>תזכורת יומית ביומן</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
   </section>
   <p class="fbrow" id="feedbackRow" data-s="home" data-when="after" hidden><button class="fblink" id="feedbackBtn" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>יש הצעה או בעיה? כתבו לנו</button></p>
   <p class="foot" data-s="home" data-when="before">השיר מתחלף בחצות</p>
