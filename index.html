@@ -51,7 +51,7 @@
     --r-s: 8px; --r-m: 12px; --r-l: 18px; --r-card: 28px; --pill: 999px;
     --shadow-card: 0 1px 2px rgba(var(--shade), .04), 0 12px 40px rgba(var(--shade), .08);
     --shadow-tile: 0 1px 2px rgba(var(--shade), .04), 0 4px 16px rgba(var(--shade), .07);
-    --art: min(52vw, 26vh, 240px);                  /* the mystery cover on the game screen */
+    --art: min(42vw, 22vh, 190px);                  /* the mystery cover on the game screen */
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
@@ -114,7 +114,7 @@
   .t-trophy svg, .t-cal svg, .t-bell svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
   /* player stage: a mystery cover, the status and the progress line under it, then the controls */
-  .stage { margin-top: var(--sp-2); display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
+  .stage { margin-top: var(--sp-3); display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
   .stage[hidden] { display: none; }
   /* the cover of a song nobody has named yet, shaped like an app icon: blurred colours of the day's hue and a question
      mark. Like a now-playing screen it is a little smaller while paused and grows while the clip plays. */
@@ -147,7 +147,7 @@
   /* the play button: a round black button with a white icon */
   .play {
     position: relative;
-    width: 64px; height: 64px;
+    width: 80px; height: 80px;
     padding: 0; border: 0; border-radius: 50%;
     background: var(--btn); color: #fff;
     cursor: pointer;
@@ -158,7 +158,7 @@
   @media (hover: hover) { .play:hover:not(:disabled) { transform: scale(1.06); } }
   .play:active:not(:disabled) { transform: scale(0.94); }
   .play:disabled { cursor: progress; opacity: .45; }
-  .play svg { position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; transform: translate(-50%, -50%); fill: currentColor; }
+  .play svg { position: absolute; left: 50%; top: 50%; width: 32px; height: 32px; transform: translate(-50%, -50%); fill: currentColor; }
   .play .i-pause { display: none; }
   .play[data-state="playing"] .i-play { display: none; }
   .play[data-state="playing"] .i-pause { display: block; }
