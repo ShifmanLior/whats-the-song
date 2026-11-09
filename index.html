@@ -21,8 +21,9 @@
 <style>
 
   /* Clean and bright: a quiet light-grey page with one white rounded card in the middle that holds everything. Near-black
-     text, grey secondary text, the device's own font with bold titles. One blue accent: --accent for fills (white on it
-     4.7:1), --accent-ink for blue text (5.6:1 on white, 5.0:1 on the grey fills). Small rounded "app icon" tiles with
+     text, grey secondary text, the device's own font in fine weights (titles 600, labels 500, text 400). The main buttons
+     are black (--btn) with white text. One blue accent for state, not for buttons: --accent for the progress, a right
+     answer and focus (white on it 4.7:1), --accent-ink for blue link text (5.6:1 on white). Small rounded "app icon" tiles with
      gradients mark the stats and the links. The mystery cover keeps the day's colours (--h, set by the main script).
      State is still shown with fill, icons and shape as well as colour. Light only.
      Spacing: one scale on a 4px base, --sp-1 4px to --sp-7 48px. Small steps inside a component, middle steps between
@@ -41,7 +42,8 @@
     --mid: #86868b;
     --accent: #0071e3;
     --accent-ink: #0066cc;
-    --accent-dark: #0062c4;
+    --btn: #1d1d1f;                                 /* the main buttons: black with white text */
+    --btn-hover: #3a3a3c;
     --accent-l: #bcd9f7;
     --shade: 0, 0, 0;                               /* the colour of shadows, as r, g, b */
     --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px; --sp-7: 48px;
@@ -55,24 +57,26 @@
   html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
-    min-height: 100vh;
+    min-height: 100vh; min-height: 100svh;
+    display: flex; flex-direction: column; align-items: center;   /* the card in the middle of the screen */
+    padding: var(--sp-7) var(--sp-4);
     overflow-x: clip;
     background: var(--page);
     color: var(--ink);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Hebrew", Arial, sans-serif;
     font-size: 17px;
     font-weight: 400;
-    line-height: 1.45;
-    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
   }
   button, input { font: inherit; color: inherit; }
   :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 
   /* the card */
   .app {
-    width: auto;
+    width: 100%;
     max-width: 440px;
-    margin: var(--sp-7) auto;
+    margin: auto;                                   /* centred on the screen when it is shorter than the screen */
     padding: var(--pad) var(--pad) var(--sp-6);
     background: var(--paper);
     border-radius: var(--r-card);
@@ -82,10 +86,12 @@
 
   /* the name and the day, under the covers */
   .info { margin-top: var(--sp-3); text-align: center; }
-  h1 { margin: 0; font-size: 44px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+  h1 { margin: 0; font-size: 40px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.2; }
   .sub { margin: var(--sp-1) 0 0; color: var(--muted); font-size: 15px; }
   .lead { margin: var(--sp-4) 0 0; color: var(--muted); font-size: 15px; text-align: center; }
-  .app[data-state="after"] .sub.quiet { display: none; }   /* after today's game the day number is not repeated under the name */
+  .app[data-state="after"] .sub.quiet { display: none; }
+  /* centred text breaks into lines of even length, so no word is left alone on the last line */
+  .lead, .sub, .status, .tl-label, .guess .note, .next, .result h2, .song-line, .foot, .remind p, .fb .lead { text-wrap: balance; }   /* after today's game the day number is not repeated under the name */
 
   /* the streak and the wins: two white tiles, each with a small gradient icon */
   .stats { display: flex; justify-content: center; gap: var(--sp-3); margin-top: var(--sp-4); }
@@ -95,7 +101,7 @@
     display: flex; flex-direction: column; align-items: center; gap: var(--sp-1);
     background: var(--paper); border-radius: var(--r-l); box-shadow: var(--shadow-tile), inset 0 0 0 1px rgba(var(--shade), .04);
   }
-  .stat b { display: block; margin-top: var(--sp-1); font-size: 26px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .stat b { display: block; margin-top: var(--sp-1); font-size: 24px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.1; font-variant-numeric: tabular-nums; }
   .stat span { display: block; color: var(--muted); font-size: 13px; }
   /* an app-icon tile: a rounded square with a gradient and a white icon */
   .tile { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 2px 6px rgba(var(--shade), .14); }
@@ -122,13 +128,13 @@
       linear-gradient(135deg, hsl(calc(var(--h) + 200) 55% 34%), hsl(calc(var(--h) + 300) 60% 24%));
     background-size: 160% 160%; background-position: 30% 30%;
     box-shadow: 0 16px 36px rgba(var(--shade), .2), inset 0 1px 0 rgba(255, 255, 255, .35);
-    transform: scale(.92);
+    transform: scale(.92); transform-origin: 50% 100%;   /* paused it shrinks towards the status under it, so that gap stays true */
     transition: transform .45s cubic-bezier(.3, 1.4, .5, 1), box-shadow .45s ease;
   }
   .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(160deg, rgba(255, 255, 255, .3), transparent 45%); }   /* a soft sheen */
   .art .q {
     position: absolute; inset: 0; display: grid; place-items: center;
-    color: rgba(255, 255, 255, .8); font-size: calc(var(--art) * .42); font-weight: 700; line-height: 1;
+    color: rgba(255, 255, 255, .8); font-size: calc(var(--art) * .42); font-weight: 600; line-height: 1;
     text-shadow: 0 6px 24px rgba(var(--shade), .25);
   }
   .stage:has(.play[data-state="playing"]) .art {
@@ -136,39 +142,38 @@
     animation: drift 5s ease-in-out infinite alternate;
   }
   @keyframes drift { to { background-position: 70% 65%; } }
-  .tl-label { text-align: center; font-size: 15px; font-weight: 600; }   /* under the cover, like a song's title */
+  .tl-label { text-align: center; font-size: 15px; font-weight: 500; }   /* under the cover, like a song's title */
 
-  /* the play button: a round blue button with a white icon */
+  /* the play button: a round black button with a white icon */
   .play {
     position: relative;
     width: 64px; height: 64px;
     padding: 0; border: 0; border-radius: 50%;
-    background: var(--accent); color: #fff;
+    background: var(--btn); color: #fff;
     cursor: pointer;
     display: block;
-    box-shadow: 0 6px 16px rgba(0, 113, 227, .3);
+    box-shadow: 0 6px 16px rgba(var(--shade), .22);
     transition: transform .12s ease, background-color .15s ease;
   }
   @media (hover: hover) { .play:hover:not(:disabled) { transform: scale(1.06); } }
   .play:active:not(:disabled) { transform: scale(0.94); }
   .play:disabled { cursor: progress; opacity: .45; }
   .play svg { position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; transform: translate(-50%, -50%); fill: currentColor; }
-  .play .i-play { transform: translate(calc(-50% + 2px), -50%); }   /* a triangle looks centred a little to the right of the middle */
   .play .i-pause { display: none; }
   .play[data-state="playing"] .i-play { display: none; }
   .play[data-state="playing"] .i-pause { display: block; }
   .play[data-state="playing"]::after {
     content: ""; position: absolute; inset: -6px; border-radius: 50%;
-    border: 2px solid var(--accent); opacity: 0;
+    border: 2px solid rgba(29, 29, 31, .5); opacity: 0;
     animation: pulse 1.2s ease-out infinite;
   }
   .play.invite[data-state="idle"]::after {          /* press play: a ring that grows from it, for a clip not yet played by hand */
-    content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid var(--accent); opacity: 0; pointer-events: none;
+    content: ""; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid rgba(29, 29, 31, .45); opacity: 0; pointer-events: none;
     animation: ring 2.6s ease-out infinite;
   }
   .play[data-state="loading"]::after {
     content: ""; position: absolute; inset: -6px; border-radius: 50%;
-    border: 2px solid transparent; border-top-color: var(--accent);
+    border: 2px solid transparent; border-top-color: var(--btn);
     animation: spin .8s linear infinite;
   }
   @keyframes pulse { from { transform: scale(0.9); opacity: .6; } to { transform: scale(1.3); opacity: 0; } }
@@ -208,7 +213,7 @@
   .list[hidden] { display: none; }
   .list li { position: relative; padding: var(--sp-3) var(--sp-4); cursor: pointer; touch-action: manipulation; }
   .list li + li::before { content: ""; position: absolute; top: 0; inset-inline: var(--sp-4) 0; height: 1px; background: var(--soft-2); }   /* inset separators */
-  .list li b { display: block; font-weight: 600; }
+  .list li b { display: block; font-weight: 500; }
   .list li small { display: block; color: var(--muted); font-size: 14px; }
   .list li[aria-selected="true"] { background: var(--soft); }
   @media (hover: hover) { .list li:hover { background: var(--soft); } }
@@ -218,6 +223,7 @@
      with the back button gone, so the suggestions and the guess button fit above the keyboard without scrolling. The
      suggestions then sit in the page, under the field, instead of floating over what is below it. */
   .app.typing .bar { display: none; }
+  .app.typing { margin-top: 0; }                   /* at the top, not centred: the suggestions stay above the keyboard */
   .app.typing .stage { margin-top: var(--sp-3); flex-direction: row; align-items: center; gap: var(--sp-4); width: 100%; }
   .app.typing .art { display: none; }
   .app.typing .play { width: 44px; height: 44px; flex: none; order: -1; box-shadow: none; }
@@ -231,21 +237,21 @@
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
     height: 50px; padding: 0 var(--sp-5); border: 0; border-radius: var(--pill);
-    font-weight: 600; font-size: 16px; cursor: pointer;
+    font-weight: 500; font-size: 16px; cursor: pointer;
     transition: transform .1s ease, background-color .15s ease;
   }
   .btn:active:not(:disabled) { transform: scale(0.97); }
   .btn:disabled { cursor: not-allowed; }
-  /* the main action: a blue pill; disabled it turns grey */
-  .btn.primary, .result .btn.share, .fb .btn.send { background: var(--accent); color: #fff; }
+  /* the main action: a black pill; disabled it turns grey */
+  .btn.primary, .result .btn.share, .fb .btn.send { background: var(--btn); color: #fff; }
   .btn.primary:disabled, .fb .btn.send:disabled { background: var(--soft-2); color: var(--mid); }
-  @media (hover: hover) { .btn.primary:hover:not(:disabled), .result .btn.share:hover, .fb .btn.send:hover:not(:disabled) { background: var(--accent-dark); } }
-  /* a second action: a grey pill with blue text */
-  .btn.ghost { background: var(--soft); color: var(--accent-ink); }
+  @media (hover: hover) { .btn.primary:hover:not(:disabled), .result .btn.share:hover, .fb .btn.send:hover:not(:disabled) { background: var(--btn-hover); } }
+  /* a second action: a grey pill with dark text */
+  .btn.ghost { background: var(--soft); color: var(--ink); }
   .btn.ghost:disabled { opacity: .45; }
   @media (hover: hover) { .btn.ghost:hover:not(:disabled), .btn.skip:hover:not(:disabled) { background: var(--soft-2); } }
   /* "skip" sits under the play button: a small grey pill with a + */
-  .btn.skip { height: 40px; padding: 0 var(--sp-4); background: var(--soft); color: var(--accent-ink); font-size: 15px; }
+  .btn.skip { height: 40px; padding: 0 var(--sp-4); background: var(--soft); color: var(--ink); font-size: 15px; }
   .btn.skip .i-plus { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2.4; }
   .btn.skip.reveal .i-plus { display: none; }        /* the last attempt: "show me the song" adds nothing */
   .app.typing .btn.skip { display: none; }           /* while typing the guess, the stage is one small row */
@@ -256,9 +262,9 @@
   /* result */
   .result { padding-top: var(--sp-3); text-align: center; }
   .result[hidden] { display: none; }
-  .result h2 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
+  .result h2 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: -0.015em; }
   /* the song, one line: the band, a colon, the title; it sits between the share button and the video */
-  .song-line { margin: var(--sp-5) 0 0; text-align: center; font-size: 21px; font-weight: 700; line-height: 1.35; }
+  .song-line { margin: var(--sp-5) 0 0; text-align: center; font-size: 19px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.35; }
   .song-line .by { color: var(--muted); font-weight: 400; }
   /* the score: one tile per attempt. A tick on blue is the right answer, a cross on ink a wrong one, a grey tile a skip,
      and a hollow slot an attempt that was not needed. They pop in one after the other. */
@@ -287,7 +293,7 @@
   .btn svg { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
   .btn[hidden] { display: none; }
   .next { margin: var(--sp-3) 0 0; color: var(--muted); font-size: 14px; }
-  .next b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .next b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
 
   /* YouTube player: kept off-screen while guessing, shown at the end */
   .player-wrap { position: fixed; left: -10000px; top: 0; width: 220px; height: 220px; pointer-events: none; }
@@ -333,18 +339,18 @@
   .sleeve .a { fill: var(--accent); } .sleeve .l { fill: var(--accent-l); } .sleeve .i { fill: var(--ink); }
   .sleeve .p { fill: var(--paper); } .sleeve .s { fill: var(--soft-2); }
   @keyframes deal { from { transform: translate(0, 26px) rotate(0deg) scale(.7); } }
-  /* the way in: a blue pill with a play icon */
+  /* the way in: a black pill with a play icon */
   .startbtn {
     position: relative; display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-3);
     min-width: 200px; height: 56px; padding: 0 var(--sp-6);
-    background: var(--accent); color: #fff; border: 0; border-radius: var(--pill);
-    font-size: 19px; font-weight: 700; cursor: pointer;
-    box-shadow: 0 10px 24px rgba(0, 113, 227, .28);
+    background: var(--btn); color: #fff; border: 0; border-radius: var(--pill);
+    font-size: 18px; font-weight: 500; cursor: pointer;
+    box-shadow: 0 10px 24px rgba(var(--shade), .2);
     transition: transform .12s ease, background-color .15s ease;
     animation: rise .7s cubic-bezier(.2, .8, .2, 1) .5s both;
   }
   .startbtn svg { width: 20px; height: 20px; fill: currentColor; }
-  @media (hover: hover) { .startbtn:hover { background: var(--accent-dark); } }
+  @media (hover: hover) { .startbtn:hover { background: var(--btn-hover); } }
   .startbtn:active { transform: scale(.97); }
   @keyframes rise { from { transform: translateY(14px) scale(.9); opacity: 0; } }
   @keyframes ring { 0% { transform: scale(1); opacity: .6; } 100% { transform: scale(1.45); opacity: 0; } }
@@ -355,7 +361,7 @@
   .more { margin-top: var(--sp-5); background: var(--paper); border-radius: var(--r-l); box-shadow: var(--shadow-tile), inset 0 0 0 1px rgba(var(--shade), .04); overflow: hidden; }
   .row {
     position: relative; display: flex; align-items: center; gap: var(--sp-3); width: 100%; min-height: 56px;
-    padding: var(--sp-2) var(--sp-4); background: none; border: 0; color: var(--ink); font-size: 16px; font-weight: 500; text-align: start; cursor: pointer;
+    padding: var(--sp-2) var(--sp-4); background: none; border: 0; color: var(--ink); font-size: 16px; font-weight: 400; text-align: start; cursor: pointer;
   }
   .row > span { flex: 1; }
   .row + .row::before { content: ""; position: absolute; top: 0; inset-inline: calc(var(--sp-4) + 32px + var(--sp-3)) 0; height: 1px; background: var(--soft-2); }   /* the separator starts after the icon */
@@ -369,10 +375,10 @@
   .remind { font-size: 15px; }
   .remind p { margin: 0 0 var(--sp-3); color: var(--muted); font-size: 14px; text-align: center; }
   .remind label { display: flex; align-items: center; justify-content: center; gap: var(--sp-3); margin-bottom: var(--sp-3); }
-  .remind input[type="time"] { height: 42px; padding: 0 var(--sp-3); border: 0; border-radius: 10px; background: var(--soft); color: var(--ink); font: inherit; font-weight: 600; }
+  .remind input[type="time"] { height: 42px; padding: 0 var(--sp-3); border: 0; border-radius: 10px; background: var(--soft); color: var(--ink); font: inherit; font-weight: 500; }
   .remind .actions .btn { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 58px; border-radius: var(--r-m); font-size: 15px; text-align: center; text-decoration: none; line-height: 1.25; }
   .remind .actions .btn small { color: var(--muted); font-size: 12px; font-weight: 400; }
-  .remind .alt { display: block; width: 100%; margin-top: var(--sp-3); padding: var(--sp-2); background: none; border: 0; color: var(--accent-ink); font: inherit; font-size: 13px; cursor: pointer; }
+  .remind .alt { display: block; width: 100%; margin-top: var(--sp-3); padding: var(--sp-2); background: none; border: 0; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; font: inherit; font-size: 13px; cursor: pointer; }
   .remind .alt[hidden] { display: none; }
 
   /* feedback: a quiet line of text above the credit opens a dialog with a message and an email address that is optional */
@@ -380,30 +386,30 @@
   .fbrow[hidden] { display: none; }
   .fblink {
     display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 44px; padding: 0 var(--sp-2);
-    background: none; border: 0; color: var(--accent-ink); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+    background: none; border: 0; color: var(--accent-ink); font: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
   }
   .fblink svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; }
   @media (hover: hover) { .fblink:hover { text-decoration: underline; text-underline-offset: 3px; } }
-  .fb h2 { margin: 0 0 var(--sp-2); font-size: 22px; font-weight: 700; text-align: center; }
+  .fb h2 { margin: 0 0 var(--sp-2); font-size: 20px; font-weight: 600; letter-spacing: -0.01em; text-align: center; }
   .fb h2:focus { outline: none; }
   .fb .lead { margin: 0 0 var(--sp-4); color: var(--muted); font-size: 14px; text-align: center; }
   .fb textarea, .fb input[type="email"] { display: block; width: 100%; padding: var(--sp-3) var(--sp-4); border: 0; border-radius: var(--r-m); background: var(--soft); color: var(--ink); font: inherit; font-size: 16px; }
   .fb textarea { height: 120px; resize: none; }
   .fb textarea:focus, .fb input[type="email"]:focus { outline: none; background: var(--paper); box-shadow: 0 0 0 2px var(--accent); }
-  .fb label { display: block; margin: var(--sp-4) 0 var(--sp-2); font-size: 14px; font-weight: 600; }
+  .fb label { display: block; margin: var(--sp-4) 0 var(--sp-2); font-size: 14px; font-weight: 500; }
   .fb label small { color: var(--muted); font-size: 13px; font-weight: 400; }
   .fb .btn { margin-top: var(--sp-3); }
   .fb .note { min-height: 20px; margin: var(--sp-3) 0 0; color: var(--muted); font-size: 13px; text-align: center; }
-  .fb .note.bad { color: var(--ink); font-weight: 600; }
+  .fb .note.bad { color: var(--ink); font-weight: 500; }
   .fb .thanks { padding: var(--sp-4) 0 var(--sp-1); text-align: center; }
-  .fb .thanks p { margin: 0 0 var(--sp-2); font-size: 20px; font-weight: 700; }
+  .fb .thanks p { margin: 0 0 var(--sp-2); font-size: 19px; font-weight: 600; }
   .fb [hidden] { display: none; }
   .remind #remindClose { margin-top: var(--sp-4); }
 
   .toast {
     position: fixed; inset-inline: 0; bottom: var(--sp-5); margin: 0 auto; width: max-content; max-width: calc(100% - var(--sp-6));
     padding: var(--sp-3) var(--sp-5); border-radius: var(--pill);
-    background: rgba(29, 29, 31, .86); color: #fff; font-size: 15px; font-weight: 600;
+    background: rgba(29, 29, 31, .86); color: #fff; font-size: 15px; font-weight: 500;
     -webkit-backdrop-filter: blur(16px) saturate(180%); backdrop-filter: blur(16px) saturate(180%);
     box-shadow: 0 10px 26px rgba(var(--shade), .2);
     opacity: 0; transform: translateY(12px); pointer-events: none;
@@ -417,7 +423,7 @@
   .links { margin: var(--sp-3) 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sp-1) var(--sp-4); font-size: 15px; }
   .link {
     display: inline-flex; align-items: center; gap: var(--sp-2);
-    padding: 0; border: 0; background: none; color: var(--accent-ink); font: inherit; font-weight: 600;
+    padding: 0; border: 0; background: none; color: var(--accent-ink); font: inherit; font-weight: 500;
     text-decoration: none; white-space: nowrap; cursor: pointer;
   }
   .link[hidden] { display: none; }
@@ -430,16 +436,16 @@
   dialog.cal::backdrop { background: rgba(var(--shade), .25); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
   .cal-body { padding: var(--sp-5) var(--sp-4) var(--sp-4); }
   .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-4); }
-  .cal-head h2 { margin: 0; font-size: 22px; font-weight: 700; }
+  .cal-head h2 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
   .cal-nav { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 50%; background: var(--soft); color: var(--ink); cursor: pointer; }
   .cal-nav:disabled { opacity: .3; cursor: default; }
   .cal-nav svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
   .cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--sp-3); text-align: center; }   /* small squares with air between them */
-  .cal-week { margin-bottom: var(--sp-2); color: var(--muted); font-size: 13px; font-weight: 600; }
+  .cal-week { margin-bottom: var(--sp-2); color: var(--muted); font-size: 13px; font-weight: 500; }
   .cal-day {
     position: relative; display: block; aspect-ratio: 1; padding: 0;
     border: 0; border-radius: var(--r-s); background: var(--soft); color: var(--ink);
-    font: inherit; font-size: 15px; font-weight: 600; font-style: normal; line-height: 1; cursor: pointer;
+    font: inherit; font-size: 15px; font-weight: 500; font-style: normal; line-height: 1; cursor: pointer;
   }
   button.cal-day { line-height: normal; }
   .cal-day:disabled { background: transparent; color: var(--mid); font-weight: 400; cursor: default; }
@@ -459,8 +465,8 @@
   /* phones: the card sits close to the screen's edges, with a little less padding */
   @media (max-width: 480px) {
     :root { --pad: var(--sp-4); }
-    .app { margin: var(--sp-3); }
-    h1 { font-size: 40px; }
+    body { padding: var(--sp-3); }
+    h1 { font-size: 36px; }
     .lead { margin-top: var(--sp-3); font-size: 14px; }
     .guess { margin-top: var(--sp-4); }
     .guess .note { font-size: 11px; }                 /* its two lines fit the card on a phone */
