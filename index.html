@@ -1148,36 +1148,54 @@
     if (active >= 0) input.setAttribute('aria-activedescendant', 'opt-' + active);
   }
 
-  // Suggestions come from the iTunes catalog (millions of songs, Hebrew included), and our own list is always searched as
+  // Suggestions come from music catalogs (millions of songs, Hebrew included), and our own list is always searched as
   // well, so today's song can always be found.
-  //  - A search asks for 50 songs, so an artist's name brings many of their songs, not a handful.
-  //  - The Israeli store comes first. For a search in Latin letters that it answers with few songs, the American store
-  //    is asked too and its songs are added.
+  //  - The catalogs are asked through our own search, /api/search (api/search.js). It asks the iTunes catalog and Deezer
+  //    at the same time and merges what they find (50 songs from each, so an artist's name brings many of their songs),
+  //    and Vercel keeps each answer, so the many players who type the same thing ask the catalogs only once. iTunes
+  //    refuses an address that searches too often, and many phones share one; our search asks from the server, and
+  //    Deezer answers when iTunes does not.
+  //  - If our search cannot be reached, the page asks the iTunes catalog itself, as it used to. When iTunes refuses that
+  //    (403 or 429), it is left alone for a minute.
   //  - If nothing is found while the last word is still being typed ("shalom han"), the words before it are searched
   //    and the songs are kept whose names have a word starting with it.
   //  - While a search is on its way, what an earlier search found for the start of the same words is shown already.
-  //  - iTunes answers a limited number of searches a minute from one address. When it refuses (403 or 429), searches
-  //    rest for a minute, earlier results and our own list are used, and the list says the catalog is busy instead of
-  //    "not found".
-  const catalogCache = new Map();                   // "il|query" or "us|query" -> songs
-  let searchTimer = 0, searchCtl = null, searchSeq = 0, catalogRestUntil = 0;
+  //  - When no catalog answers at all, the search is tried once more a moment later; only then does the list say so.
+  const catalogCache = new Map();                   // query (as catalogKey makes it) -> songs
+  let searchTimer = 0, searchCtl = null, searchSeq = 0, itunesRestUntil = 0;
   function cancelSearch() { clearTimeout(searchTimer); if (searchCtl) searchCtl.abort(); searchSeq++; }
-  const catalogBusy = () => Date.now() < catalogRestUntil;
+  // the query as api/search.js reads it, so the same search is the same answer in Vercel's cache
+  const catalogKey = (q) => q.toLowerCase().replace(/\s+/g, ' ').slice(0, 80).trim();
 
-  async function fetchStore(country, q, signal) {
-    const key = country + '|' + q;
-    if (catalogCache.has(key)) return catalogCache.get(key);
-    if (catalogBusy()) throw new Error('catalog busy');
-    const r = await fetch(`https://itunes.apple.com/search?media=music&entity=song&limit=50&country=${country}&term=` + encodeURIComponent(q), { signal });
-    if (r.status === 403 || r.status === 429) { catalogRestUntil = Date.now() + 60000; throw new Error('catalog busy'); }
-    if (!r.ok) throw new Error('catalog ' + r.status);
-    const out = ((await r.json()).results || [])
+  async function viaOurSearch(q, signal) {
+    const r = await fetch('/api/search?q=' + encodeURIComponent(q), { signal });
+    if (!r.ok) throw new Error('search ' + r.status);
+    const d = await r.json();
+    if (!Array.isArray(d.songs)) throw new Error('search: no songs');
+    return d.songs.filter((x) => x && x.title && x.artist).map((x) => ({ title: String(x.title), artist: String(x.artist) }));
+  }
+  async function viaItunes(q, signal) {             // the old way, for when our search cannot be reached
+    if (Date.now() < itunesRestUntil) throw new Error('itunes resting');
+    const r = await fetch('https://itunes.apple.com/search?media=music&entity=song&limit=50&country=il&term=' + encodeURIComponent(q), { signal });
+    if (r.status === 403 || r.status === 429) { itunesRestUntil = Date.now() + 60000; throw new Error('itunes refused'); }
+    if (!r.ok) throw new Error('itunes ' + r.status);
+    return ((await r.json()).results || [])
       .filter((x) => x.trackName && x.artistName)
       .map((x) => ({ title: x.trackName, artist: x.artistName }));
-    catalogCache.set(key, out);
+  }
+  async function fetchCatalog(raw, signal) {
+    const q = catalogKey(raw);
+    if (catalogCache.has(q)) return catalogCache.get(q);
+    let out;
+    try { out = await viaOurSearch(q, signal); }
+    catch (e) {
+      if (e.name === 'AbortError') throw e;
+      dbg('search: ours failed (' + e.message + '), asking iTunes');
+      out = await viaItunes(q, signal);
+    }
+    catalogCache.set(q, out);
     return out;
   }
-  const merge = (...lists) => lists.flat();
   // the songs whose title or artist has every finished word, and a word starting with the last one
   function narrow(songs, raw) {
     const toks = norm(raw).split(' ').filter(Boolean);
@@ -1189,12 +1207,10 @@
     });
   }
   async function searchCatalog(q, signal) {
-    const latin = !HE.test(q);
-    let found = await fetchStore('il', q, signal);
-    if (latin && found.length < 10) found = merge(found, await fetchStore('us', q, signal).catch((e) => { if (e.name === 'AbortError') throw e; return []; }));
+    let found = await fetchCatalog(q, signal);
     if (!found.length && q.includes(' ')) {           // the last word may still be half typed
       const head = q.slice(0, q.lastIndexOf(' '));
-      found = narrow(await fetchStore('il', head, signal), q);
+      found = narrow(await fetchCatalog(head, signal), q);
     }
     return found;
   }
@@ -1202,8 +1218,7 @@
   function cachedFor(raw) {
     const q = raw.trim();
     for (let n = q.length - 1; n >= 2; n--) {
-      const head = q.slice(0, n).trim();
-      const hit = catalogCache.get('il|' + head) || catalogCache.get('us|' + head);
+      const hit = catalogCache.get(catalogKey(q.slice(0, n)));
       if (hit) return narrow(hit, q);
     }
     return null;
@@ -1231,7 +1246,7 @@
     }).slice(0, 12);
   }
 
-  function updateList() {
+  function updateList(again) {                      // again: the second try, after no catalog answered
     picked = null;
     const raw = input.value.trim();
     $('guessBtn').disabled = true;                  // only a song picked from the list can be sent
@@ -1243,16 +1258,19 @@
     const seq = searchSeq;
     searchTimer = setTimeout(async () => {
       searchCtl = new AbortController();
-      let found = null;
+      let found = null, failed = false;
       try { found = await searchCatalog(raw, searchCtl.signal); }
-      catch (e) { if (e.name === 'AbortError') return; found = cachedFor(raw); }
+      catch (e) { if (e.name === 'AbortError') return; failed = true; found = cachedFor(raw); dbg('search: no catalog answered (' + e.message + ')'); }
       if (seq !== searchSeq) return;
       matches = suggestions(found, raw);
       active = -1;
-      const busy = catalogBusy() && !(found && found.length);
-      renderList(matches.length ? (busy ? 'החיפוש המלא עמוס לרגע, אלה תוצאות חלקיות' : '')
-        : busy ? 'החיפוש עמוס לרגע. נסו שוב בעוד דקה' : 'לא נמצא שיר כזה. נסו לכתוב אחרת');
-    }, 350);
+      if (failed && !again) {                         // no catalog answered: show what we have, and try once more in a moment
+        renderList(matches.length ? '' : 'מחפש...');
+        searchTimer = setTimeout(() => { if (seq === searchSeq) updateList(true); }, 1500);
+        return;
+      }
+      renderList(matches.length ? '' : failed ? 'החיפוש לא זמין כרגע, נסו שוב בעוד רגע' : 'לא נמצא שיר כזה. נסו לכתוב אחרת');
+    }, again ? 0 : 350);
   }
   function pick(i) {
     const s = matches[i];
