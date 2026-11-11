@@ -96,6 +96,9 @@
   .sub { margin: var(--sp-1) 0 0; color: var(--muted); font-size: 15px; }
   .lead { margin: var(--sp-5) 0 0; color: var(--muted); font-size: 15px; text-align: center; }   /* a group of its own under the start button */
   .app[data-state="after"] .sub.quiet { display: none; }
+  .app[data-state="after"] .info h1 {               /* the summary does without the name; screen readers still have it */
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
   /* centred text breaks into lines of even length, so no word is left alone on the last line */
   .lead, .sub, .status, .tl-label, .guess .note, .next, .result h2, .song-line, .foot, .remind p, .fb .lead { text-wrap: balance; }   /* after today's game the day number is not repeated under the name */
 
@@ -226,7 +229,10 @@
   /* "skip" sits under the play button: a small white pill framed in the colour of the day, naming the attempt it leads to */
   .btn.skip { height: 40px; padding: 0 var(--sp-4); background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--accent); font-size: 15px; }
   @media (hover: hover) { .btn.skip:hover:not(:disabled) { box-shadow: inset 0 0 0 1.5px var(--accent-d); } }
-  .app.typing .btn.skip { display: none; }           /* while typing the guess, the stage is one small row */
+  .app.typing .btn.skip { display: none; }
+  /* a second action that should be seen: white, framed in the colour of the day */
+  .btn.framed { background: var(--paper); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--accent); }
+  @media (hover: hover) { .btn.framed:hover { box-shadow: inset 0 0 0 1.5px var(--accent-d); } }           /* while typing the guess, the stage is one small row */
   .hint { margin: var(--sp-1) 0 0; color: var(--muted); font-size: 13px; text-align: center; }   /* the play button's caption, 16px under it: the ring that grows from the button needs that room */   /* under the play button: playing again is free */
   .app.typing .hint { display: none; }
   .guess .actions { grid-template-columns: 1fr; }   /* the guess button across the width */
@@ -240,11 +246,12 @@
   /* the song, one line: the band, a colon, the title; it sits between the share button and the video */
   .song-line { margin: var(--sp-5) 0 0; text-align: center; font-size: 22px; font-weight: 400; line-height: 1.35; }
   .song-line .by { color: var(--muted); font-weight: 300; }
-  /* the score: one tile per attempt. A white tick on the colour of the day is the right answer, a black cross in a framed white tile a
-     wrong one, a light grey tile a skip, and a hollow slot an attempt that was not needed. They pop in one after the other. */
+  /* the score: one small dot per attempt. A white tick on the colour of the day is the right answer, a black cross in a
+     ringed white dot a wrong one, a light grey dot a skip, and a hollow ring an attempt that was not needed. They pop in
+     one after the other. */
   .squares { display: flex; justify-content: center; gap: var(--sp-2); margin: var(--sp-4) 0; }
   .squares i {
-    position: relative; flex: 1 1 0; max-width: 30px; aspect-ratio: 1; border-radius: 7px;
+    position: relative; flex: none; width: 18px; height: 18px; border-radius: 50%;
     box-shadow: inset 0 0 0 1px var(--line-2);
     animation: tile .4s cubic-bezier(.2, .8, .2, 1) calc(var(--n, 0) * 55ms) backwards;
   }
@@ -252,16 +259,29 @@
   .squares i.win { background: var(--accent); box-shadow: none; }
   .squares i.bad { background: var(--paper); box-shadow: inset 0 0 0 1px var(--ink); }
   .squares i.win::after {
-    content: ""; position: absolute; left: 50%; top: 46%; width: 28%; height: 52%;
-    border: solid var(--paper); border-width: 0 2.5px 2.5px 0; transform: translate(-50%, -50%) rotate(45deg);
+    content: ""; position: absolute; left: 50%; top: 45%; width: 26%; height: 48%;
+    border: solid var(--paper); border-width: 0 1.5px 1.5px 0; transform: translate(-50%, -50%) rotate(45deg);
   }
   .squares i.bad::before, .squares i.bad::after {
-    content: ""; position: absolute; left: 24%; top: calc(50% - 1.25px); width: 52%; height: 2.5px;
-    background: var(--ink); border-radius: 2px; transform: rotate(45deg);
+    content: ""; position: absolute; left: 27%; top: calc(50% - .75px); width: 46%; height: 1.5px;
+    background: var(--ink); border-radius: 1px; transform: rotate(45deg);
   }
   .squares i.bad::after { transform: rotate(-45deg); }
   @keyframes tile { from { transform: scale(.4); opacity: 0; } }
   .result .btn { width: 100%; }
+  /* after the game: the songs of earlier days still waiting, right under the countdown, framed by a hairline. One tap
+     opens the latest of them (yesterday's, or the latest day before it not played yet); the whole calendar is a quiet
+     link under it. */
+  .earlier { margin: var(--sp-5) 0 0; padding: var(--sp-4); border: 1px solid var(--line); border-radius: var(--r-l); text-align: center; }
+  .earlier[hidden] { display: none; }
+  .earlier h3 { margin: 0; font-size: 20px; font-weight: 300; }
+  .earlier p { margin: var(--sp-1) 0 0; color: var(--muted); font-size: 15px; text-wrap: balance; }
+  .earlier .btn { width: 100%; margin-top: var(--sp-4); }
+  .earlier .btn svg { fill: currentColor; stroke: none; width: 14px; height: 14px; }
+  .earlier-all {
+    display: inline-block; margin: var(--sp-3) 0 0; padding: var(--sp-1) var(--sp-2); background: none; border: 0; color: var(--muted);
+    font: inherit; font-size: 14px; font-weight: 300; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 4px; cursor: pointer;
+  }
   a.btn { text-decoration: none; }
   .btn svg { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
   /* in every button the icon comes after the text, so on its left; all icons are 18px, 8px from the text */
@@ -275,8 +295,8 @@
   .player-wrap iframe { width: 100%; height: 100%; border: 0; }
   .player-wrap.revealed {
     position: static; left: auto;
-    width: 100%; height: auto; aspect-ratio: 16 / 9;
-    margin-top: var(--sp-4); pointer-events: auto;
+    width: min(100%, 260px); height: auto; aspect-ratio: 16 / 9;   /* smaller than the card, centred */
+    margin: var(--sp-4) auto 0; pointer-events: auto;
     border-radius: var(--r-m); overflow: hidden; border: 1px solid var(--line);
   }
 
@@ -360,9 +380,9 @@
   .fbrow[hidden] { display: none; }
   .fblink {
     display: inline-flex; align-items: center; gap: var(--sp-2); min-height: 44px; padding: 0 var(--sp-2);
-    background: none; border: 0; color: var(--ink); font: inherit; font-size: 16px; font-weight: 400; cursor: pointer; text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 4px;
+    background: none; border: 0; color: var(--muted); font: inherit; font-size: 16px; font-weight: 300; cursor: pointer; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 4px;
   }
-  .fblink svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; }
+  .fblink svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; }
   @media (hover: hover) { .fblink:hover { text-decoration: underline; text-underline-offset: 3px; } }
   .fb h2 { margin: 0 0 var(--sp-2); font-size: 24px; font-weight: 200; text-align: center; }
   .fb h2:focus { outline: none; }
@@ -547,6 +567,13 @@
     <button class="btn ghost share" id="shareBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7.5 7.5L12 3l4.5 4.5M5 13v7h14v-7"/></svg>שתפו תוצאה</button>
     <p class="next" id="next">השיר הבא בעוד <b data-countdown>--:--:--</b></p>
   </section>
+  <!-- home, after the game: songs of earlier days still waiting, with one tap to the latest of them -->
+  <section class="earlier" id="earlier" data-s="home" data-when="after" hidden aria-labelledby="earlierTitle">
+    <h3 id="earlierTitle">רוצים עוד?</h3>
+    <p id="earlierText"></p>
+    <a class="btn framed" id="earlierBtn" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg><span id="earlierBtnText"></span></a>
+    <button class="earlier-all" id="earlierAll" type="button">כל הימים בלוח</button>
+  </section>
   <p class="song-line" id="songLine" data-s="home" data-when="after"><bdi class="by" id="resultArtist"></bdi>: <bdi id="resultSong"></bdi></p>
 
   <div class="player-wrap" id="playerWrap" data-s="home game"></div>
@@ -687,6 +714,7 @@
   //   share         { day, won, how }             how: native | copy
   //   history_open  { day }                       the calendar of played days
   //   history_pick  { day, state }                a day chosen from it (state: new | going | won | lost)
+  //   earlier_play  { day, from, left }           the "רוצים עוד?" button after a game: the day it opens, the day just played, how many were waiting
   //   reminder      { how }                       google | android | ios | file
   //   feedback_open { day }                       the feedback dialog was opened
   //   feedback_send { day, email }                a message was sent (email: whether an address was given); the text and the address themselves are never tracked
@@ -794,6 +822,7 @@
     $('resultArtist').textContent = answer.artist;
     fillSquares($('resultSquares'));
     tickCountdown();
+    renderEarlier();
   }
 
   // home: where the day stands, and the one button that goes on from there
@@ -1372,6 +1401,30 @@
       grid.appendChild(b);
     }
   }
+  // after the game: the earlier days not finished yet (today is not one of them), latest first. The card says how many
+  // there are and opens the first of them in one tap: yesterday's song, or if that one is played, the latest day before
+  // it that is not, by its date ("לשיר של 9 בנובמבר"). When every day is played, today's too, it says so instead, with
+  // no button; when only today's song is left, it is not shown.
+  function renderEarlier() {
+    const waiting = [];
+    for (let n = today - 1; n >= 1; n--) if (n !== dayNo && !(store.days[n] && store.days[n].done)) waiting.push(n);
+    const allDone = !waiting.length && (dayNo === today || !!(store.days[today] && store.days[today].done));
+    const box = $('earlier'), btn = $('earlierBtn');
+    box.hidden = previewMode || (!waiting.length && !allDone);
+    if (box.hidden) return;
+    btn.hidden = allDone;
+    if (allDone) {
+      $('earlierTitle').textContent = 'שיחקתם בכל השירים 🎉';
+      $('earlierText').textContent = 'נתראה מחר';
+      return;
+    }
+    $('earlierTitle').textContent = 'רוצים עוד?';
+    const n = waiting[0], count = waiting.length;
+    $('earlierText').textContent = count === 1 ? 'עוד שיר אחד מחכה לכם' : `עוד ${count} שירים מחכים לכם`;
+    $('earlierBtnText').textContent = 'לשיר ' + (n === today - 1 ? 'של אתמול' : 'של ' + DAY_FMT.format(dateOfDay(n)));
+    btn.href = `?day=${n}`;
+    btn.onclick = () => track('earlier_play', { day: n, from: dayNo, left: count });
+  }
   const openCalendar = () => {
     shownMonth = Math.min(monthOf(dateOfDay(dayNo)), lastMonth);
     renderCalendar();
@@ -1379,6 +1432,7 @@
     cal.showModal();
   };
   $('calBtn').addEventListener('click', openCalendar);
+  $('earlierAll').addEventListener('click', openCalendar);
   $('calPrev').addEventListener('click', () => { shownMonth--; renderCalendar(); });
   $('calNext').addEventListener('click', () => { shownMonth++; renderCalendar(); });
   $('calClose').addEventListener('click', () => cal.close());
