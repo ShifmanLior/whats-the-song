@@ -1385,17 +1385,25 @@
   }
   // after the game: the earlier days not finished yet (today is not one of them), latest first. The card says how many
   // there are and opens the first of them in one tap: yesterday's song, or if that one is played, the latest day before
-  // it that is not, by its date ("לשיר של 9 בנובמבר").
+  // it that is not, by its date ("לשיר של 9 בנובמבר"). When every day is played, today's too, it says so instead, with
+  // no button; when only today's song is left, it is not shown.
   function renderEarlier() {
     const waiting = [];
     for (let n = today - 1; n >= 1; n--) if (n !== dayNo && !(store.days[n] && store.days[n].done)) waiting.push(n);
-    const box = $('earlier');
-    box.hidden = previewMode || !waiting.length;
+    const allDone = !waiting.length && (dayNo === today || !!(store.days[today] && store.days[today].done));
+    const box = $('earlier'), btn = $('earlierBtn');
+    box.hidden = previewMode || (!waiting.length && !allDone);
     if (box.hidden) return;
+    btn.hidden = allDone;
+    if (allDone) {
+      $('earlierTitle').textContent = 'שיחקתם בכל השירים 🎉';
+      $('earlierText').textContent = 'נתראה מחר';
+      return;
+    }
+    $('earlierTitle').textContent = 'רוצים עוד?';
     const n = waiting[0], count = waiting.length;
     $('earlierText').textContent = count === 1 ? 'עוד שיר אחד מחכה לכם' : `עוד ${count} שירים מחכים לכם`;
     $('earlierBtnText').textContent = 'לשיר ' + (n === today - 1 ? 'של אתמול' : 'של ' + DAY_FMT.format(dateOfDay(n)));
-    const btn = $('earlierBtn');
     btn.href = `?day=${n}`;
     btn.onclick = () => track('earlier_play', { day: n, from: dayNo, left: count });
   }
