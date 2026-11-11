@@ -270,7 +270,8 @@
   @keyframes tile { from { transform: scale(.4); opacity: 0; } }
   .result .btn { width: 100%; }
   /* after the game: the songs of earlier days still waiting, right under the countdown, framed by a hairline. One tap
-     opens the latest of them (today's first, if it is still open); the whole calendar is a quiet link under it. */
+     opens the latest of them (yesterday's, or the latest day before it not played yet); the whole calendar is a quiet
+     link under it. */
   .earlier { margin: var(--sp-5) 0 0; padding: var(--sp-4); border: 1px solid var(--line); border-radius: var(--r-l); text-align: center; }
   .earlier[hidden] { display: none; }
   .earlier h3 { margin: 0; font-size: 20px; font-weight: 300; }
@@ -1382,21 +1383,20 @@
       grid.appendChild(b);
     }
   }
-  // after the game: the open days not finished yet (the one on screen aside), latest first, so today comes first if it is
-  // still open. The card says how many there are and opens the first of them in one tap.
+  // after the game: the earlier days not finished yet (today is not one of them), latest first. The card says how many
+  // there are and opens the first of them in one tap: yesterday's song, or if that one is played, the latest day before
+  // it that is not, by its date ("לשיר של 9 בנובמבר").
   function renderEarlier() {
     const waiting = [];
-    for (let n = today; n >= 1; n--) if (n !== dayNo && !(store.days[n] && store.days[n].done)) waiting.push(n);
+    for (let n = today - 1; n >= 1; n--) if (n !== dayNo && !(store.days[n] && store.days[n].done)) waiting.push(n);
     const box = $('earlier');
     box.hidden = previewMode || !waiting.length;
     if (box.hidden) return;
     const n = waiting[0], count = waiting.length;
-    const when = n === today ? 'של היום' : n === today - 1 ? 'של אתמול' : 'של ' + DAY_FMT.format(dateOfDay(n));
-    const started = dayState(n) === 'going';
     $('earlierText').textContent = count === 1 ? 'עוד שיר אחד מחכה לכם' : `עוד ${count} שירים מחכים לכם`;
-    $('earlierBtnText').textContent = (started ? 'המשיכו את השיר ' : 'לשיר ') + when;
+    $('earlierBtnText').textContent = 'לשיר ' + (n === today - 1 ? 'של אתמול' : 'של ' + DAY_FMT.format(dateOfDay(n)));
     const btn = $('earlierBtn');
-    btn.href = n === today ? './' : `?day=${n}`;
+    btn.href = `?day=${n}`;
     btn.onclick = () => track('earlier_play', { day: n, from: dayNo, left: count });
   }
   const openCalendar = () => {
